@@ -10,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SlideMaker</RootNamespace>
     <AssemblyName>Nyasa Wizard</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -44,43 +45,63 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DocumentViews\FontSizePropertyEditor.cs">
+    <Compile Include="TreeObjectView\TItemControl.cs" />
+    <Compile Include="TreeObjectView\TItemControlArray.cs" />
+    <Compile Include="TreeObjectView\TItemDocument.cs" />
+    <Compile Include="TreeObjectView\TItemPage.cs" />
+    <Compile Include="TreeObjectView\TItemPageArray.cs" />
+    <Compile Include="TreeObjectView\TVItemArray.cs" />
+    <Compile Include="TreeObjectView\TVAction.cs" />
+    <Compile Include="TreeObjectView\TADocAddPage.cs" />
+    <Compile Include="NavigationFrame.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NavigationFrame.Designer.cs">
+      <DependentUpon>NavigationFrame.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ObjectDumpFrame.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ObjectDumpFrame.Designer.cs">
+      <DependentUpon>ObjectDumpFrame.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PageDynamicDropEntry.cs" />
+    <Compile Include="Views\EditStyleName.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Views\EditStyleName.Designer.cs">
+      <DependentUpon>EditStyleName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\PageDetailPanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="DocumentViews\FontSizePropertyEditor.Designer.cs">
-      <DependentUpon>FontSizePropertyEditor.cs</DependentUpon>
+    <Compile Include="Views\PageDetailPanel.Designer.cs">
+      <DependentUpon>PageDetailPanel.cs</DependentUpon>
     </Compile>
-    <Compile Include="DocumentViews\PageEditViewArguments.cs" />
-    <Compile Include="DocumentViews\PageScrollArea.cs">
+    <Compile Include="Views\PageEditViewArguments.cs" />
+    <Compile Include="Views\PageScrollArea.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="DocumentViews\PageScrollArea.Designer.cs">
+    <Compile Include="Views\PageScrollArea.Designer.cs">
       <DependentUpon>PageScrollArea.cs</DependentUpon>
     </Compile>
-    <Compile Include="Document\LineValues.cs" />
-    <Compile Include="Document\MNDocumentController.cs" />
-    <Compile Include="Document\MNDocumentDelegate.cs" />
-    <Compile Include="Document\MNLine.cs" />
-    <Compile Include="Document\MNPageRuler.cs" />
-    <Compile Include="Document\SMControlAlign.cs" />
-    <Compile Include="Document\SMLabel.cs" />
-    <Compile Include="Property Views\LineProperties.cs">
+    <Compile Include="Views\EventScriptDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Views\EventScriptDialog.Designer.cs">
+      <DependentUpon>EventScriptDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ImagesDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Views\ImagesDialog.Designer.cs">
+      <DependentUpon>ImagesDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\LineProperties.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Property Views\LineProperties.Designer.cs">
+    <Compile Include="Views\LineProperties.Designer.cs">
       <DependentUpon>LineProperties.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Property Views\ImageProperties.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Property Views\ImageProperties.Designer.cs">
-      <DependentUpon>ImageProperties.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Property Views\NyasaMantraProperties.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Property Views\NyasaMantraProperties.Designer.cs">
-      <DependentUpon>NyasaMantraProperties.cs</DependentUpon>
     </Compile>
     <Compile Include="MainFrame.cs">
       <SubType>Form</SubType>
@@ -88,95 +109,59 @@
     <Compile Include="MainFrame.Designer.cs">
       <DependentUpon>MainFrame.cs</DependentUpon>
     </Compile>
-    <Compile Include="DocumentViews\ImagesListView.cs">
+    <Compile Include="Views\ImagesListView.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="DocumentViews\ImagesListView.Designer.cs">
+    <Compile Include="Views\ImagesListView.Designer.cs">
       <DependentUpon>ImagesListView.cs</DependentUpon>
     </Compile>
-    <Compile Include="InsertMantraDialog.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="InsertMantraDialog.Designer.cs">
-      <DependentUpon>InsertMantraDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="DocumentViews\MantrasView.cs">
+    <Compile Include="Views\PageEditView.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="DocumentViews\MantrasView.Designer.cs">
-      <DependentUpon>MantrasView.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Document\MNDocument.cs" />
-    <Compile Include="Document\MNPagePoint.cs" />
-    <Compile Include="Document\MNPageContext.cs" />
-    <Compile Include="Document\MNPageMantra.cs" />
-    <Compile Include="Document\MNPage.cs" />
-    <Compile Include="Document\MNPageImage.cs" />
-    <Compile Include="Document\SMControl.cs" />
-    <Compile Include="Document\MNPageTextWithImage.cs" />
-    <Compile Include="Document\MNReferencedImage.cs" />
-    <Compile Include="Document\MNReferencedMantra.cs" />
-    <Compile Include="DocumentViews\PageEditView.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="DocumentViews\PageEditView.Designer.cs">
+    <Compile Include="Views\PageEditView.Designer.cs">
       <DependentUpon>PageEditView.cs</DependentUpon>
-    </Compile>
-    <Compile Include="PagePropertiesDialog.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PagePropertiesDialog.Designer.cs">
-      <DependentUpon>PagePropertiesDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="PictureSettings.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PictureSettings.Designer.cs">
-      <DependentUpon>PictureSettings.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Property Views\SimpleTextProperties.cs">
+    <Compile Include="TreeObjectView\TVItem.cs" />
+    <Compile Include="TreeObjectView\TreeObjectView.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Property Views\SimpleTextProperties.Designer.cs">
-      <DependentUpon>SimpleTextProperties.cs</DependentUpon>
+    <Compile Include="TreeObjectView\TreeObjectView.Designer.cs">
+      <DependentUpon>TreeObjectView.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="DocumentViews\FontSizePropertyEditor.resx">
-      <DependentUpon>FontSizePropertyEditor.cs</DependentUpon>
+    <EmbeddedResource Include="NavigationFrame.resx">
+      <DependentUpon>NavigationFrame.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="DocumentViews\PageScrollArea.resx">
+    <EmbeddedResource Include="ObjectDumpFrame.resx">
+      <DependentUpon>ObjectDumpFrame.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditStyleName.resx">
+      <DependentUpon>EditStyleName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\PageDetailPanel.resx">
+      <DependentUpon>PageDetailPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\PageScrollArea.resx">
       <DependentUpon>PageScrollArea.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Property Views\LineProperties.resx">
+    <EmbeddedResource Include="Views\EventScriptDialog.resx">
+      <DependentUpon>EventScriptDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\ImagesDialog.resx">
+      <DependentUpon>ImagesDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\LineProperties.resx">
       <DependentUpon>LineProperties.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Property Views\ImageProperties.resx">
-      <DependentUpon>ImageProperties.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Property Views\NyasaMantraProperties.resx">
-      <DependentUpon>NyasaMantraProperties.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainFrame.resx">
       <DependentUpon>MainFrame.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="DocumentViews\ImagesListView.resx">
+    <EmbeddedResource Include="Views\ImagesListView.resx">
       <DependentUpon>ImagesListView.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="InsertMantraDialog.resx">
-      <DependentUpon>InsertMantraDialog.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="DocumentViews\MantrasView.resx">
-      <DependentUpon>MantrasView.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="DocumentViews\PageEditView.resx">
+    <EmbeddedResource Include="Views\PageEditView.resx">
       <DependentUpon>PageEditView.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PagePropertiesDialog.resx">
-      <DependentUpon>PagePropertiesDialog.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PictureSettings.resx">
-      <DependentUpon>PictureSettings.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -188,9 +173,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="Property Views\SimpleTextProperties.resx">
-      <DependentUpon>SimpleTextProperties.cs</DependentUpon>
+    <EmbeddedResource Include="TreeObjectView\TreeObjectView.resx">
+      <DependentUpon>TreeObjectView.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="app.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -209,6 +195,53 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\ZoomOut.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cursor_normal.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cursor_anchor.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cursor_b_move.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cursor_b_anchor.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cursor_b_ready.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\DefaultImage.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rambha.Document\Rambha.Document.csproj">
+      <Project>{9EC38D3A-B51A-4433-9BC7-0F8E9D2399E2}</Project>
+      <Name>Rambha.Document</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Rambha.Script\Rambha.Script.csproj">
+      <Project>{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}</Project>
+      <Name>Rambha.Script</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Rambha.Serializer\Rambha.Serializer.csproj">
+      <Project>{26C66C19-2795-442B-BC49-2FD971702999}</Project>
+      <Name>Rambha.Serializer</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Languages.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TrackerPageNextIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\iconCollapse.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\iconExpand.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\IconActions.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2AA594D7-DF13-48FE-9395-ED6F26FE7344}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Rambha.GraphView</RootNamespace>
+    <AssemblyName>Rambha.GraphView</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Dialogs\DialogSelectObject.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dialogs\DialogSelectObject.Designer.cs">
+      <DependentUpon>DialogSelectObject.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GVDeclarationDataEntry.cs" />
+    <Compile Include="GVDeclarationFlowOut.cs" />
+    <Compile Include="GraphConnections\GVGraphConnControlFlow.cs" />
+    <Compile Include="GraphConnections\GVGraphConnectionCollection.cs" />
+    <Compile Include="GraphConnections\GVGraphConnDataFlow.cs" />
+    <Compile Include="GraphConnections\GVGraphConnOwnership.cs" />
+    <Compile Include="GraphObjects\GVGraphObjectCollection.cs" />
+    <Compile Include="GraphConnections\GVGraphConnMember.cs" />
+    <Compile Include="GVGraphics.cs" />
+    <Compile Include="GVGraph.cs" />
+    <Compile Include="GraphConnections\GVGraphConnection.cs" />
+    <Compile Include="GraphObjects\GVGraphObject.cs" />
+    <Compile Include="GVGraphView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="GVGraphView.Designer.cs">
+      <DependentUpon>GVGraphView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GVGraphViewContext.cs" />
+    <Compile Include="GraphObjects\GVGraphAction.cs" />
+    <Compile Include="Trackers\GVTrackerControlOut.cs" />
+    <Compile Include="Trackers\GVTrackerClean.cs" />
+    <Compile Include="Trackers\GVTrackerBase.cs" />
+    <Compile Include="Trackers\GVTrackerConnectionBase.cs" />
+    <Compile Include="Trackers\GVTrackerDataOut.cs" />
+    <Compile Include="Trackers\GVTrackerMoving.cs" />
+    <Compile Include="Interfaces.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="GVDeclarationProcedure.cs" />
+    <Compile Include="Trackers\GVTrackerObjectMethod.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Dialogs\DialogSelectObject.resx">
+      <DependentUpon>DialogSelectObject.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GVGraphView.resx">
+      <DependentUpon>GVGraphView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TrackerMoveIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TrackerInIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TrackerOutIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TrackerPageNextIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TrackerCleanIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\DataOutIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rambha.Serializer\Rambha.Serializer.csproj">
+      <Project>{26C66C19-2795-442B-BC49-2FD971702999}</Project>
+      <Name>Rambha.Serializer</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\IconObjectMethod.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

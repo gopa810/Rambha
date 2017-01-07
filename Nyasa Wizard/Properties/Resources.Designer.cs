@@ -61,12 +61,134 @@ namespace SlideMaker.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cursor_anchor {
+            get {
+                object obj = ResourceManager.GetObject("cursor_anchor", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cursor_b_anchor {
+            get {
+                object obj = ResourceManager.GetObject("cursor_b_anchor", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cursor_b_move {
+            get {
+                object obj = ResourceManager.GetObject("cursor_b_move", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cursor_b_ready {
+            get {
+                object obj = ResourceManager.GetObject("cursor_b_ready", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cursor_normal {
+            get {
+                object obj = ResourceManager.GetObject("cursor_normal", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap DefaultImage {
+            get {
+                object obj = ResourceManager.GetObject("DefaultImage", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap IconActions {
+            get {
+                object obj = ResourceManager.GetObject("IconActions", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconCollapse {
+            get {
+                object obj = ResourceManager.GetObject("iconCollapse", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconExpand {
+            get {
+                object obj = ResourceManager.GetObject("iconExpand", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to #English Name of Language	All English Names	All French Names	ISO 639-2	ISO 639-1
+        ///Abkhazian	Abkhazian	abkhaze	abk	ab
+        ///Achinese	Achinese	aceh	ace	 
+        ///Acoli	Acoli	acoli	ach	 
+        ///Adangme	Adangme	adangme	ada	 
+        ///Adygei	Adyghe; Adygei	adyghé	ady	 
+        ///Adyghe	Adyghe; Adygei	adyghé	ady	 
+        ///Afar	Afar	afar	aar	aa
+        ///Afrihili	Afrihili	afrihili	afh	 
+        ///Afrikaans	Afrikaans	afrikaans	afr	af
+        ///Afro-Asiatic languages	Afro-Asiatic languages	afro-asiatiques, langues	afa	 
+        ///Ainu	Ainu	aïnou	ain	 
+        ///Akan	Akan	akan	aka	ak
+        ///Akkadian	Akkadian [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Languages {
+            get {
+                return ResourceManager.GetString("Languages", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon MainIcon {
             get {
                 object obj = ResourceManager.GetObject("MainIcon", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap TrackerPageNextIcon {
+            get {
+                object obj = ResourceManager.GetObject("TrackerPageNextIcon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         

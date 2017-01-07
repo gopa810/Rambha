@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2F7D6FD3-A289-4D66-9F17-5BD83F905828}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GOFEditor</RootNamespace>
+    <AssemblyName>GOFEditor</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="NAudio">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\NAudio\NAudio.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.WindowsMediaFormat">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\NAudio\NAudio.WindowsMediaFormat.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DialogNewObject.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogNewObject.Designer.cs">
+      <DependentUpon>DialogNewObject.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="AudioPlayer.cs" />
+    <Compile Include="SVLanguageCollection.cs" />
+    <Compile Include="Views\EditControlDirectory.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlDirectory.Designer.cs">
+      <DependentUpon>EditControlDirectory.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditControlImage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlImage.Designer.cs">
+      <DependentUpon>EditControlImage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditControlRunningText.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlRunningText.Designer.cs">
+      <DependentUpon>EditControlRunningText.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditControlSound.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlSound.Designer.cs">
+      <DependentUpon>EditControlSound.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditControlString.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlString.Designer.cs">
+      <DependentUpon>EditControlString.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="DialogNewObject.resx">
+      <DependentUpon>DialogNewObject.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="Views\EditControlDirectory.resx">
+      <DependentUpon>EditControlDirectory.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditControlImage.resx">
+      <DependentUpon>EditControlImage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditControlRunningText.resx">
+      <DependentUpon>EditControlRunningText.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditControlSound.resx">
+      <DependentUpon>EditControlSound.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditControlString.resx">
+      <DependentUpon>EditControlString.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rambha.GOF\Rambha.GOF.csproj">
+      <Project>{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}</Project>
+      <Name>Rambha.GOF</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Languages.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\file-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigate-up-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icon_add.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Folder.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

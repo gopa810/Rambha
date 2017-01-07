@@ -1,0 +1,183 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9EC38D3A-B51A-4433-9BC7-0F8E9D2399E2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Rambha.Document</RootNamespace>
+    <AssemblyName>Rambha.Document</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Dialogs\DialogNextPageConnection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dialogs\DialogNextPageConnection.Designer.cs">
+      <DependentUpon>DialogNextPageConnection.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ExtensionGraphics.cs" />
+    <Compile Include="GSTitledCore.cs" />
+    <Compile Include="MNBookHeader.cs" />
+    <Compile Include="MNBookLanguage.cs" />
+    <Compile Include="Properties\DocumentResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DocumentResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Enums.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="PVDragContext.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="SMConnection.cs" />
+    <Compile Include="SMKeyboard.cs" />
+    <Compile Include="SMTokenItem.cs" />
+    <Compile Include="SMStyle.cs" />
+    <Compile Include="SMWordToken.cs" />
+    <Compile Include="Views\FontSizePropertyEditor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\FontSizePropertyEditor.Designer.cs">
+      <DependentUpon>FontSizePropertyEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ImageSelectionPropertyControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\ImageSelectionPropertyControl.Designer.cs">
+      <DependentUpon>ImageSelectionPropertyControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MNDocument.cs" />
+    <Compile Include="MNNotificationCenter.cs" />
+    <Compile Include="Interfaces.cs" />
+    <Compile Include="MNLine.cs" />
+    <Compile Include="MNPage.cs" />
+    <Compile Include="MNPageContext.cs" />
+    <Compile Include="MNPagePoint.cs" />
+    <Compile Include="MNReferencedImage.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SMCheckBox.cs" />
+    <Compile Include="SMControl.cs" />
+    <Compile Include="SMControlAlign.cs" />
+    <Compile Include="SMDrawable.cs" />
+    <Compile Include="SMFreeDrawing.cs" />
+    <Compile Include="SMGraphics.cs" />
+    <Compile Include="SMControlGroup.cs" />
+    <Compile Include="SMImage.cs" />
+    <Compile Include="SMLabel.cs" />
+    <Compile Include="SMLetterInput.cs" />
+    <Compile Include="SMRectangleArea.cs" />
+    <Compile Include="SMRuler.cs" />
+    <Compile Include="SMTextContainer.cs" />
+    <Compile Include="SMTextEdit.cs" />
+    <Compile Include="SMTextPuzzle.cs" />
+    <Compile Include="SMTextView.cs" />
+    <Compile Include="Views\TemplateSelection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\TemplateSelection.Designer.cs">
+      <DependentUpon>TemplateSelection.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Dialogs\DialogNextPageConnection.resx">
+      <DependentUpon>DialogNextPageConnection.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\DocumentResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>DocumentResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\FontSizePropertyEditor.resx">
+      <DependentUpon>FontSizePropertyEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\ImageSelectionPropertyControl.resx">
+      <DependentUpon>ImageSelectionPropertyControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\TemplateSelection.resx">
+      <DependentUpon>TemplateSelection.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rambha.Script\Rambha.Script.csproj">
+      <Project>{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}</Project>
+      <Name>Rambha.Script</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Rambha.Serializer\Rambha.Serializer.csproj">
+      <Project>{26C66C19-2795-442B-BC49-2FD971702999}</Project>
+      <Name>Rambha.Serializer</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TrackerPageNextIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\IconObjectMethod.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Backkey.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Enterkey.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CtrlGroupTracker.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

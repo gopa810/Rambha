@@ -22,5 +22,17 @@ namespace SlideMaker.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int UniqueID {
+            get {
+                return ((int)(this["UniqueID"]));
+            }
+            set {
+                this["UniqueID"] = value;
+            }
+        }
     }
 }

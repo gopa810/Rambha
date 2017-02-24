@@ -84,11 +84,29 @@ namespace SlideMaker.Views
                         panel1.Invalidate();
                     }
                     break;
+                case "TextInserted":
+                    if (p_tree != null)
+                    {
+                        p_tree.RefreshChildren();
+                        panel1.Height = (int)GetTreeHeight();
+                        panel1.Invalidate();
+                    }
+                    break;
+                case "ObjectSelected":
+                    if (args != null && args.Length > 0)
+                    {
+                        if (FindAndSelectNode(args[0], Tree))
+                            Invalidate();
+                    }
+                    break;
             }
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
+            if (p_tree == null)
+                return;
+
             int h = (int)GetTreeHeight();
             if (panel1.Height != h)
             {
@@ -166,7 +184,7 @@ namespace SlideMaker.Views
 
             g.DrawString(itemName, ItemFont, Brushes.Black, item.PaintRect.X + ItemHeight, item.PaintRect.Y + (int)(ItemHeight - textSize.Height)/2);
 
-            if (item == SelectedNode)
+            if (item == SelectedNode && item.GetActions() != null)
             {
                 g.DrawImage(Properties.Resources.IconActions, width - ItemHeight, y, ItemHeight, ItemHeight);
             }
@@ -183,15 +201,15 @@ namespace SlideMaker.Views
                     level++;
 
 
-                    g.DrawLine(CellBorderPen, level * ItemHeight, lastY, width, lastY);
+                    g.DrawLine(CellBorderPen, level * ItemHeight, lastY, level * ItemHeight + 8, lastY);
                     for (int i = 0; i < item.Children.Count; i++)
                     {
                         lastY = PaintItem(item.Children[i], lastY, level, width - 2, g);
-                        g.DrawLine(CellBorderPen, level * ItemHeight, lastY, width, lastY);
+                        g.DrawLine(CellBorderPen, level * ItemHeight, lastY, level * ItemHeight + 8, lastY);
                     }
 
                     // vertical line
-                    g.DrawLine(CellBorderPen, width - 1, topY, width - 1, lastY);
+                    //g.DrawLine(CellBorderPen, width - 1, topY, width - 1, lastY);
                     g.DrawLine(CellBorderPen, level * ItemHeight, topY, level * ItemHeight, lastY);
 
                 }
@@ -346,6 +364,34 @@ namespace SlideMaker.Views
 
         }
 
+
+        public void SelectItemWithData(object p)
+        {
+            FindAndSelectNode(p, Tree);
+        }
+
+        private bool FindAndSelectNode(object p, TVItem item)
+        {
+            if (item != null)
+            {
+                if (item.IdenticalData(p))
+                {
+                    SelectedNode = item;
+                    return true;
+                }
+
+                if (item.Expanded)
+                {
+                    foreach (TVItem ch in item.Children)
+                    {
+                        if (FindAndSelectNode(p, ch))
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
     }
 
     public class TreeObjectViewEventArgs : EventArgs

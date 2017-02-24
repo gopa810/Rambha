@@ -31,40 +31,18 @@ namespace Rambha.Script
         public GSExecutor()
         {
             stackVars.Add(new Dictionary<string, GSCore>());
+            SetVariable("Int", new GSExecutorMathInteger() { Parent = this });
+            SetVariable("Double", new GSExecutorDoubleMath() { Parent = this });
+            SetVariable("Bool", new GSExecutorLog() { Parent = this });
+            SetVariable("Bin", new GSExecutorBin() { Parent = this });
+            SetVariable("String", new GSExecutorString() { Parent = this });
+            SetVariable("System", this);
         }
 
         public override GSCore ExecuteMessage(string token, GSCoreCollection args)
         {
             GSCore result = null;
-            if (token.Equals("add") || token.Equals("+"))
-                result = execAdd(getNativeValues(args));
-            else if (token.Equals("sub") || token.Equals("-"))
-                result = execSub(getNativeValues(args));
-            else if (token.Equals("mul") || token.Equals("*"))
-                result = execMul(getNativeValues(args));
-            else if (token.Equals("div") || token.Equals("/"))
-                result = execDiv(getNativeValues(args));
-            else if (token.Equals("and") || token.Equals("&"))
-                result = execAnd(getNativeValues(args));
-            else if (token.Equals("or") || token.Equals("|"))
-                result = execOr(getNativeValues(args));
-            else if (token.Equals("not") || token.Equals("!"))
-                result = execNot(args);
-            else if (token.Equals("set") && args.Count > 1)
-                result = execSet(args[0], args[1]);
-            else if ((token.Equals("gt") || token.Equals(">")) && args.Count > 1)
-                result = execGt(getNativeValues(args));
-            else if ((token.Equals("ge") || token.Equals(">=")) && args.Count > 1)
-                result = execGe(getNativeValues(args));
-            else if ((token.Equals("eq") || token.Equals("==")) && args.Count > 1)
-                result = execEq(getNativeValues(args));
-            else if ((token.Equals("ne") || token.Equals("!=")) && args.Count > 1)
-                result = execNe(getNativeValues(args));
-            else if ((token.Equals("le") || token.Equals("<=")) && args.Count > 1)
-                result = execLe(getNativeValues(args));
-            else if ((token.Equals("lt") || token.Equals("<")) && args.Count > 1)
-                result = execLt(getNativeValues(args));
-            else if (token.Equals("print"))
+            if (token.Equals("print"))
                 result = execPrint(args, false);
             else if (token.Equals("println"))
                 result = execPrint(args, true);
@@ -84,6 +62,8 @@ namespace Rambha.Script
                 result = new GSReturn(GSReturn.TYPE_BREAK);
             else if (token.Equals("continue"))
                 result = new GSReturn(GSReturn.TYPE_CONTINUE);
+            else if (token.Equals("set") && args.Count > 1)
+                result = execSet(args[0], args[1]);
             else
             {
                 if (token.IndexOf('.') >= 0)
@@ -575,131 +555,6 @@ namespace Rambha.Script
             return GSVoid.Void;
         }
 
-        private GSCore execGt(GSCoreCollection arg1)
-        {
-            GSBoolean bv = new GSBoolean();
-            GSCoreDataType dt = arg1.getArithmeticDataType();
-
-            if (dt == GSCoreDataType.Double)
-            {
-                bv.BooleanValue = (arg1[0].getDoubleValue() > arg1[1].getDoubleValue());
-            }
-            else if (dt == GSCoreDataType.Integer)
-            {
-                bv.BooleanValue = (arg1[0].getIntegerValue() > arg1[1].getIntegerValue());
-            }
-            else if (dt == GSCoreDataType.String)
-            {
-                bv.BooleanValue = (arg1[0].getStringValue().CompareTo(arg1[1].getStringValue()) > 0);
-            }
-
-            return bv;
-        }
-
-        private GSCore execGe(GSCoreCollection arg1)
-        {
-            GSBoolean bv = new GSBoolean();
-            GSCoreDataType dt = arg1.getArithmeticDataType();
-
-            if (dt == GSCoreDataType.Double)
-            {
-                bv.BooleanValue = (arg1[0].getDoubleValue() >= arg1[1].getDoubleValue());
-            }
-            else if (dt == GSCoreDataType.Integer)
-            {
-                bv.BooleanValue = (arg1[0].getIntegerValue() >= arg1[1].getIntegerValue());
-            }
-            else if (dt == GSCoreDataType.String)
-            {
-                bv.BooleanValue = (arg1[0].getStringValue().CompareTo(arg1[1].getStringValue()) >= 0);
-            }
-
-            return bv;
-        }
-
-        private GSCore execEq(GSCoreCollection arg1)
-        {
-            GSBoolean bv = new GSBoolean();
-            GSCoreDataType dt = arg1.getArithmeticDataType();
-
-            if (dt == GSCoreDataType.Double)
-            {
-                bv.BooleanValue = (arg1[0].getDoubleValue() == arg1[1].getDoubleValue());
-            }
-            else if (dt == GSCoreDataType.Integer)
-            {
-                bv.BooleanValue = (arg1[0].getIntegerValue() == arg1[1].getIntegerValue());
-            }
-            else if (dt == GSCoreDataType.String)
-            {
-                bv.BooleanValue = (arg1[0].getStringValue().CompareTo(arg1[1].getStringValue()) == 0);
-            }
-
-            return bv;
-        }
-
-        private GSCore execNe(GSCoreCollection arg1)
-        {
-            GSBoolean bv = new GSBoolean();
-            GSCoreDataType dt = arg1.getArithmeticDataType();
-
-            if (dt == GSCoreDataType.Double)
-            {
-                bv.BooleanValue = (arg1[0].getDoubleValue() != arg1[1].getDoubleValue());
-            }
-            else if (dt == GSCoreDataType.Integer)
-            {
-                bv.BooleanValue = (arg1[0].getIntegerValue() != arg1[1].getIntegerValue());
-            }
-            else if (dt == GSCoreDataType.String)
-            {
-                bv.BooleanValue = (arg1[0].getStringValue().CompareTo(arg1[1].getStringValue()) != 0);
-            }
-
-            return bv;
-        }
-
-        private GSCore execLe(GSCoreCollection arg1)
-        {
-            GSBoolean bv = new GSBoolean();
-            GSCoreDataType dt = arg1.getArithmeticDataType();
-
-            if (dt == GSCoreDataType.Double)
-            {
-                bv.BooleanValue = (arg1[0].getDoubleValue() <= arg1[1].getDoubleValue());
-            }
-            else if (dt == GSCoreDataType.Integer)
-            {
-                bv.BooleanValue = (arg1[0].getIntegerValue() <= arg1[1].getIntegerValue());
-            }
-            else if (dt == GSCoreDataType.String)
-            {
-                bv.BooleanValue = (arg1[0].getStringValue().CompareTo(arg1[1].getStringValue()) <= 0);
-            }
-
-            return bv;
-        }
-
-        private GSCore execLt(GSCoreCollection arg1)
-        {
-            GSBoolean bv = new GSBoolean();
-            GSCoreDataType dt = arg1.getArithmeticDataType();
-
-            if (dt == GSCoreDataType.Double)
-            {
-                bv.BooleanValue = (arg1[0].getDoubleValue() < arg1[1].getDoubleValue());
-            }
-            else if (dt == GSCoreDataType.Integer)
-            {
-                bv.BooleanValue = (arg1[0].getIntegerValue() < arg1[1].getIntegerValue());
-            }
-            else if (dt == GSCoreDataType.String)
-            {
-                bv.BooleanValue = (arg1[0].getStringValue().CompareTo(arg1[1].getStringValue()) < 0);
-            }
-
-            return bv;
-        }
 
         private GSCore execSet(GSCore keyElem, GSCore valueElem)
         {
@@ -724,175 +579,6 @@ namespace Rambha.Script
                 markupEnd = value.getStringValue();
         }
 
-        private GSCore execNot(GSCoreCollection args)
-        {
-            bool result = true;
-
-            if (args.Count > 0)
-                result = !args[0].getBooleanValue();
-            return new GSBoolean() { BooleanValue = result };
-        }
-
-        private GSCore execOr(GSCoreCollection args)
-        {
-            bool result = false;
-            foreach (GSCore item in args)
-            {
-                if (item.getBooleanValue() == true)
-                {
-                    result = true;
-                    break;
-                }
-            }
-            return new GSBoolean() { BooleanValue = result };
-        }
-
-        private GSCore execAnd(GSCoreCollection args)
-        {
-            bool result = true;
-            foreach (GSCore item in args)
-            {
-                if (item.getBooleanValue() == false)
-                {
-                    result = false;
-                    break;
-                }
-            }
-            return new GSBoolean() { BooleanValue = result };
-        }
-
-        private GSCore execDiv(GSCoreCollection args)
-        {
-            GSCoreDataType dataType = args.getArithmeticDataType();
-
-            switch (dataType)
-            {
-                case GSCoreDataType.Double:
-                    {
-                        double[] arr = getDoubleArray(args);
-                        double sum = arr[0];
-                        for (int i = 1; i < arr.Length; i++)
-                            sum /= arr[i];
-                        return new GSDouble() { DoubleValue = sum };
-                    }
-                case GSCoreDataType.Integer:
-                case GSCoreDataType.Boolean:
-                    {
-                        long[] arr = getIntegerArray(args);
-                        long sum = arr[0];
-                        for (int i = 1; i < arr.Length; i++)
-                            sum /= arr[i];
-                        return new GSInt64() { Int64Value = sum };
-                    }
-                default:
-                    break;
-            }
-
-            return new GSString();
-        }
-
-        private GSCore execMul(GSCoreCollection args)
-        {
-            GSCoreDataType dataType = args.getArithmeticDataType();
-
-            switch (dataType)
-            {
-                case GSCoreDataType.Double:
-                    {
-                        double[] arr = getDoubleArray(args);
-                        double sum = 1.0;
-                        for (int i = 0; i < arr.Length; i++)
-                            sum *= arr[i];
-                        return new GSDouble() { DoubleValue = sum };
-                    }
-                case GSCoreDataType.Integer:
-                case GSCoreDataType.Boolean:
-                    {
-                        long[] arr = getIntegerArray(args);
-                        long sum = 1;
-                        for (int i = 0; i < arr.Length; i++)
-                            sum *= arr[i];
-                        return new GSInt64() { Int64Value = sum };
-                    }
-                default:
-                    break;
-            }
-
-            return new GSString();
-        }
-
-        private GSCore execSub(GSCoreCollection args)
-        {
-            GSCoreDataType dataType = args.getArithmeticDataType();
-
-            switch (dataType)
-            {
-                case GSCoreDataType.Double:
-                    {
-                        double[] arr = getDoubleArray(args);
-                        double sum = arr[0];
-                        for (int i = 1; i < arr.Length; i++)
-                            sum -= arr[i];
-                        return new GSDouble() { DoubleValue = sum };
-                    }
-                case GSCoreDataType.Integer:
-                case GSCoreDataType.Boolean:
-                    {
-                        long[] arr = getIntegerArray(args);
-                        long sum = arr[0];
-                        for (int i = 1; i < arr.Length; i++)
-                            sum -= arr[i];
-                        return new GSInt64() { Int64Value = sum };
-                    }
-                default:
-                    break;
-            }
-
-            return new GSString();
-        }
-
-        private GSCore execAdd(GSCoreCollection args)
-        {
-            GSCoreDataType dataType = args.getArithmeticDataType();
-
-            switch (dataType)
-            {
-                case GSCoreDataType.String:
-                case GSCoreDataType.Void:
-                    {
-                        string[] arr = getStringArray(args);
-                        StringBuilder sb = new StringBuilder();
-                        foreach (string s in arr)
-                        {
-                            if (sb.Length > 0)
-                                sb.Append(' ');
-                            sb.Append(s);
-                        }
-                        return new GSString() { Value = sb.ToString() };
-                    }
-                case GSCoreDataType.Double:
-                    {
-                        double[] arr = getDoubleArray(args);
-                        double sum = 0;
-                        for (int i = 0; i < arr.Length; i++)
-                            sum += arr[i];
-                        return new GSDouble() { DoubleValue = sum };
-                    }
-                case GSCoreDataType.Integer:
-                case GSCoreDataType.Boolean:
-                    {
-                        long[] arr = getIntegerArray(args);
-                        long sum = 0;
-                        for (int i = 0; i < arr.Length; i++)
-                            sum += arr[i];
-                        return new GSInt64() { Int64Value = sum };
-                    }
-                default:
-                    break;
-            }
-
-            return new GSString();
-        }
 
 
         // this function is also in GSCore object
@@ -1014,7 +700,7 @@ namespace Rambha.Script
                 }
                 else
                 {
-                    if (L.Parts.IsFirstToken())
+                    /*if (L.Parts.IsFirstToken())
                     {
                         GSCore res = null;
                         try
@@ -1031,15 +717,22 @@ namespace Rambha.Script
                         }
                         return res;
                     }
-                    else
+                    else*/
                     {
                         GSCore result = null;
-                        foreach (GSCore item in L.Parts)
+                        GSCore target = ExecuteElement(L.Parts[0]);
+                        string message = (L.Parts[1] is GSToken ? (L.Parts[1] as GSToken).Token : L.Parts[1].getStringValue());
+                        if (target != null)
+                        {
+                            result = target.ExecuteMessage(message, L.Parts.getSublist(2));
+                        }
+
+                        /*foreach (GSCore item in L.Parts)
                         {
                             result = ExecuteElement(item);
                             if (result is GSReturn)
                                 break;
-                        }
+                        }*/
                         if (result == null)
                             return new GSString();
                         return result;

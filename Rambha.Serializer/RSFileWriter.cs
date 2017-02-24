@@ -27,6 +27,12 @@ namespace Rambha.Serializer
             }
         }
 
+        public void WriteHeader(byte[] ba)
+        {
+            Log("HEADER\n");
+            WriteBytes(ba);
+        }
+
         public void WriteBool(bool b)
         {
             Log("BOOL {0}\n", b);

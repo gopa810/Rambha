@@ -18,7 +18,7 @@ using Rambha.Serializer;
 namespace Rambha.Document
 {
     [Serializable()]
-    public class MNPage: GSCore, IRSObjectOrigin
+    public class MNPage: GSCore
     {
         [Browsable(true), ReadOnly(true)]
         public long Id { get; set; }
@@ -30,6 +30,9 @@ namespace Rambha.Document
         public string Title { get { return p_title_obj.Value; } set { p_title_obj.Value = value; } }
         private GSString p_title_obj = new GSString("");
 
+        [Browsable(true), DisplayName("API Name"), Category("API")]
+        public string APIName { get { return p_title_obj.Value; } set { p_title_obj.Value = value; } }
+
         [Browsable(true), DisplayName("Page Description"), Category("Page")]
         public string Description { get; set; }
 
@@ -39,13 +42,33 @@ namespace Rambha.Document
         [Browsable(true), Category("Evaluation")]
         public MNEvaluationType Evaluation { get; set; }
 
-        [Browsable(true), Category("Events")]
-        public string UserEventOnClick { get; set; }
-        public string UserEventOnDoubleClick { get; set; }
-        public string UserEventOnLongClick { get; set; }
+        private Color backgroundColor = Color.White;
+        private Brush nontransparentBackgroundBrush = null;
+        private Brush semitransparentBackgroundBrush = null;
 
+        public Color BackgroundColor
+        {
+            get
+            {
+                return backgroundColor;
+            }
+            set
+            {
+                backgroundColor = value;
+                nontransparentBackgroundBrush = new SolidBrush(backgroundColor);
+                semitransparentBackgroundBrush = new SolidBrush(Color.FromArgb(128, backgroundColor));
+            }
+        }
+
+        /// <summary>
+        /// These are non-permanent properties for storing values during
+        /// runtime. They are not saved.
+        /// </summary>
+        public Dictionary<string, GSCore> Properties = new Dictionary<string, GSCore>();
 
         public List<SMControl> Objects = new List<SMControl>();
+
+        public List<MNReferencedText> Scripts = new List<MNReferencedText>();
 
         public Dictionary<long, SMRectangleArea> Areas = new Dictionary<long, SMRectangleArea>();
 
@@ -57,15 +80,35 @@ namespace Rambha.Document
         //
 
         [Browsable(true), Editor(typeof(TemplateSelectionEditor), typeof(UITypeEditor))]
-        public MNPage Template { get { return p_template; } set { p_template = value; } 
+        public MNPage Template 
+        {
+            get 
+            {
+                if (p_template == null && p_template_lazy > 0)
+                {
+                    p_template = Document.FindTemplateId(p_template_lazy);
+                    p_template_lazy = -1;
+                }
+                return p_template;
+            }
+            set
+            {
+                p_template = value;
+            }
+        }
+        [Browsable(false)]
+        public long TemplateId
+        {
+            get { MNPage t = Template; return (t != null ? t.Id : p_template_lazy); }
+            set { p_template_lazy = value; }
         }
         private MNPage p_template = null;
+        private long p_template_lazy = -1;
 
-        [Browsable(false)]
-        public long TemplateId { get { MNPage t = Template;  return (t != null ? t.Id : -1); } }
 
         public int ItemHeight = 0;
         public int ItemTextHeight = 0;
+        public int Index = 0;
 
 
         public override GSCore GetPropertyValue(string s)
@@ -76,6 +119,49 @@ namespace Rambha.Document
                     return p_title_obj;
                 default:
                     return base.GetPropertyValue(s);
+            }
+        }
+
+        public override GSCore ExecuteMessage(string token, GSCoreCollection args)
+        {
+            string key;
+            GSCore val;
+            switch (token)
+            {
+                case "getValue":
+                    key = args.getSafe(0).getStringValue();
+                    if (Properties.ContainsKey(key))
+                        return Properties[key];
+                    return GSVoid.Void;
+                case "setValue":
+                    key = args.getSafe(0).getStringValue();
+                    val = args.getSafe(1);
+                    Properties[key] = val;
+                    return val;
+                case "checkAnswers":
+                    return new GSBoolean(CheckAnswers(false));
+                case "displayValidation":
+                    CheckAnswers(false);
+                    return GSVoid.Void;
+                case "showHints":
+                    ShowHints(true);
+                    return GSVoid.Void;
+                case "hideHints":
+                    ShowHints(false);
+                    return GSVoid.Void;
+                case "displayAnswers":
+                    DisplayAnswers();
+                    return GSVoid.Void;
+                case "test":
+                    return new GSBoolean(Test());
+                case "findControl":
+                    key = args.getSafe(0).getStringValue();
+                    foreach (SMControl ctrl in Objects)
+                        if (ctrl.UniqueName.Equals(key))
+                            return ctrl;
+                    return GSVoid.Void;
+                default:
+                    return base.ExecuteMessage(token, args);
             }
         }
 
@@ -124,9 +210,13 @@ namespace Rambha.Document
             Area.Save(bw);
 
             bw.WriteByte(15);
-            bw.WriteString(UserEventOnClick);
-            bw.WriteString(UserEventOnDoubleClick);
-            bw.WriteString(UserEventOnLongClick);
+            bw.WriteColor(BackgroundColor);
+
+            foreach (MNReferencedText rt in Scripts)
+            {
+                bw.WriteByte(16);
+                rt.Save(bw);
+            }
 
             // end of object
             bw.WriteByte(0);
@@ -145,8 +235,7 @@ namespace Rambha.Document
                         Title = br.ReadString();
                         Description = br.ReadString();
                         IsTemplate = br.ReadBool();
-                        //Template = new MNPageLoadingPlaceholder() { pageId = br.ReadInt32() };
-                        br.AddReference(Document, "MNPage", br.ReadInt64(), 10, this);
+                        TemplateId = br.ReadInt64();
                         Evaluation = (MNEvaluationType)br.ReadInt32();
                         break;
                     case 11:
@@ -156,6 +245,7 @@ namespace Rambha.Document
                         {
                             string type = br.ReadString();
                             SMControl control = (SMControl)this.TagToObject(type);
+                            control.Page = this;
                             if (control == null)
                                 throw new Exception("Unknown control type: " + type);
                             control.Load(br);
@@ -178,7 +268,7 @@ namespace Rambha.Document
                         Connections.Clear();
                         for (int i = 0; i < c; i++)
                         {
-                            SMConnection conn = new SMConnection(Document);
+                            SMConnection conn = new SMConnection(this);
                             conn.Load(br);
                             Connections.Add(conn);
                         }
@@ -187,9 +277,12 @@ namespace Rambha.Document
                         Area.Load(br);
                         break;
                     case 15:
-                        UserEventOnClick = br.ReadString();
-                        UserEventOnDoubleClick = br.ReadString();
-                        UserEventOnLongClick = br.ReadString();
+                        BackgroundColor = br.ReadColor();
+                        break;
+                    case 16:
+                        MNReferencedText rt = new MNReferencedText();
+                        rt.Load(br);
+                        Scripts.Add(rt);
                         break;
                     default:
                         break;
@@ -199,24 +292,11 @@ namespace Rambha.Document
             return true;
         }
 
-        public void setReference(int tag, object obj)
-        {
-            switch (tag)
-            {
-                case 10:
-                    if (obj is MNPage)
-                        Template = (MNPage)obj;
-                    break;
-            }
-        }
-
         public MNPage(MNDocument doc): base()
         {
             Document = doc;
             IsTemplate = false;
-            UserEventOnClick = "";
-            UserEventOnDoubleClick = "";
-            UserEventOnLongClick = "";
+            BackgroundColor = Color.White;
         }
 
         public override string ToString()
@@ -409,31 +489,8 @@ namespace Rambha.Document
                 SMRectangleArea area = GetArea(item.Id);
                 if (area.Selected)
                 {
-                    if (item.ParentObject == null)
-                    {
-                        objectsForDelete.Add(item);
-                    }
-                    else
-                    {
-                        if (!selectedParentObjects.Contains(item.ParentObject))
-                        {
-                            objectsForDelete.Add(item.ParentObject);
-                            selectedParentObjects.Add(item.ParentObject);
-                        }
-                    }
+                    objectsForDelete.Add(item);
                 }
-            }
-
-            foreach (SMControl item in Objects)
-            {
-                try
-                {
-                    if (selectedParentObjects.Contains(item.ParentObject))
-                    {
-                        objectsForDelete.Add(item);
-                    }
-                }
-                catch { }
             }
 
             // actual delete
@@ -443,6 +500,29 @@ namespace Rambha.Document
                     Objects.Remove(item);
                 }
                 catch {
+                }
+            }
+        }
+
+        public void DuplicateSelectedObjects()
+        {
+            int i, m = Objects.Count;
+            for (i = 0; i < m; i++)
+            {
+                SMControl item = Objects[i];
+                SMRectangleArea area = GetArea(item.Id);
+                if (area.Selected)
+                {
+                    area.Selected = false;
+                    SMControl duplicated = item.Duplicate();
+                    if (duplicated != null)
+                    {
+                        SMRectangleArea area2 = GetArea(duplicated.Id);
+                        area2.Set(area, 30, 30);
+                        area2.Selected = true;
+
+                        Objects.Add(duplicated);
+                    }
                 }
             }
         }
@@ -463,6 +543,8 @@ namespace Rambha.Document
             {
                 Graphics g = context.g;
 
+                g.FillRectangle(nontransparentBackgroundBrush, 0, 0, context.PageWidth, context.PageHeight);
+
                 // draw connections
                 foreach (SMConnection connection in this.Connections)
                 {
@@ -472,7 +554,32 @@ namespace Rambha.Document
                 // draw objects
                 foreach (SMControl po in this.SortedObjects)
                 {
+                    if (!po.UIStateVisible)
+                        continue;
+
+                    SMRectangleArea area = GetArea(po.Id);
+                    Rectangle rect = context.isTracking ? area.GetBoundsRecalc(context) : area.GetBounds(context);
+
                     po.Paint(context);
+
+                    if (po.UIStateShowHint && po.Hints.Length > 0)
+                    {
+                        SizeF hintSize = g.MeasureString(po.Hints, context.HintFont);
+                        Rectangle hintRect = new Rectangle(rect.Right - (int)hintSize.Width,
+                            rect.Top - (int)hintSize.Height, (int)hintSize.Width, (int)hintSize.Height);
+                        g.FillRectangle(Brushes.LightYellow, hintRect);
+                        g.DrawString(po.Hints, context.HintFont, Brushes.Black, hintRect);
+                    }
+
+                    if (context.drawSelectionMarks)
+                    {
+                        g.DrawRectangle(Pens.LightGray, rect);
+                    }
+
+                    if (!po.UIStateEnabled)
+                    {
+                        g.FillRectangle(semitransparentBackgroundBrush, rect);
+                    }
                 }
 
             }
@@ -554,11 +661,16 @@ namespace Rambha.Document
             return null;
         }
 
+        public void AddConnection(SMConnection conn)
+        {
+            Connections.Add(conn);
+        }
+
         public void AddConnection(SMControl from, SMControl to)
         {
             if (FindConnection(from, to) == null)
             {
-                Connections.Add(new SMConnection(Document) { Source = from, Target = to });
+                Connections.Add(new SMConnection(this) { Source = from, Target = to });
             }
         }
 
@@ -652,7 +764,7 @@ namespace Rambha.Document
             if (a == typeof(SMTextPuzzle)) return "TextPuzzle";
             if (a == typeof(SMTextView)) return "TextView";
             if (a == typeof(SMKeyboard)) return "Keyboard";
-            //if (a == typeof(SMControlGroup)) return "ControlGroup";
+            if (a == typeof(SMMemoryGame)) return "MemoryGame";
 
             return Document.ObjectTypeToTag(a);
         }
@@ -671,34 +783,244 @@ namespace Rambha.Document
                 case "TextEdit": return new SMTextEdit(this);
                 case "TextPuzzle": return new SMTextPuzzle(this);
                 case "TextView": return new SMTextView(this);
-                //case "ControlGroup": return new SMControlGroup(this);
+                case "MemoryGame": return new SMMemoryGame(this);
                 case "Keyboard": return new SMKeyboard(this);
                 default: return Document.TagToObject(tag);
             }
         }
 
-        public virtual void OnPageWillAppear()
+        public virtual void OnPageEvent(string eventName)
         {
             if (Document.HasViewer)
-                Document.Viewer.OnPageWillAppear(this);
+                Document.Viewer.OnEvent(eventName, this);
         }
 
-        public virtual void OnPageDidAppear()
+        /// <summary>
+        /// Checks if answers given by user are correct for each control.
+        /// </summary>
+        /// <param name="saveResults">If you want to save results of validation into control,
+        /// so that control will reflet it in its appearance, then use value TRUE for this argument.
+        /// If you dont want to change control's appearance, then use FALSE for this argument.</param>
+        /// <returns></returns>
+        public bool CheckAnswers(bool saveResults)
         {
-            if (Document.HasViewer)
-                Document.Viewer.OnPageDidAppear(this);
+            int errors = 0;
+            foreach (SMControl ctrl in Objects)
+            {
+                MNEvaluationResult previous = ctrl.UIStateError;
+                ctrl.Evaluate();
+                if (ctrl.Evaluate() == MNEvaluationResult.Incorrect)
+                    errors++;
+                if (!saveResults)
+                    ctrl.UIStateError = previous;
+            }
+
+            return errors > 0;
         }
 
-        public virtual void OnPageWillDisappear()
+        /// <summary>
+        /// Shows expected values in all controls.
+        /// </summary>
+        public void DisplayAnswers()
         {
-            if (Document.HasViewer)
-                Document.Viewer.OnPageWillDisappear(this);
+            foreach (SMControl ctrl in Objects)
+            {
+                if (ctrl.HasEvaluation)
+                {
+                    ctrl.DisplayAnswers();
+                }
+            }
         }
 
-        public virtual void OnPageDidDisappear()
+        public void ShowHints(bool state)
         {
-            if (Document.HasViewer)
-                Document.Viewer.OnPageDidDisappear(this);
+            foreach (SMControl ctrl in Objects)
+            {
+                ctrl.UIStateShowHint = state;
+            }
+        }
+
+        public bool Test()
+        {
+            long counter = 1;
+            if (Properties.ContainsKey("testCounter"))
+                counter = Properties["testCounter"].getIntegerValue();
+
+            bool res = CheckAnswers(false);
+            // res == false means, there are all answers valid (no incorrect ones)
+            if (res == false)
+                return true;
+
+            Properties["testCounter"] = new GSInt32(counter + 1);
+            if (counter == 1)
+            {
+                CheckAnswers(true);
+                ShowHints(false);
+                return false;
+            }
+            else if (counter == 2)
+            {
+                CheckAnswers(true);
+                ShowHints(true);
+                return false;
+            }
+            else
+            {
+                ShowHints(false);
+                DisplayAnswers();
+                CheckAnswers(true);
+                return true;
+            }
+        }
+
+
+        public void LoadStatus(RSFileReader br)
+        {
+            Connections.Clear();
+            byte b;
+            long mid;
+            SMControl ct;
+            while ((b = br.ReadByte()) != 0)
+            {
+                switch (b)
+                {
+                    case 10:
+                        SMConnection conn = new SMConnection(this);
+                        conn.Load(br);
+                        Connections.Add(conn);
+                        break;
+                    case 20:
+                        mid = br.ReadInt64();
+                        ct = FindObject(mid);
+                        if (ct != null) ct.LoadStatus(br);
+                        break;
+                }
+            }
+        }
+
+        public void SaveStatus(RSFileWriter bw)
+        {
+            foreach (SMConnection conn in Connections)
+            {
+                bw.WriteByte(10);
+                conn.Save(bw);
+            }
+
+            foreach (SMControl ct in Objects)
+            {
+                bw.WriteByte(20);
+                bw.WriteInt64(ct.Id);
+                ct.SaveStatus(bw);
+            }
+
+            bw.WriteByte(0);
+        }
+
+        public int GetSelectedCount()
+        {
+            int count = 0;
+            foreach(SMRectangleArea area in Areas.Values)
+                if (area.Selected) count++;
+            return count;
+        }
+
+        public void SaveSelection(RSFileWriter bw)
+        {
+            bw.WriteByte(10);
+            bw.WriteInt64(this.Id);
+
+            foreach (SMControl c in Objects)
+            {
+                SMRectangleArea area = GetArea(c.Id);
+                if (area.Selected)
+                {
+                    bw.WriteByte(20);
+                    bw.WriteString(ObjectTypeToTag(c.GetType()));
+                    c.Save(bw);
+
+                    bw.WriteByte(30);
+                    bw.WriteInt64(c.Id);
+                    area.Save(bw);
+                }
+            }
+
+            bw.WriteByte(0);
+        }
+
+        public SMControl PasteSelection(RSFileReader br)
+        {
+            byte b;
+            long areaId = -1;
+            long pageId = -1;
+            Dictionary<long, SMRectangleArea> tempAreas = new Dictionary<long, SMRectangleArea>();
+            List<SMControl> tempControls = new List<SMControl>();
+            SMControl returnedValue = null;
+
+
+            while ((b = br.ReadByte()) != 0)
+            {
+                switch (b)
+                {
+                    case 10:
+                        pageId = br.ReadInt64();
+                        break;
+                    case 20:
+                        object osc = TagToObject(br.ReadString());
+                        if (osc is SMControl)
+                        {
+                            SMControl sc = (SMControl)osc;
+                            sc.Load(br);
+                            tempControls.Add(sc);
+                        }
+                        break;
+                    case 30:
+                        areaId = br.ReadInt64();
+                        SMRectangleArea ra = new SMRectangleArea();
+                        ra.Load(br);
+                        tempAreas.Add(areaId, ra);
+                        break;
+                }
+            }
+
+            ClearSelection();
+
+            double offsetX = (pageId == this.Id ? 32/1024.0 : 0);
+            double offsetY = (pageId == this.Id ? 32 / 768.0 : 0);
+
+            foreach (SMControl c in tempControls)
+            {
+                if (tempAreas.ContainsKey(c.Id))
+                {
+                    SMRectangleArea a = tempAreas[c.Id];
+                    c.Id = Document.Data.GetNextId();
+                    a.Selected = true;
+                    a.TrackedSelection = SMControlSelection.All;
+
+                    if (returnedValue == null)
+                        returnedValue = c;
+
+                    Objects.Add(c);
+                    Areas.Add(c.Id, a);
+
+                    if (pageId == this.Id)
+                    {
+                        a.MoveRaw(32 / 1024.0, 32 / 768.0);
+                    }
+                }
+            }
+
+            return returnedValue;
+        }
+
+        public void RecalcAreasForSelection(MNPageContext context)
+        {
+            foreach (SMRectangleArea area in Areas.Values)
+            {
+                if (area.Selected)
+                {
+                    area.RecalcAllBounds(context);
+                }
+            }
         }
     }
 }

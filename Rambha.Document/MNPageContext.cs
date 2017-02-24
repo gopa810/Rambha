@@ -21,6 +21,8 @@ namespace Rambha.Document
         public float zoom = 1.0f;
         public bool isTracking = false;
 
+        public int selectedMenuItem = -1;
+
         public MNPage CurrentPage { get; set; }
 
         public PageEditDisplaySize DisplaySize { get; set; }
@@ -46,12 +48,23 @@ namespace Rambha.Document
 
         public Pen redConstraintTrack;
 
+        public Font HintFont = null;
+        public Font MenuFont = null;
+        public Font MenuTitleFont = null;
+        public Brush semitransparentGrayBrush = null;
+
+        public GSCore ViewController = null;
+
         public MNPageContext()
         {
             redConstraintTrack = new Pen(Color.Red, 3);
             LastMatrix = new Matrix();
             LastInvertMatrix = new Matrix();
             CurrentPage = null;
+            HintFont = new Font(FontFamily.GenericSansSerif, 9);
+            MenuFont = SystemFonts.MenuFont;
+            MenuTitleFont = new Font(FontFamily.GenericSansSerif, 13);
+            semitransparentGrayBrush = new SolidBrush(Color.FromArgb(128,Color.Gray));
         }
 
         public int DimensionForAxis(SMAxis axis)

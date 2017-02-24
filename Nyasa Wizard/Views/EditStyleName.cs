@@ -36,7 +36,7 @@ namespace SlideMaker.Views
         {
             if (Document != null)
             {
-                foreach (SMStyle s in Document.Styles)
+                foreach (MNReferencedStyle s in Document.DefaultLanguage.Styles)
                 {
                     if (s.Name.Equals(styleName))
                     {

@@ -160,6 +160,7 @@ namespace Rambha.Document
 
         public void SetValue(PageEditDisplaySize disp, int value)
         {
+            RemoveValue(PageEditDisplaySize.LandscapeBig);
             int idx = (int)disp;
             p_value[idx] = AbsoluteToRelative(disp,value);
             p_value_valid[idx] = true;
@@ -173,16 +174,15 @@ namespace Rambha.Document
             Changed = true;
         }
 
-        public void SetValue(PageEditDisplaySize dispSize, int value, SMAxis axis)
+        /*public void SetValue(PageEditDisplaySize dispSize, int value, SMAxis axis)
         {
             Axis = axis;
             RemoveValue(PageEditDisplaySize.LandscapeBig);
             SetValue(dispSize, value);
-        }
+        }*/
 
-        public void SetRawValue(PageEditDisplaySize dispSize, double value, SMAxis axis)
+        public void SetRawValue(PageEditDisplaySize dispSize, double value)
         {
-            Axis = axis;
             p_value[(int)dispSize] = value;
             p_value_valid[(int)dispSize] = true;
             Changed = true;
@@ -201,14 +201,9 @@ namespace Rambha.Document
             return 0;
         }
 
-        public int GetAbsoluteValue(MNPageContext context)
+        public SMRuler(SMAxis axis)
         {
-            return GetValue(context.DisplaySize);
-        }
-
-        public SMRuler()
-        {
-            Axis = SMAxis.X;
+            Axis = axis;
             SetValue(PageEditDisplaySize.LandscapeBig, 0);
             SelectedForTracking = false;
         }
@@ -276,6 +271,15 @@ namespace Rambha.Document
             set
             {
                 p_value[i] = value;
+            }
+        }
+
+        public void AddRawValue(double ry)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (p_value_valid[i])
+                    p_value[i] += ry;
             }
         }
     }

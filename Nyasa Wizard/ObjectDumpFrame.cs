@@ -44,14 +44,14 @@ namespace SlideMaker
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine("PAGES");
-            foreach (MNPage p in doc.Pages)
+            foreach (MNPage p in doc.Data.Pages)
             {
                 WritePage(sb, p, 1);
             }
             sb.AppendLine("END PAGES");
 
             sb.AppendLine("TEMPLATES");
-            foreach (MNPage p in doc.Templates)
+            foreach (MNPage p in doc.Data.Templates)
             {
                 WritePage(sb, p, 1);
             }

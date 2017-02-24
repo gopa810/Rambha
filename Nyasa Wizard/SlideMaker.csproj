@@ -45,6 +45,116 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\EVSeparator.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVSeparator.Designer.cs">
+      <DependentUpon>EVSeparator.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogGenerateLangFile.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogGenerateLangFile.Designer.cs">
+      <DependentUpon>DialogGenerateLangFile.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogNewPageName.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogNewPageName.Designer.cs">
+      <DependentUpon>DialogNewPageName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\EVMemoryGame.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVMemoryGame.Designer.cs">
+      <DependentUpon>EVMemoryGame.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\EVReferencedImage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVReferencedImage.Designer.cs">
+      <DependentUpon>EVReferencedImage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\DialogSelectLanguage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\DialogSelectLanguage.Designer.cs">
+      <DependentUpon>DialogSelectLanguage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\DialogNewObject.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\DialogNewObject.Designer.cs">
+      <DependentUpon>DialogNewObject.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\DialogStyleName.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\DialogStyleName.Designer.cs">
+      <DependentUpon>DialogStyleName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlAudioText.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlAudioText.Designer.cs">
+      <DependentUpon>EditControlAudioText.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlImage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlImage.Designer.cs">
+      <DependentUpon>EditControlImage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlSound.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlSound.Designer.cs">
+      <DependentUpon>EditControlSound.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlString.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlString.Designer.cs">
+      <DependentUpon>EditControlString.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlTextStyle.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditControlTextStyle.Designer.cs">
+      <DependentUpon>EditControlTextStyle.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditSpotsEditorView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\EditSpotsEditorView.Designer.cs">
+      <DependentUpon>EditSpotsEditorView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\LocalizationMainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LocalizationFrame\LocalizationMainForm.Designer.cs">
+      <DependentUpon>LocalizationMainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationFrame\SVLanguageCollection.cs" />
+    <Compile Include="Controls\EVStorage.cs" />
+    <Compile Include="Controls\EVContainer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVContainer.Designer.cs">
+      <DependentUpon>EVContainer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\EVControlName.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVControlName.Designer.cs">
+      <DependentUpon>EVControlName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DocMenuEditView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\DocMenuEditView.Designer.cs">
+      <DependentUpon>DocMenuEditView.cs</DependentUpon>
+    </Compile>
     <Compile Include="TreeObjectView\TItemControl.cs" />
     <Compile Include="TreeObjectView\TItemControlArray.cs" />
     <Compile Include="TreeObjectView\TItemDocument.cs" />
@@ -53,12 +163,6 @@
     <Compile Include="TreeObjectView\TVItemArray.cs" />
     <Compile Include="TreeObjectView\TVAction.cs" />
     <Compile Include="TreeObjectView\TADocAddPage.cs" />
-    <Compile Include="NavigationFrame.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="NavigationFrame.Designer.cs">
-      <DependentUpon>NavigationFrame.cs</DependentUpon>
-    </Compile>
     <Compile Include="ObjectDumpFrame.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -71,6 +175,12 @@
     </Compile>
     <Compile Include="Views\EditStyleName.Designer.cs">
       <DependentUpon>EditStyleName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ImageSpotsEditorView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\ImageSpotsEditorView.Designer.cs">
+      <DependentUpon>ImageSpotsEditorView.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\PageDetailPanel.cs">
       <SubType>UserControl</SubType>
@@ -96,12 +206,6 @@
     </Compile>
     <Compile Include="Views\ImagesDialog.Designer.cs">
       <DependentUpon>ImagesDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Views\LineProperties.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Views\LineProperties.Designer.cs">
-      <DependentUpon>LineProperties.cs</DependentUpon>
     </Compile>
     <Compile Include="MainFrame.cs">
       <SubType>Form</SubType>
@@ -130,14 +234,68 @@
     <Compile Include="TreeObjectView\TreeObjectView.Designer.cs">
       <DependentUpon>TreeObjectView.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="NavigationFrame.resx">
-      <DependentUpon>NavigationFrame.cs</DependentUpon>
+    <EmbeddedResource Include="Controls\EVSeparator.resx">
+      <DependentUpon>EVSeparator.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\EVContainer.resx">
+      <DependentUpon>EVContainer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogGenerateLangFile.resx">
+      <DependentUpon>DialogGenerateLangFile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogNewPageName.resx">
+      <DependentUpon>DialogNewPageName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\EVMemoryGame.resx">
+      <DependentUpon>EVMemoryGame.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\EVReferencedImage.resx">
+      <DependentUpon>EVReferencedImage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\DialogSelectLanguage.resx">
+      <DependentUpon>DialogSelectLanguage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\DialogNewObject.resx">
+      <DependentUpon>DialogNewObject.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\DialogStyleName.resx">
+      <DependentUpon>DialogStyleName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\EditControlAudioText.resx">
+      <DependentUpon>EditControlAudioText.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\EditControlImage.resx">
+      <DependentUpon>EditControlImage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\EditControlSound.resx">
+      <DependentUpon>EditControlSound.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\EditControlString.resx">
+      <DependentUpon>EditControlString.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\EditControlTextStyle.resx">
+      <DependentUpon>EditControlTextStyle.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\EditSpotsEditorView.resx">
+      <DependentUpon>EditSpotsEditorView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationFrame\LocalizationMainForm.resx">
+      <DependentUpon>LocalizationMainForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ObjectDumpFrame.resx">
       <DependentUpon>ObjectDumpFrame.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Controls\EVControlName.resx">
+      <DependentUpon>EVControlName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\DocMenuEditView.resx">
+      <DependentUpon>DocMenuEditView.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Views\EditStyleName.resx">
       <DependentUpon>EditStyleName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\ImageSpotsEditorView.resx">
+      <DependentUpon>ImageSpotsEditorView.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Views\PageDetailPanel.resx">
       <DependentUpon>PageDetailPanel.cs</DependentUpon>
@@ -150,9 +308,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Views\ImagesDialog.resx">
       <DependentUpon>ImagesDialog.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Views\LineProperties.resx">
-      <DependentUpon>LineProperties.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainFrame.resx">
       <DependentUpon>MainFrame.cs</DependentUpon>
@@ -243,6 +398,7 @@
   <ItemGroup>
     <None Include="Resources\IconActions.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

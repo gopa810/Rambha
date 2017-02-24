@@ -150,6 +150,15 @@ namespace Rambha.Script
             {
                 readTextListLine(line, ref currentList);
             }
+
+            if (Parts.Count == 1 && (Parts[0] is GSList))
+            {
+                Parts = (Parts[0] as GSList).Parts;
+            }
+            else if (Parts.Count > 1)
+            {
+                Parts.Insert(0, new GSToken("do"));
+            }
         }
 
         /// <summary>

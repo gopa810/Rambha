@@ -21,8 +21,7 @@ namespace SlideMaker
     {
         private int printedPageCurrent = 0;
         private MNPageContext printContext = null;
-
-        private NavigationFrame navigationFrame = null;
+        private LocalizationMainForm localeForm = null;
 
         public MainFrame()
         {
@@ -31,11 +30,7 @@ namespace SlideMaker
             pageDetailPanel1.Dock = DockStyle.Fill;
             pageDetailPanel1.Visible = true;
 
-
             MNNotificationCenter.CreateNewDocument();
-
-            navigationFrame = new NavigationFrame();
-            navigationFrame.Show();
         }
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
@@ -50,68 +45,153 @@ namespace SlideMaker
             saveToolStripMenuItem_Click(sender, e);
 
             OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Filter = "SlideMaker (*.smd)|*.smd||";
+            dlg.Filter = "SlideMaker Book (*.smb)|*.smb||";
             dlg.FilterIndex = 1;
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\load.txt"))
-                {
-                    using (BinaryReader br = new BinaryReader(File.OpenRead(dlg.FileName)))
-                    {
-                        MNDocument document = new MNDocument();
-                        RSFileReader fr = new RSFileReader(br);
-                        fr.logStream = sw;
-                        try
-                        {
-                            if (document.Load(fr, true))
-                            {
-                                MNNotificationCenter.CurrentFileName = dlg.FileName;
-                            }
-                            else
-                            {
-                                MessageBox.Show("File could not be loaded");
-                                document = new MNDocument();
-                            }
+                string fileName = dlg.FileName;
 
-                            MNNotificationCenter.CurrentDocument = document;
-                        }
-                        catch (Exception ex)
-                        {
-                            sw.Flush();
-                            sw.WriteLine("Exception:");
-                            sw.WriteLine(ex.Message);
-                            sw.Flush();
-                        }
-                    }
+                if (LoadBookHeader(fileName))
+                {
+                    MNNotificationCenter.CurrentDocument.Book.FindLanguageFiles(Path.GetDirectoryName(fileName));
+
+                    fileName = fileName.Replace(".smb", ".smd");
+                    LoadBookData(fileName);
+
+                    fileName = fileName.Replace(".smd", ".sme");
+                    LoadBookLang(fileName);
+
+                    MNNotificationCenter.BroadcastMessage(this, "DocumentChanged", MNNotificationCenter.CurrentDocument); 
                 }
             }
 
             pageDetailPanel1.RefreshView();
         }
 
-        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        private static bool LoadBookHeader(string fileName)
         {
-            if (MNNotificationCenter.CurrentFileName == null || MNNotificationCenter.CurrentFileName.Length == 0)
+            bool r = true;
+
+            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\load_book.txt"))
             {
-                if (MNNotificationCenter.CurrentDocument != null && MNNotificationCenter.CurrentDocument.HasContent())
-                    saveAsToolStripMenuItem_Click(sender, e);
-                else
-                    return;
+                using (BinaryReader br = new BinaryReader(File.OpenRead(fileName)))
+                {
+                    MNDocument document = new MNDocument();
+                    RSFileReader fr = new RSFileReader(br);
+                    fr.logStream = sw;
+                    try
+                    {
+                        document.Book.Load(fr);
+                        MNNotificationCenter.CurrentFileName = fileName;
+                        MNNotificationCenter.CurrentDocument = document;
+                    }
+                    catch (Exception ex)
+                    {
+                        sw.Flush();
+                        sw.WriteLine("Exception:");
+                        sw.WriteLine(ex.Message);
+                        sw.WriteLine(ex.StackTrace);
+                        sw.Flush();
+                        r = false;
+                    }
+                }
             }
 
-            SaveDocument(null);
+            return r;
+        }
+
+        private static void LoadBookData(string fileName)
+        {
+            if (MNNotificationCenter.CurrentDocument == null)
+                return;
+
+            if (!File.Exists(fileName))
+                return;
+
+            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\load_data.txt"))
+            {
+                using (BinaryReader br = new BinaryReader(File.OpenRead(fileName)))
+                {
+                    MNDocument document = MNNotificationCenter.CurrentDocument;
+                    RSFileReader fr = new RSFileReader(br);
+                    fr.logStream = sw;
+                    try
+                    {
+                        document.Data.Load(fr);
+                    }
+                    catch (Exception ex)
+                    {
+                        sw.Flush();
+                        sw.WriteLine("Exception:");
+                        sw.WriteLine(ex.Message);
+                        sw.WriteLine(ex.StackTrace);
+                        sw.Flush();
+                    }
+                }
+            }
+
+        }
+
+        private static void LoadBookLang(string fileName)
+        {
+            if (MNNotificationCenter.CurrentDocument == null)
+                return;
+
+            if (!File.Exists(fileName))
+                return;
+
+            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\load_lang.txt"))
+            {
+                using (BinaryReader br = new BinaryReader(File.OpenRead(fileName)))
+                {
+                    MNDocument document = MNNotificationCenter.CurrentDocument;
+                    RSFileReader fr = new RSFileReader(br);
+                    fr.logStream = sw;
+                    try
+                    {
+                        document.DefaultLanguage.Load(fr, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        sw.Flush();
+                        sw.WriteLine("Exception:");
+                        sw.WriteLine(ex.Message);
+                        sw.WriteLine(ex.StackTrace);
+                        sw.Flush();
+                    }
+                }
+            }
+
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (MNNotificationCenter.CurrentFileName == null
+                || MNNotificationCenter.CurrentFileName.Length == 0)
+            {
+                if (MNNotificationCenter.CurrentDocument != null
+                    && MNNotificationCenter.CurrentDocument.HasContent())
+                {
+                    saveAsToolStripMenuItem_Click(sender, e);
+                }
+            }
+            else
+            {
+                SaveDocument(null);
+            }
         }
 
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SaveFileDialog dlg = new SaveFileDialog();
-            dlg.DefaultExt = ".smd";
-            dlg.Filter = "SlideMaker Document (*.smd)|*.smd||";
+            dlg.DefaultExt = ".smb";
+            dlg.Filter = "SlideMaker Book (*.smb)|*.smb||";
             dlg.FilterIndex = 1;
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
+                MNNotificationCenter.CurrentFileName = dlg.FileName;
                 SaveDocument(dlg.FileName);
             }
         }
@@ -120,13 +200,45 @@ namespace SlideMaker
         {
             if (filePath != null)
                 MNNotificationCenter.CurrentFileName = filePath;
-            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save.txt"))
+            else
+                filePath = MNNotificationCenter.CurrentFileName;
+
+            RSFileWriter fw;
+            string fileName = filePath;
+
+            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_book.txt"))
             {
-                using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(MNNotificationCenter.CurrentFileName)))
+                using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(fileName)))
                 {
-                    RSFileWriter fw = new RSFileWriter(bw);
+                    fw = new RSFileWriter(bw);
                     fw.logStream = sw;
-                    MNNotificationCenter.CurrentDocument.Save(fw);
+                    MNNotificationCenter.CurrentDocument.Book.Save(fw);
+                }
+            }
+
+            fileName = fileName.Replace(".smb", ".smd");
+            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_data.txt"))
+            {
+                using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(fileName)))
+                {
+                    fw = new RSFileWriter(bw);
+                    fw.logStream = sw;
+                    MNNotificationCenter.CurrentDocument.Data.Save(fw);
+                }
+            }
+
+            fileName = fileName.Replace(".smd", ".sme");
+            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_lang.txt"))
+            {
+                using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(fileName)))
+                {
+                    fw = new RSFileWriter(bw);
+                    fw.logStream = sw;
+                    MNDocument doc = MNNotificationCenter.CurrentDocument;
+                    MNLocalisation loc = doc.DefaultLanguage;
+                    loc.SetProperty("BookCode", doc.Book.BookCode);
+                    loc.SetProperty("LanguageName", "Default");
+                    loc.Save(fw);
                 }
             }
         }
@@ -138,54 +250,7 @@ namespace SlideMaker
 
         private void printToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            PrintDialog pd = new PrintDialog();
-
-            if (pd.ShowDialog() != DialogResult.OK)
-                return;
-
-            printedPageCurrent = 0;
-            printDocument1.DocumentName = MNNotificationCenter.CurrentDocument.BookTitle;
-            printDocument1.PrinterSettings = pd.PrinterSettings;
-
-            if (printContext == null)
-            {
-                printContext = new MNPageContext();
-
-                printContext.drawSelectionMarks = false;
-                printContext.TrackedObjects = new List<SMControl>();
-            }
-
-            printContext.LastMatrix = null;
-
-            printDocument1.Print();
-
         }
-
-        private void printDocument1_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
-        {
-            if (printContext.LastMatrix == null)
-            {
-                printContext.PageHeight = MNNotificationCenter.CurrentDocument.PageHeight;
-                printContext.PageWidth = MNNotificationCenter.CurrentDocument.PageWidth;
-                Rectangle presentedRect = new Rectangle(0, 0, printContext.PageWidth, printContext.PageHeight);
-                Point[] pls = new Point[3];
-                pls[0] = new Point(0, 0);
-                pls[1] = new Point(e.PageBounds.Width - 1, 0);
-                pls[2] = new Point(0, e.PageBounds.Height - 1);
-                printContext.LastMatrix = new System.Drawing.Drawing2D.Matrix(presentedRect, pls);
-                printContext.LastInvertMatrix = new System.Drawing.Drawing2D.Matrix(presentedRect, pls);
-                printContext.LastInvertMatrix.Invert();
-            }
-
-            printContext.g = e.Graphics;
-            e.Graphics.Transform = printContext.LastMatrix;
-
-            MNNotificationCenter.CurrentDocument.Pages[printedPageCurrent].Paint(printContext);
-            printedPageCurrent++;
-
-            e.HasMorePages = (printedPageCurrent < MNNotificationCenter.CurrentDocument.Pages.Count);
-        }
-
 
         private void toolStripMenuItem5_Click(object sender, EventArgs e)
         {
@@ -283,6 +348,75 @@ namespace SlideMaker
 
         private void pageDynamicsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+        }
+
+        private void MainFrame_Activated(object sender, EventArgs e)
+        {
+            /*if (navigationFrame != null)
+                navigationFrame.Visible = true;*/
+        }
+
+        private void MainFrame_Deactivate(object sender, EventArgs e)
+        {
+            /*if (navigationFrame != null)
+                navigationFrame.Visible = false;*/
+        }
+
+        private void MainFrame_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            saveToolStripMenuItem_Click(sender, EventArgs.Empty);
+        }
+
+        private void showDefaultLanguageDataToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (localeForm == null)
+            {
+                localeForm = new LocalizationMainForm();
+                localeForm.Show();
+            }
+            else
+            {
+                localeForm.Show();
+                localeForm.BringToFront();
+            }
+
+            localeForm.SetLocalisationData(MNNotificationCenter.CurrentDocument.DefaultLanguage);
+        }
+
+        private void toolStripMenuItem6_Click(object sender, EventArgs e)
+        {
+            // create language file from folder
+            // we need:
+            // - book code
+            // - directory path
+            DialogGenerateLangFile d = new DialogGenerateLangFile();
+
+            d.SetBookCode(MNNotificationCenter.CurrentDocument.Book.BookCode);
+            d.SetBookFileName(MNNotificationCenter.CurrentFileName);
+
+            if (d.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                string inDir = d.GetInputDirectory();
+                string outFile = d.GetOutputFileName();
+
+                MNLocalisation file = new MNLocalisation();
+                file.SetProperty("BookCode", MNNotificationCenter.CurrentDocument.Book.BookCode);
+                file.SetProperty("LanguageName", Path.GetFileName(inDir));
+
+                foreach (string objectFileName in Directory.GetFiles(inDir))
+                {
+                    string extension = Path.GetExtension(objectFileName);
+                    if (extension.Equals(".mp3"))
+                    {
+                        MNReferencedSound sound = new MNReferencedSound();
+                        sound.InitializeWithFile(objectFileName);
+                        sound.Name = Path.GetFileNameWithoutExtension(objectFileName);
+                        file.Sounds.Add(sound);
+                    }
+                }
+
+                file.Save(outFile);
+            }
         }
 
 

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Rambha.Script;
+
 namespace Rambha.Document
 {
     public interface IDocumentViewDelegate
@@ -24,11 +26,9 @@ namespace Rambha.Document
         void OnDragHotTrackStarted(SMTokenItem item, PVDragContext context);
         void OnDragHotTrackEnded(SMTokenItem item, PVDragContext context);
 
-        // page events
-        void OnPageWillAppear(MNPage page);
-        void OnPageDidAppear(MNPage page);
-        void OnPageWillDisappear(MNPage page);
-        void OnPageDidDisappear(MNPage page);
+        // general event
+        void OnEvent(string eventName, GSCore parent);
 
+        void AddNextScript(string scriptText);
     }
 }

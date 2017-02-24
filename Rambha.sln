@@ -7,13 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rambha.Document", "Rambha.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rambha.Script", "Rambha.Script\Rambha.Script.csproj", "{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rambha.GOF", "Rambha.GOF\Rambha.GOF.csproj", "{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GOFEditor", "GOFEditor\GOFEditor.csproj", "{2F7D6FD3-A289-4D66-9F17-5BD83F905828}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalizationEditor", "GOFEditor\LocalizationEditor.csproj", "{2F7D6FD3-A289-4D66-9F17-5BD83F905828}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlideViewer", "SlideViewer\SlideViewer.csproj", "{EA001F0A-223E-42EC-87CE-8439CD38EF79}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rambha.Serializer", "Rambha.Serializer\Rambha.Serializer.csproj", "{26C66C19-2795-442B-BC49-2FD971702999}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilesGenerator", "FilesGenerator\FilesGenerator.csproj", "{C7758ECE-F266-47C2-93C8-D9563FFD8373}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,16 +55,6 @@ Global
 		{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}.Release|x86.ActiveCfg = Release|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}.Release|x86.ActiveCfg = Release|Any CPU
 		{2F7D6FD3-A289-4D66-9F17-5BD83F905828}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{2F7D6FD3-A289-4D66-9F17-5BD83F905828}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{2F7D6FD3-A289-4D66-9F17-5BD83F905828}.Debug|Mixed Platforms.Build.0 = Debug|x86
@@ -95,6 +85,16 @@ Global
 		{26C66C19-2795-442B-BC49-2FD971702999}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{26C66C19-2795-442B-BC49-2FD971702999}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{26C66C19-2795-442B-BC49-2FD971702999}.Release|x86.ActiveCfg = Release|Any CPU
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Debug|x86.ActiveCfg = Debug|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Debug|x86.Build.0 = Debug|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Release|Any CPU.ActiveCfg = Release|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Release|Mixed Platforms.Build.0 = Release|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Release|x86.ActiveCfg = Release|x86
+		{C7758ECE-F266-47C2-93C8-D9563FFD8373}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

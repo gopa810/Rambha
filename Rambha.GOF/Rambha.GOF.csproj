@@ -41,13 +41,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GOFCoreObject.cs" />
     <Compile Include="GOFImage.cs" />
     <Compile Include="GOFile.cs" />
     <Compile Include="GOFNodes.cs" />
-    <Compile Include="GOFRunningText.cs" />
-    <Compile Include="GOFSound.cs" />
-    <Compile Include="GOFString.cs" />
+    <Compile Include="MNReferencedSound.cs" />
+    <Compile Include="MNReferencedText.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 
 using Rambha.Document;
+using Rambha.Script;
 
 namespace SlideMaker.Views
 {
@@ -27,18 +28,9 @@ namespace SlideMaker.Views
         {
             InitializeComponent();
             MNNotificationCenter.AddReceiver(this, null);
+            MNNotificationCenter.AddReceiver(treeObjectView1, null);
 
-        }
-
-        public MNReferencedImage DefaultDocImage
-        {
-            get
-            {
-                MNReferencedImage image = new MNReferencedImage(null);
-                image.Title = "(default)";
-                image.ImageData = Properties.Resources.DefaultImage;
-                return image;
-            }
+            propertyPanelsContainer1.EditView = pageScrollArea1.GetPageEditView();
         }
 
         public void InitializeControlList(MNPage currentPage)
@@ -47,7 +39,7 @@ namespace SlideMaker.Views
             listToolbox.Items.Clear();
             if (currentPage != null)
             {
-                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "TextView", Data = currentPage.ObjectTypeToTag(typeof(SMTextView)) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "TextView (1 column)", Data = currentPage.ObjectTypeToTag(typeof(SMTextView)), Args = "columns=1" });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "TextEdit Short", Data = currentPage.ObjectTypeToTag(typeof(SMLetterInput)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "TextEdit", Data = currentPage.ObjectTypeToTag(typeof(SMTextEdit)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Label", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)) });
@@ -58,6 +50,15 @@ namespace SlideMaker.Views
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Text Container", Data = currentPage.ObjectTypeToTag(typeof(SMTextContainer)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Text Puzzle", Data = currentPage.ObjectTypeToTag(typeof(SMTextPuzzle)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Keyboard", Data = currentPage.ObjectTypeToTag(typeof(SMKeyboard)) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Memory Game", Data = currentPage.ObjectTypeToTag(typeof(SMMemoryGame)) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Next Page", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=Next >;script=OnClick:(view showpage #next);style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Previous Page", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=< Back;script=OnClick:(view showpage #back);style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Goto Page <text>", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=<text>;script=OnClick:(view showpage PageName);style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Page Header", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=Page Header;style=PageHeader", DefaultSize = new Size(512, 48) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Horizontal Line", Data = currentPage.ObjectTypeToTag(typeof(SMDrawable)), Args = "drawings=line 0 50 100 50" });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Vertical Line", Data = currentPage.ObjectTypeToTag(typeof(SMDrawable)), Args = "drawings=line 50 0 50 100" });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "TextView (1 column + navig)", Data = currentPage.ObjectTypeToTag(typeof(SMTextView)), Args = "columns=1;navigbuttons=true" });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "TextView (2 columns + navig)", Data = currentPage.ObjectTypeToTag(typeof(SMTextView)), Args = "columns=2;navigbuttons=true" });
                 /*listToolbox.Items.Add(new PageEditDraggableItem()
                 {
                     Text = "GROUP: List of Labels",
@@ -130,9 +131,9 @@ namespace SlideMaker.Views
                 dlg.StyleName = styleName;
                 if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-                    SMStyle sm = doc.GetDefaultStyle().CreateCopy();
+                    MNReferencedStyle sm = doc.GetDefaultStyle().CreateCopy();
                     sm.Name = dlg.StyleName;
-                    doc.Styles.Add(sm);
+                    doc.DefaultLanguage.Styles.Add(sm);
                     listBoxStyles.Items.Add(sm);
                 }
             }
@@ -140,132 +141,31 @@ namespace SlideMaker.Views
 
         private void buttonAddPage_Click(object sender, EventArgs e)
         {
-            int index = listBoxPages.SelectedIndex;
-            if (index < 0) index = 0;
-            MNNotificationCenter.CurrentDocument.CreateNewPage();
-            RefreshListboxes(MNNotificationCenter.CurrentDocument);
         }
 
         private void addTemplateToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MNDocument doc = MNNotificationCenter.CurrentDocument;
             MNPage nt = new MNPage(doc);
-            nt.Id = doc.GetNextId();
+            nt.Id = doc.Data.GetNextId();
             nt.IsTemplate = true;
-            nt.Title = "Template " + doc.Templates.Count.ToString();
+            nt.Title = "Template " + doc.Data.Templates.Count.ToString();
             nt.Description = "template for pages";
-            doc.Templates.Add(nt);
+            doc.Data.Templates.Add(nt);
             RefreshListboxes(MNNotificationCenter.CurrentDocument);
-        }
-        private void buttonAddImage_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Multiselect = true;
-
-            MNDocument Document = MNNotificationCenter.CurrentDocument;
-            if (Document == null)
-                return;
-
-            if (dlg.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    foreach (string sFileName in dlg.FileNames)
-                    {
-                        Document.AcceptFile(sFileName);
-                    }
-                    listBoxImages.Items.Clear();
-                    foreach (MNReferencedImage img in Document.Images)
-                    {
-                        listBoxImages.Items.Add(img);
-                    }
-                }
-                catch (BadImageFormatException bfe)
-                {
-                    MessageBox.Show("Invalid format of image.\nImage is not loaded.\n\n" + bfe.Message);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error during loading of image.\n\n" + ex.Message);
-                }
-
-            }
-        }
-
-        private void buttonDeleteImage_Click(object sender, EventArgs e)
-        {
-            MNDocument Document = MNNotificationCenter.CurrentDocument;
-            if (Document == null)
-                return;
-
-            if (listBoxImages.SelectedItems.Count > 0)
-            {
-                if (MessageBox.Show("Delete images?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    List<MNReferencedImage> imgs = new List<MNReferencedImage>();
-                    foreach (MNReferencedImage im in listBoxImages.SelectedItems)
-                    {
-                        imgs.Add(im);
-                    }
-                    foreach (MNReferencedImage im in imgs)
-                    {
-                        Document.Images.Remove(im);
-                    }
-                }
-            }
         }
 
         private void listBoxImages_DrawItem(object sender, DrawItemEventArgs e)
         {
-            if ((e.State & DrawItemState.Selected) > 0)
-            {
-                e.Graphics.FillRectangle(Brushes.LightBlue, e.Bounds);
-            }
-            else
-            {
-                e.Graphics.FillRectangle(SystemBrushes.Window, e.Bounds);
-            }
-
-            if (e.Index >= 0)
-            {
-                MNReferencedImage image = listBoxImages.Items[e.Index] as MNReferencedImage;
-                SizeF sizeOfText = e.Graphics.MeasureString("M", SystemFonts.MenuFont);
-                if (image != null && image.ImageData != null)
-                {
-                    int sz = Math.Max(image.ImageData.Height, image.ImageData.Width);
-                    double change = image.ItemHeight / Convert.ToDouble(sz);
-                    Rectangle rect = new Rectangle(0, 0, Convert.ToInt32(image.ImageData.Width * change),
-                        Convert.ToInt32(image.ImageData.Height * change));
-                    if (rect.Width > rect.Height)
-                    {
-                        rect.Y = (image.ItemHeight - rect.Height) / 2;
-                    }
-                    else
-                    {
-                        rect.X = (image.ItemHeight - rect.Width) / 2;
-                    }
-
-                    rect.X += e.Bounds.X + 8;
-                    rect.Y += e.Bounds.Y + 4;
-
-                    e.Graphics.DrawImage(image.ImageData, rect);
-                    e.Graphics.DrawString(image.Title, SystemFonts.MenuFont, Brushes.Black, e.Bounds.X + image.ItemHeight + 16, e.Bounds.Y + 4);
-                    e.Graphics.DrawString(image.Description, SystemFonts.MenuFont, Brushes.Gray, e.Bounds.X + image.ItemHeight + 8, e.Bounds.Y + 8 + sizeOfText.Height);
-                }
-            }
         }
 
         private void listBoxImages_MeasureItem(object sender, MeasureItemEventArgs e)
         {
-            MNReferencedImage image = listBoxImages.Items[e.Index] as MNReferencedImage;
-            SizeF sizeOfText = e.Graphics.MeasureString("M", SystemFonts.MenuFont);
-            e.ItemHeight = Convert.ToInt32(sizeOfText.Height * 2 + 12);
-            image.ItemHeight = e.ItemHeight;
-            image.ItemTextHeight = Convert.ToInt32(sizeOfText.Height);
         }
 
         private void listBoxPages_SelectedIndexChanged(object sender, EventArgs e)
         {
+            /*
             if (listBoxPages.SelectedIndex >= 0 &&
                 listBoxPages.SelectedIndex < listBoxPages.Items.Count)
             {
@@ -295,31 +195,34 @@ namespace SlideMaker.Views
 
                     MNNotificationCenter.BroadcastMessage(pageScrollArea1, "ObjectSelected", template);
                 }
-            }
+            }*/
         }
 
         private void listBoxPages_MouseDown(object sender, MouseEventArgs e)
         {
+            /*
             int index = listBoxImages.IndexFromPoint(e.X, e.Y);
             MNDocument doc = MNNotificationCenter.CurrentDocument;
             if (index >= doc.Pages.Count && index < (doc.Pages.Count + doc.Templates.Count))
             {
                 DragDropEffects de = listBoxImages.DoDragDrop(listBoxPages.Items[index], DragDropEffects.Copy);
-            }
+            }*/
         }
 
         private void listBoxPages_MeasureItem(object sender, MeasureItemEventArgs e)
         {
+            /*
             MNPage image = listBoxPages.Items[e.Index] as MNPage;
             SizeF sizeOfText = e.Graphics.MeasureString("M", SystemFonts.MenuFont);
             e.ItemHeight = Convert.ToInt32(sizeOfText.Height * 2 + 12);
             image.ItemHeight = e.ItemHeight;
             image.ItemTextHeight = Convert.ToInt32(sizeOfText.Height);
-
+            */
         }
 
         private void listBoxPages_DrawItem(object sender, DrawItemEventArgs e)
         {
+            /*
             if (e.Index < 0)
                 return;
 
@@ -334,26 +237,6 @@ namespace SlideMaker.Views
 
             MNPage image = listBoxPages.Items[e.Index] as MNPage;
             SizeF sizeOfText = e.Graphics.MeasureString("M", SystemFonts.MenuFont);
-            /*if (image != null && image.ImageData != null)
-            {
-                int sz = Math.Max(image.ImageData.Height, image.ImageData.Width);
-                double change = image.ItemHeight / Convert.ToDouble(sz);
-                Rectangle rect = new Rectangle(0, 0, Convert.ToInt32(image.ImageData.Width * change),
-                    Convert.ToInt32(image.ImageData.Height * change));
-                if (rect.Width > rect.Height)
-                {
-                    rect.Y = (image.ItemHeight - rect.Height) / 2;
-                }
-                else
-                {
-                    rect.X = (image.ItemHeight - rect.Width) / 2;
-                }
-
-                rect.X += e.Bounds.X + 8;
-                rect.Y += e.Bounds.Y + 4;
-
-                e.Graphics.DrawImage(image.ImageData, rect);
-            }*/
 
             if (image.IsTemplate)
             {
@@ -367,23 +250,18 @@ namespace SlideMaker.Views
             }
             e.Graphics.DrawString(image.Title, SystemFonts.MenuFont, Brushes.Black, e.Bounds.X + image.ItemHeight + 16, e.Bounds.Y + 4);
             e.Graphics.DrawString(image.Description, SystemFonts.MenuFont, Brushes.Gray, e.Bounds.X + image.ItemHeight + 8, e.Bounds.Y + 8 + sizeOfText.Height);
+            */
         }
 
         private void listBoxImages_MouseDown(object sender, MouseEventArgs e)
         {
-            int index = listBoxImages.IndexFromPoint(e.X, e.Y);
-            if (index >= 0)
-            {
-                DragDropEffects de = listBoxImages.DoDragDrop(listBoxImages.Items[index], DragDropEffects.Copy);
-            }
         }
 
         private bool bStyle_OmitSetting = false;
 
         private void listBoxStyles_SelectedIndexChanged(object sender, EventArgs e)
         {
-            propertyGridStyle.SelectedObject = listBoxStyles.SelectedItem;
-            SMStyle ss = listBoxStyles.SelectedItem as SMStyle;
+            MNReferencedStyle ss = listBoxStyles.SelectedItem as MNReferencedStyle;
             if (!bStyle_OmitSetting)
             {
                 if (ss != null && CurrentSelectedControl != null && CurrentSelectedControl.Style != ss)
@@ -396,24 +274,8 @@ namespace SlideMaker.Views
 
         public void RefreshListboxes(MNDocument document)
         {
-            listBoxPages.Items.Clear();
-            foreach (MNPage page in document.Pages)
-            {
-                listBoxPages.Items.Add(page);
-            }
-            foreach (MNPage template in document.Templates)
-            {
-                listBoxPages.Items.Add(template);
-            }
-
-            listBoxImages.Items.Clear();
-            foreach (MNReferencedImage img in document.Images)
-            {
-                listBoxImages.Items.Add(img);
-            }
-
             listBoxStyles.Items.Clear();
-            foreach (SMStyle style in document.Styles)
+            foreach (MNReferencedStyle style in document.DefaultLanguage.Styles)
             {
                 listBoxStyles.Items.Add(style);
             }
@@ -424,26 +286,39 @@ namespace SlideMaker.Views
             switch (msg)
             {
                 case "FilesAdded":
-                    listBoxImages.Items.Clear();
-                    MNDocument document = MNNotificationCenter.CurrentDocument;
-                    foreach (MNReferencedImage img in document.Images)
-                    {
-                        listBoxImages.Items.Add(img);
-                    }
                     break;
                 case "ObjectSelected":
                     if (args != null && args.Length > 0)
+                    {
                         objectWasSelected(sender, args[0]);
+                        //treeObjectView1.SelectItemWithData(args[0]);
+                    }
                     break;
                 case "DocumentChanged":
                     if (args != null && args.Length > 0 && args[0] is MNDocument)
                     {
-                        RefreshListboxes(args[0] as MNDocument);
-                        if (listBoxPages.Items.Count > 0)
-                            listBoxPages.SelectedIndex = 0;
+                        MNDocument doc = args[0] as MNDocument;
+
+                        RefreshListboxes(doc);
+                        /*if (listBoxPages.Items.Count > 0)
+                            listBoxPages.SelectedIndex = 0;*/
+                        treeObjectView1.SetObject(doc);
+
+                        if (doc.Data.Pages.Count > 0)
+                            pageScrollArea1.SetPage(doc.Data.Pages[0]);
                     }
                     break;
                 case "PagesChanged":
+                    RefreshListboxes(MNNotificationCenter.CurrentDocument);
+                    break;
+                case "NewPageInserted":
+                    TVItem item = treeObjectView1.Tree;
+                    if (item != null) item = item.FindChild("Pages");
+                    if (item != null) item.RefreshChildren();
+                    treeObjectView1.SelectItemWithData(args[0]);
+                    treeObjectView1.Invalidate();
+                    break;
+                case "StyleListChanged":
                     RefreshListboxes(MNNotificationCenter.CurrentDocument);
                     break;
             }
@@ -453,15 +328,19 @@ namespace SlideMaker.Views
         {
             propertyGrid1.SelectedObject = obj;
 
+            propertyPanelsContainer1.ClearPanels();
+
             // initialization of event scripts
             SMRectangleArea area = null;
-            SMStyle currStyle = null;
+            MNReferencedStyle currStyle = null;
             if (obj is SMRectangleArea)
             {
+                ShowTab(0);
                 area = (SMRectangleArea)obj;
             }
             else if (obj is SMControl)
             {
+                ShowTab(0);
                 CurrentSelectedControl = obj as SMControl;
                 currStyle = CurrentSelectedControl.Style;
                 MNPage page = MNNotificationCenter.CurrentPage;
@@ -469,15 +348,41 @@ namespace SlideMaker.Views
                 {
                     area = page.GetArea(CurrentSelectedControl.Id);
                 }
+
+                EVControlName se = (EVControlName)EVStorage.GetSafeControl(typeof(EVControlName));
+                se.SetObject(obj as SMControl);
+                propertyPanelsContainer1.AddPanel("General", se);
+
+                if (obj is SMMemoryGame)
+                {
+                    EVMemoryGame emg = (EVMemoryGame)EVStorage.GetSafeControl(typeof(EVMemoryGame));
+                    emg.SetControl(obj as SMMemoryGame);
+                    propertyPanelsContainer1.AddPanel("Memory Game", emg);
+                }
             }
             else if (obj is MNPage)
             {
+                ShowTab(0);
                 InitializeControlList(obj as MNPage);
                 area = (obj as MNPage).Area;
             }
             else if (obj is MNDocument)
             {
-                area = (obj as MNDocument).Area;
+                propertyGrid1.SelectedObject = (obj as MNDocument).Book;
+                ShowTab(0);
+            }
+            else if (obj is MNReferencedText)
+            {
+                ShowTab(1);
+                p_editedRefText = obj as MNReferencedText;
+                textPanel_name.Text = p_editedRefText.Name;
+                textPanel_text.Text = p_editedRefText.Text;
+            }
+            else if (obj is MNMenu)
+            {
+                ShowTab(2);
+                p_editedMenu = obj as MNMenu;
+                docMenuEditView1.Menu = p_editedMenu;
             }
 
             if (area != null)
@@ -494,6 +399,91 @@ namespace SlideMaker.Views
                         listBoxStyles.SelectedIndex = i;
                         break;
                     }
+                }
+            }
+        }
+
+        private TVItem p_action_item = null;
+        private MNReferencedText p_editedRefText = null;
+        private MNMenu p_editedMenu = null;
+
+        public void ShowTab(int i)
+        {
+            if (p_editedRefText != null)
+            {
+                p_editedRefText.Name = textPanel_name.Text;
+                p_editedRefText.Text = textPanel_text.Text;
+                p_editedRefText = null;
+                textPanel_name.Text = "";
+                textPanel_text.Text = "";
+            }
+
+            tabControl2.SelectedIndex = i;
+        }
+
+        private void treeObjectView1_OnInitializeActionMenu(object sender, TreeObjectViewEventArgs e)
+        {
+            p_action_item = e.Item;
+
+            if (p_action_item == null) return;
+
+            NABase[] pa = p_action_item.GetActions();
+
+            if (pa != null && pa.Length > 0)
+            {
+                contextMenuStrip1.Items.Clear();
+                foreach (NABase s in pa)
+                {
+                    ToolStripItem tsi = contextMenuStrip1.Items.Add(s.Title);
+                    tsi.Tag = s;
+                    tsi.Click += new EventHandler(tsi_Click);
+                }
+
+                contextMenuStrip1.Show(e.ScreenPoint);
+            }
+        }
+
+        void tsi_Click(object sender, EventArgs e)
+        {
+            if (sender is ToolStripItem)
+            {
+                ToolStripItem tsi = sender as ToolStripItem;
+                if (tsi.Tag != null && tsi.Tag is NABase)
+                {
+                    (tsi.Tag as NABase).Execute();
+                }
+            }
+        }
+
+        private NABase[] GetActionsForObject(GSCore cr)
+        {
+            if (cr is MNPage)
+            {
+                return new NABase[]
+                {
+                };
+            }
+            else if (cr is MNDocument)
+            {
+            }
+
+            return null;
+        }
+
+        private void ProcessObjectMessage(GSCore core, string msg)
+        {
+            if (core is MNPage)
+            {
+                switch (msg)
+                {
+                    default: break;
+                }
+            }
+            else if (core is MNDocument)
+            {
+                switch (msg)
+                {
+                    default: break;
                 }
             }
         }

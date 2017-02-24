@@ -25,7 +25,7 @@ namespace Rambha.Document.Views
             int i = 1;
             int seld = 0;
             listBox1.Items.Add("<none>");
-            foreach(MNPage rimg in doc.Templates)
+            foreach (MNPage rimg in doc.Data.Templates)
             {
                 listBox1.Items.Add(rimg);
                 if (rimg == tmp) seld = i;

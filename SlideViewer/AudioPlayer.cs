@@ -9,13 +9,13 @@ using System.Windows.Forms;
 using NAudio;
 using NAudio.Wave;
 
-using Rambha.GOF;
+using Rambha.Document;
 
 namespace SlideViewer
 {
     public class AudioPlayer
     {
-        GOFSound sound = null;
+        MNReferencedSound sound = null;
         WaveStream p_audioFileReader = null;
         MemoryStream p_memoryStream = null;
         DirectSoundOut p_waveOut = null;
@@ -76,7 +76,7 @@ namespace SlideViewer
         }
 
 
-        public void SetSound(GOFSound s)
+        public void SetSound(MNReferencedSound s)
         {
             sound = s;
         }

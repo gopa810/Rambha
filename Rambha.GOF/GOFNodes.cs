@@ -11,20 +11,20 @@ namespace Rambha.GOF
     /// <summary>
     /// This class represents subnodes of one node withni the tree of objects
     /// </summary>
-    public class GOFNodes: GOFCoreObject
+    public class GOFNodes: MNReferencedCore
     {
 
-        private Dictionary<string, GOFCoreObject> Nodes = new Dictionary<string, GOFCoreObject>();
+        private Dictionary<string, MNReferencedCore> Nodes = new Dictionary<string, MNReferencedCore>();
 
         public GOFNodes()
         {
             Modified = false;
         }
 
-        public List<KeyValuePair<string, GOFCoreObject>> GetEnumerableNodes()
+        public List<KeyValuePair<string, MNReferencedCore>> GetEnumerableNodes()
         {
-            List<KeyValuePair<string,GOFCoreObject>> list = new List<KeyValuePair<string,GOFCoreObject>>();
-            foreach(KeyValuePair<string,GOFCoreObject> v in Nodes)
+            List<KeyValuePair<string,MNReferencedCore>> list = new List<KeyValuePair<string,MNReferencedCore>>();
+            foreach(KeyValuePair<string,MNReferencedCore> v in Nodes)
             {
                 list.Add(v);
             }
@@ -34,7 +34,7 @@ namespace Rambha.GOF
         public override bool IsModified()
         {
             if (Modified) return Modified;
-            foreach (GOFCoreObject obj in Nodes.Values)
+            foreach (MNReferencedCore obj in Nodes.Values)
             {
                 if (obj.Modified) return true;
             }
@@ -55,7 +55,7 @@ namespace Rambha.GOF
             Nodes.Clear();
             for (int i = 0; i < count; i++)
             {
-                GOFCoreObject obj = null;
+                MNReferencedCore obj = null;
                 key = br.ReadString();
                 objType = br.ReadString();
                 obj = GOFile.CreateInstance(objType);
@@ -67,7 +67,7 @@ namespace Rambha.GOF
         public override void Save(RSFileWriter bw)
         {
             bw.WriteInt32(Nodes.Count);
-            foreach (KeyValuePair<string, GOFCoreObject> obj in Nodes)
+            foreach (KeyValuePair<string, MNReferencedCore> obj in Nodes)
             {
                 bw.WriteString(obj.Key);
                 bw.WriteString(GOFile.InstanceToTag(obj.Value));
@@ -77,15 +77,16 @@ namespace Rambha.GOF
             Modified = false;
         }
 
-        public void SetValue(string key, GOFCoreObject value)
+        public void SetValue(string key, MNReferencedCore value)
         {
+            Modified = true;
             if (Nodes.ContainsKey(key))
                 Nodes[key] = value;
             else
                 Nodes.Add(key, value);
         }
 
-        public GOFCoreObject GetValue(string name)
+        public MNReferencedCore GetValue(string name)
         {
             return Nodes.ContainsKey(name) ? Nodes[name] : null;
         }

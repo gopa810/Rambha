@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
 
 using Rambha.Serializer;
 
@@ -145,27 +146,61 @@ namespace Rambha.GOF
         }
 
 
-        public static GOFCoreObject CreateInstance(string s)
+        public static MNReferencedCore CreateInstance(string s)
         {
             switch (s)
             {
                 case "Nodes": return new GOFNodes();
-                case "Sound": return new GOFSound();
+                case "Sound": return new MNReferencedSound();
                 case "Image": return new GOFImage();
-                case "String": return new GOFString();
-                case "RunningText": return new GOFRunningText();
-                default: return new GOFCoreObject();
+                case "String": return new MNReferencedText();
+                case "RunningText": return new MNReferencedAudioText();
+                default: return new MNReferencedCore();
             }
         }
 
-        public static string InstanceToTag(GOFCoreObject obj)
+        public static string InstanceToTag(MNReferencedCore obj)
         {
             if (obj is GOFNodes) return "Nodes";
-            if (obj is GOFString) return "String";
+            if (obj is MNReferencedText) return "String";
             if (obj is GOFImage) return "Image";
-            if (obj is GOFRunningText) return "RunningText";
-            if (obj is GOFSound) return "Sound";
+            if (obj is MNReferencedAudioText) return "RunningText";
+            if (obj is MNReferencedSound) return "Sound";
             return "Core";
+        }
+
+        public MNReferencedCore FindObject(string path)
+        {
+            Debugger.Log(0, "", "FIND OBJECT AT PATH: " + path + "\n");
+            string[] p = null;
+            if (path.IndexOf('/') >= 0)
+            {
+                p = path.Split('/');
+            }
+            else
+            {
+                p = new string[] { path };
+            }
+
+            GOFNodes data = Data;
+            MNReferencedCore value = null;
+            foreach (string component in p)
+            {
+                if (data == null)
+                    return null;
+                value = data.GetValue(component);
+                if (value is GOFNodes)
+                    data = (GOFNodes)value;
+                else
+                    data = null;
+
+                if (value != null)
+                {
+                    Debugger.Log(0, "", "Value [" + component + "] from path '" + path + "' found\n");
+                }
+            }
+
+            return value;
         }
     }
 

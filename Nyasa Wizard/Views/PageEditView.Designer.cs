@@ -38,7 +38,10 @@
             this.insertNewPageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.pagePropertiesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.contextMenuStrip1.SuspendLayout();
+            this.contextMenuStrip2.SuspendLayout();
             this.SuspendLayout();
             // 
             // contextMenuStrip1
@@ -54,6 +57,11 @@
             this.pagePropertiesToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(160, 148);
+            // 
+            // setPictureToolStripMenuItem
+            // 
+            this.setPictureToolStripMenuItem.Name = "setPictureToolStripMenuItem";
+            this.setPictureToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
             // 
             // insertMantraToolStripMenuItem
             // 
@@ -100,6 +108,20 @@
             this.pagePropertiesToolStripMenuItem.Text = "Page Properties";
             this.pagePropertiesToolStripMenuItem.Click += new System.EventHandler(this.pagePropertiesToolStripMenuItem_Click);
             // 
+            // pasteToolStripMenuItem
+            // 
+            this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
+            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.pasteToolStripMenuItem.Text = "Paste";
+            this.pasteToolStripMenuItem.Click += new System.EventHandler(this.pasteToolStripMenuItem_Click);
+            // 
+            // contextMenuStrip2
+            // 
+            this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.pasteToolStripMenuItem});
+            this.contextMenuStrip2.Name = "contextMenuStrip2";
+            this.contextMenuStrip2.Size = new System.Drawing.Size(153, 48);
+            // 
             // PageEditView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -120,6 +142,7 @@
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PageEditView_MouseMove);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PageEditView_MouseUp);
             this.contextMenuStrip1.ResumeLayout(false);
+            this.contextMenuStrip2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -135,6 +158,8 @@
         private System.Windows.Forms.ToolStripMenuItem pagePropertiesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem insertTextToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem insertLineToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip2;
 
 
     }

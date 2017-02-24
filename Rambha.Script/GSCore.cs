@@ -47,6 +47,8 @@ namespace Rambha.Script
                     return new GSDouble(getDoubleValue());
                 case "boolean":
                     return new GSBoolean(getBooleanValue());
+                case "this":
+                    return this;
                 default:
                     return GSVoid.Void;
             }

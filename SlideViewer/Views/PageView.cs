@@ -22,7 +22,37 @@ namespace SlideViewer.Views
 
         public PageViewController ViewController { get; set; }
 
-        public MNDocumentExecutor DocExec = null;
+        private MNDocumentExecutor p_docexec = null;
+
+        private MNMenu p_displayedMenu = null;
+
+        public MNBookHeader CurrentBook = null;
+
+        public IMainFrameDelegate mainFrameDelegate = null;
+
+        private AudioPlayer Player = new AudioPlayer();
+
+        public MNMenu DisplayedMenu
+        {
+            get { return p_displayedMenu; }
+            set { p_displayedMenu = value; }
+        }
+
+        public void SetDocument(MNDocument doc)
+        {
+            Document = doc;
+            doc.Viewer = p_docexec;
+            p_docexec.Document = doc;
+            p_docexec.OnEvent("OnLoad", doc);
+        }
+
+        public MNDocumentExecutor DocExec
+        {
+            get
+            {
+                return p_docexec;
+            }
+        }
 
         public MNPageContext Context { get; set; }
 
@@ -31,13 +61,13 @@ namespace SlideViewer.Views
             InitializeComponent();
             ViewController = new PageViewController();
             ViewController.View = this;
-            DocExec = new MNDocumentExecutor(ViewController);
+            p_docexec = new MNDocumentExecutor(ViewController);
             Context = new MNPageContext();
         }
 
         public void Start()
         {
-            CurrentPage = Document.GetPage(Document.StartPage);
+            CurrentPage = Document.GetPage(Document.Book.StartPage);
             Invalidate();
         }
 
@@ -47,8 +77,11 @@ namespace SlideViewer.Views
             set
             {
                 Document = value;
-                Document.Viewer = DocExec;
-                DocExec.SetDocument(Document);
+                if (value != null)
+                {
+                    Document.Viewer = DocExec;
+                    DocExec.Document = Document;
+                }
             }
         }
 
@@ -62,16 +95,17 @@ namespace SlideViewer.Views
             {
                 MNPage oldPage = p_current_page;
                 if (p_current_page != null)
-                    p_current_page.OnPageWillDisappear();
+                    p_current_page.OnPageEvent("OnPageWillDisappear");
                 if (value != null)
-                    value.OnPageWillAppear();
+                    value.OnPageEvent("OnPageWillAppear");
                 p_current_page = value;
                 DocExec.CurrentPage = value;
+                ReloadPage();
                 Invalidate();
                 if (value != null)
-                    value.OnPageDidAppear();
+                    value.OnPageEvent("OnPageDidAppear");
                 if (oldPage != null)
-                    value.OnPageDidDisappear();
+                    value.OnPageEvent("OnPageDidDisappear");
 
             }
         }
@@ -107,20 +141,28 @@ namespace SlideViewer.Views
             Context.g = e.Graphics;
             Context.CurrentPage = CurrentPage;
             Context.drawSelectionMarks = false;
+            Context.ViewController = ViewController;
 
             CurrentPage.Paint(Context);
 
-            // painting dragged item
-            switch (MouseContext.DragType)
+            if (p_displayedMenu != null)
             {
-                case SMDragResponse.Drag:
-                    PaintDraggedItem(Context, MouseContext);
-                    break;
-                case SMDragResponse.Line:
-                    e.Graphics.DrawLine(Pens.Black, MouseContext.startPoint, MouseContext.lastPoint);
-                    break;
-                default:
-                    break;
+                p_displayedMenu.Paint(Context);
+            }
+            else
+            {
+                // painting dragged item
+                switch (MouseContext.DragType)
+                {
+                    case SMDragResponse.Drag:
+                        PaintDraggedItem(Context, MouseContext);
+                        break;
+                    case SMDragResponse.Line:
+                        e.Graphics.DrawLine(Pens.Black, MouseContext.startPoint, MouseContext.lastPoint);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
@@ -133,12 +175,12 @@ namespace SlideViewer.Views
                 {
                     if (ti.ContentSize.Width == 0)
                     {
-                        SizeF sf = context.g.MeasureString(ti.Text, ti.TextFont);
+                        SizeF sf = context.g.MeasureString(ti.Text, context.MenuTitleFont);
                         ti.ContentSize = new Size(Convert.ToInt32(sf.Width),Convert.ToInt32(sf.Height));
                     }
                     Rectangle rc = new Rectangle(mouseContext.lastPoint.X - ti.ContentSize.Width/2, mouseContext.lastPoint.Y - ti.ContentSize.Height,
                         ti.ContentSize.Width + 2, ti.ContentSize.Height + 2);
-                    context.g.DrawString(ti.Text, ti.TextFont, ti.TextBrush, rc);
+                    context.g.DrawString(ti.Text, context.MenuTitleFont, Brushes.Black, rc);
                 }
                 else if (ti.Image != null)
                 {
@@ -183,19 +225,35 @@ namespace SlideViewer.Views
             if (CurrentPage == null)
                 return;
 
-            MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
-            MouseContext.startPoint = MouseContext.lastPoint;
-            MouseContext.startControl = FindObjectContainingPoint(MouseContext.lastPoint);
-            MouseContext.endControl = null;
-            MouseContext.State = PVDragContext.Status.ClickDown;
-            MouseContext.DragType = SMDragResponse.None;
-            MouseContext.context = Context;
+            if (p_displayedMenu == null)
+            {
+                MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                MouseContext.startPoint = MouseContext.lastPoint;
+                MouseContext.startControl = FindObjectContainingPoint(MouseContext.lastPoint);
+                MouseContext.endControl = null;
+                MouseContext.State = PVDragContext.Status.ClickDown;
+                MouseContext.DragType = SMDragResponse.None;
+                MouseContext.context = Context;
 
-            if (MouseContext.startControl != null)
-                MouseContext.startControl.OnTapBegin(MouseContext);
-            MouseContext.StartClicked = true;
+                if (MouseContext.startControl != null)
+                    MouseContext.startControl.OnTapBegin(MouseContext);
+                MouseContext.StartClicked = true;
 
-            timerLongClick.Start();
+                timerLongClick.Start();
+            }
+            else
+            {
+                MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                MouseContext.startPoint = MouseContext.lastPoint;
+                MouseContext.startControl = null;
+                MouseContext.endControl = null;
+                MouseContext.State = PVDragContext.Status.ClickDown;
+                MouseContext.DragType = SMDragResponse.None;
+                MouseContext.context = Context;
+                MouseContext.StartClicked = true;
+                Context.selectedMenuItem = p_displayedMenu.TestHit(MouseContext);
+            }
+
             Invalidate();
         }
 
@@ -209,13 +267,32 @@ namespace SlideViewer.Views
             if (CurrentPage == null)
                 return;
 
+            if (p_displayedMenu != null)
+            {
+                MouseContext.context = Context;
+                MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                MouseContext.endControl = null;
+
+                if (Context.selectedMenuItem == p_displayedMenu.TestHit(MouseContext)
+                    && Context.selectedMenuItem >= 0 && Context.selectedMenuItem < p_displayedMenu.Items.Count)
+                {
+                    if (p_docexec != null)
+                    {
+                        MNMenuItem mi = p_displayedMenu.Items[Context.selectedMenuItem];
+                        p_docexec.OnMenuItem(mi, CurrentPage);
+                    }
+                }
+
+                p_displayedMenu = null;
+                Context.selectedMenuItem = -1;
+            }
 
             MouseContext.context = Context;
             MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
             MouseContext.endControl = FindObjectContainingPoint(MouseContext.lastPoint);
 
-            if (MouseContext.startControl != null)
-                MouseContext.startControl.OnTapEnd(MouseContext);
+            /*if (MouseContext.startControl != null)
+                MouseContext.startControl.OnTapEnd(MouseContext);*/
 
             if (MouseContext.State == PVDragContext.Status.Dragging)
             {
@@ -223,6 +300,7 @@ namespace SlideViewer.Views
                 {
                     MouseContext.trackedControl.OnDropFinished(MouseContext);
                     MouseContext.trackedControl.OnDragHotTrackEnded(MouseContext.draggedItem, MouseContext);
+                    Debugger.Log(0,"", "Dropping into control\n");
                 }
                 if (MouseContext.startControl != null)
                 {
@@ -267,6 +345,9 @@ namespace SlideViewer.Views
             MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
             MouseContext.endControl = FindObjectContainingPoint(MouseContext.lastPoint);
 
+            // if menu is displayed, we dont need movements of mouse
+            if (p_displayedMenu != null)
+                return;
 
             if (MouseContext.endControl != null)
                 MouseContext.endControl.OnDropMove(MouseContext);
@@ -276,12 +357,12 @@ namespace SlideViewer.Views
                     MouseContext.startControl.OnTapMove(MouseContext);
 
                 if (MouseContext.trackedControl == null && MouseContext.endControl != null && MouseContext.endControl != MouseContext.startControl
-                    && MouseContext.endControl.Style.Droppable != SMDropResponse.None)
+                    && MouseContext.endControl.Droppable != SMDropResponse.None)
                 {
                     MouseContext.endControl.OnDragHotTrackStarted(MouseContext.draggedItem, MouseContext);
                 }
                 else if (MouseContext.trackedControl != null && MouseContext.endControl == null
-                    && MouseContext.trackedControl.Style.Droppable != SMDropResponse.None)
+                    && MouseContext.trackedControl.Droppable != SMDropResponse.None)
                 {
                     MouseContext.trackedControl.OnDragHotTrackEnded(MouseContext.draggedItem, MouseContext);
                 }
@@ -299,11 +380,11 @@ namespace SlideViewer.Views
                         timerLongClick.Stop();
                     MouseContext.startControl.OnTapCancel(MouseContext);
                     MouseContext.StartClicked = false;
-                    if (MouseContext.startControl != null && MouseContext.startControl.Style.Draggable != SMDragResponse.None)
+                    if (MouseContext.startControl != null && MouseContext.startControl.Draggable != SMDragResponse.None)
                     {
                         MouseContext.State = PVDragContext.Status.Dragging;
-                        MouseContext.DragType = MouseContext.startControl.Style.Draggable;
-                        if (MouseContext.DragType == SMDragResponse.Drag)
+                        MouseContext.DragType = MouseContext.startControl.Draggable;
+                        if (MouseContext.DragType == SMDragResponse.Drag || MouseContext.DragType == SMDragResponse.Line)
                             MouseContext.draggedItem = MouseContext.startControl.GetDraggableItem(MouseContext.lastPoint);
                         MouseContext.startControl.OnDragStarted(MouseContext);
                         MouseContext.startControl.OnDragMove(MouseContext);
@@ -311,6 +392,8 @@ namespace SlideViewer.Views
                     Invalidate();
                 }
             }
+
+            //Debugger.Log(0, "", "MouseState: " + MouseContext.State.ToString() + "\n");
         }
 
         private double PointDistance(Point a, Point b)
@@ -324,7 +407,12 @@ namespace SlideViewer.Views
             {
                 MouseContext.State = PVDragContext.Status.LongClicked;
                 if (Document.HasViewer)
-                    Document.Viewer.OnLongClick(MouseContext.startControl, MouseContext);
+                {
+                    if (MouseContext.startControl != null)
+                        Document.Viewer.OnLongClick(MouseContext.startControl, MouseContext);
+                    else
+                        Document.Viewer.OnEvent("OnPageLongClick", CurrentPage);
+                }
                 //ExecuteScriptForKey(MouseContext.startControl, "onLongClick");
             }
             timerLongClick.Stop();
@@ -333,11 +421,95 @@ namespace SlideViewer.Views
         private void PageView_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             if (Document.HasViewer)
-                Document.Viewer.OnDoubleClick(MouseContext.startControl, MouseContext);
+            {
+                if (MouseContext.startControl != null)
+                    Document.Viewer.OnDoubleClick(MouseContext.startControl, MouseContext);
+                else
+                    Document.Viewer.OnEvent("OnPageDoubleClick", CurrentPage);
+            }
             //ExecuteScriptForKey(MouseContext.startControl, "onDoubleClick");
 
         }
 
+        /// <summary>
+        /// Reloading language localizations for all controls
+        /// </summary>
+        public void ReloadPage()
+        {
+            if (CurrentDocument != null)
+            {
+                // load content for all controls
+                foreach (SMControl control in p_current_page.Objects)
+                {
+                    if (control.ContentId != null && control.ContentId.Length > 0)
+                    {
+                        MNReferencedCore value = FindContentObject(control.ContentType, control.ContentId);
+                        control.Content = value;
+                        if (value != null && value is MNReferencedAudioText)
+                        {
+                            p_current_runtext = value as MNReferencedAudioText;
+                            p_current_runtext.currentWord = 0;
+                            timerRuntext.Interval = p_current_runtext.GetCurrentTimeInterval();
+                            timerRuntext.Start();
+                            PlaySound(p_current_runtext.Sound);
+                            Invalidate();
+                        }
+                        else if (value != null && value is MNReferencedText)
+                        {
+                            PlaySound(value as MNReferencedSound);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void PlaySound(MNReferencedSound sound)
+        {
+            Player.SetSound(sound);
+            Player.Play();
+        }
+
+        public MNReferencedCore FindContentObject(SMContentType type, string contentId)
+        {
+            MNReferencedCore value = null;
+
+            if (CurrentDocument.CurrentLanguage != null)
+            {
+                value = CurrentDocument.CurrentLanguage.FindObject(contentId);
+            }
+            
+            if (value == null && type == SMContentType.Text)
+            {
+                MNReferencedText rt = CurrentDocument.FindText(contentId);
+                if (rt != null)
+                {
+                    MNReferencedText str = new MNReferencedText();
+                    str.Text = rt.Text;
+                    value = str;
+                }
+
+            }
+
+            return value;
+        }
+
+        public MNReferencedAudioText p_current_runtext = null;
+
+        private void timerRuntext_Tick(object sender, EventArgs e)
+        {
+            p_current_runtext.currentWord++;
+            if (p_current_runtext.currentWord >= p_current_runtext.GetWordCount())
+            {
+                timerRuntext.Stop();
+                Player.Stop();
+                Player.DisposeAll();
+            }
+            else
+            {
+                timerRuntext.Interval = p_current_runtext.GetCurrentTimeInterval();
+            }
+            Invalidate();
+        }
     }
 
 
@@ -348,12 +520,120 @@ namespace SlideViewer.Views
     {
         public PageView View { get; set; }
 
+        public Timer t = new Timer();
+
+        private List<int> PageHistory = new List<int>();
+
+        private class ScheduledTask
+        {
+            public GSCore Target = null;
+            public string Message = string.Empty;
+            public GSCoreCollection Args = null;
+        }
+
+        private ScheduledTask scheduled = null;
+
+        public PageViewController()
+        {
+            t.Tick += new EventHandler(t_Tick);
+        }
+
+        private void t_Tick(object sender, EventArgs e)
+        {
+            if (scheduled != null)
+            {
+                scheduled.Target.ExecuteMessage(scheduled.Message, scheduled.Args);
+                scheduled = null;
+            }
+        }
+
         public override GSCore ExecuteMessage(string token, GSCoreCollection args)
         {
+            string arg1 = string.Empty;
+            MNPage p = null;
             switch(token)
             {
                 case "restart":
                     View.Start();
+                    break;
+                case "selectBook":
+                    if (View.CurrentDocument != null)
+                        View.CurrentDocument.SaveBookStatus();
+                    View.mainFrameDelegate.SetShowPanel("files");
+                    break;
+                case "showpage":
+                    arg1 = args.getSafe(0).getStringValue();
+                    if (arg1.Equals("#next"))
+                    {
+                        // displaying next page (page with index + 1)
+                        // store current page index to history
+                        if (View.CurrentPage != null)
+                            p = View.CurrentDocument.FindPageWithIndex(View.CurrentPage.Index + 1);
+                        if (p != null)
+                        {
+                            if (View.CurrentPage != null)
+                                PageHistory.Add(View.CurrentPage.Index);
+                            View.CurrentPage = p;
+                        }
+                    }
+                    else if (arg1.Equals("#back"))
+                    {
+                        // showing page that was displayed previously
+                        // take index of that page from page history
+                        if (PageHistory.Count > 0)
+                        {
+                            p = View.CurrentDocument.FindPageWithIndex(PageHistory[PageHistory.Count - 1]);
+                            PageHistory.RemoveAt(PageHistory.Count - 1);
+                        }
+                        if (p != null)
+                            View.CurrentPage = p;
+                    }
+                    else
+                    {
+                        // displaying specific page
+                        // store current page index to history
+                        p = View.CurrentDocument.FindPage(arg1);
+                        if (p != null)
+                        {
+                            if (View.CurrentPage != null)
+                                PageHistory.Add(View.CurrentPage.Index);
+                            View.CurrentPage = p;
+                        }
+                    }
+                    break;
+                case "showmenu":
+                    MNMenu m = View.CurrentDocument.FindMenu(args.getSafe(0).getStringValue());
+                    if (m != null)
+                        View.DisplayedMenu = m;
+                    break;
+                case "changeLanguage":
+                    View.mainFrameDelegate.showSelectLanguageDialog(View.CurrentBook);
+                    break;
+                case "playSound":
+                    GSCore aif = args.getSafe(0);
+                    if (aif != null && aif is MNReferencedSound)
+                    {
+                        View.PlaySound(aif as MNReferencedSound);
+                    }
+                    break;
+                case "scheduleCall":
+                    if (t.Enabled) t.Stop();
+                    if (scheduled != null)
+                    {
+                        scheduled.Target.ExecuteMessage(scheduled.Message, scheduled.Args);
+                        scheduled = null;
+                    }
+
+                    int interval = (int)args.getSafe(0).getIntegerValue();
+                    if (interval > 0 && interval < 200000)
+                    {
+                        scheduled = new ScheduledTask();
+                        scheduled.Target = args.getSafe(1);
+                        scheduled.Message = args.getSafe(2).getStringValue();
+                        scheduled.Args = args.getSublist(3);
+                        t.Interval = interval;
+                        t.Start();
+                    }
                     break;
                 default:
                     base.ExecuteMessage(token, args);

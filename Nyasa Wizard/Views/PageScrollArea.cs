@@ -33,7 +33,6 @@ namespace SlideMaker.Views
 
         public void SetPage(MNPage page)
         {
-            pageEditView1.Document = page.Document;
             pageEditView1.Page = page;
             MNNotificationCenter.CurrentPage = page;
         }
@@ -91,6 +90,8 @@ namespace SlideMaker.Views
 
         private void PageScrollArea_DragEnter(object sender, DragEventArgs e)
         {
+            string[] formats = e.Data.GetFormats();
+
             Point pt = this.PointToClient(new Point(e.X, e.Y));
             if (pageEditView1.Bounds.Contains(pt))
             {
@@ -106,7 +107,8 @@ namespace SlideMaker.Views
                 {
                     e.Effect = DragDropEffects.Copy;
                 }
-                else if (e.Data.GetDataPresent(typeof(MNReferencedImage)))
+                else if (e.Data.GetDataPresent(typeof(MNReferencedImage)) ||
+                    e.Data.GetDataPresent(DataFormats.UnicodeText))
                 {
                     e.Effect = DragDropEffects.Copy;
                 }
@@ -237,7 +239,11 @@ namespace SlideMaker.Views
                     foreach (SMControl sm in pageEditView1.Page.Objects)
                     {
                         SMRectangleArea area = pageEditView1.Page.GetArea(sm.Id);
-                        if (area.Selected) area.GetBoundsRecalc(pageEditView1.Context, true);
+                        if (area.Selected)
+                        {
+                            area.RecalcAllBounds(pageEditView1.Context);
+                            area.GetBoundsRecalc(pageEditView1.Context);
+                        }
                     }
                 }
                 pageEditView1.Invalidate();
@@ -259,6 +265,58 @@ namespace SlideMaker.Views
         {
             if (this.BackToParentView != null)
                 this.BackToParentView(this, e);
+        }
+
+        private void alignHorizontalyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.AlignHorizontal();
+        }
+
+        private void alignVerticalyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.AlignVertical();
+        }
+
+        private void alignHeightToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.AlignHeight();
+        }
+
+        private void alignWidthToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.AlignWidth();
+        }
+
+        private void useAverageValueToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.AverageValueSelection = 0;
+        }
+
+        private void useMinimumValueToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.AverageValueSelection = 1;
+        }
+
+        private void useMaximumValueToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.AverageValueSelection = 2;
+        }
+
+        private void toolStripSplitButton1_DropDownOpening(object sender, EventArgs e)
+        {
+            useAverageValueToolStripMenuItem.Checked = (pageEditView1.AverageValueSelection == 0);
+            useMaximumValueToolStripMenuItem.Checked = (pageEditView1.AverageValueSelection == 1);
+            useMinimumValueToolStripMenuItem.Checked = (pageEditView1.AverageValueSelection == 2);
+        }
+
+        private void useFirstValueToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.AverageValueSelection = 3;
+        }
+
+        internal PageEditView GetPageEditView()
+        {
+            return pageEditView1;
         }
     }
 

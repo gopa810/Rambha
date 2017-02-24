@@ -14,8 +14,6 @@ namespace Rambha.Serializer
 
         public StreamWriter logStream = null;
 
-        public List<RSObjectReference> References = new List<RSObjectReference>();
-
 
         public RSFileReader(BinaryReader r)
         {
@@ -46,6 +44,36 @@ namespace Rambha.Serializer
             {
                 br.BaseStream.Position = value;
             }
+        }
+
+        /// <summary>
+        /// Comparing two byte arrays
+        /// </summary>
+        /// <param name="a1"></param>
+        /// <param name="a2"></param>
+        /// <returns></returns>
+        public static bool ByteArrayCompare(byte[] a1, byte[] a2)
+        {
+            if (a1.Length != a2.Length)
+                return false;
+
+            for (int i = 0; i < a1.Length; i++)
+                if (a1[i] != a2[i])
+                    return false;
+
+            return true;
+        }
+
+        public bool ReadHeader(byte[] ba)
+        {
+            byte[] ha = br.ReadBytes(ba.Length);
+            if (!ByteArrayCompare(ha, ba))
+            {
+                Log("File Header does not equal to expected value.");
+                return false;
+            }
+
+            return true;
         }
 
         public bool ReadBool()
@@ -141,44 +169,6 @@ namespace Rambha.Serializer
             br.BaseStream.Position += a;
         }
 
-        public void AddReference(IRSObjectResolver parentObject, string referencedObjectType, long referencedObjectId, int tagInSource, IRSObjectOrigin sourceObject)
-        {
-            RSObjectReference reference = new RSObjectReference();
-            reference.Resolver = parentObject;
-            reference.Tag = tagInSource;
-            reference.RefObjectId = referencedObjectId;
-            reference.RefObjectType = referencedObjectType;
-            reference.ObjectOrigin = sourceObject;
-            reference.Evaluated = false;
-
-            References.Add(reference);
-        }
-
-        public void ResolveReferences(IRSObjectResolver resolver)
-        {
-            object found = null;
-            foreach (RSObjectReference objectRef in References)
-            {
-                if (objectRef.Evaluated) continue;
-                found = resolver.IRSResolver_FindObject(objectRef.RefObjectType, objectRef.RefObjectId);
-                if (found != null)
-                {
-                    objectRef.ObjectOrigin.setReference(objectRef.Tag, found);
-                    objectRef.Evaluated = true;
-                }
-            }
-        }
     }
-
-    public class RSObjectReference
-    {
-        public IRSObjectResolver Resolver = null;
-        public string RefObjectType = null;
-        public long RefObjectId = -1;
-        public int Tag = 0;
-        public IRSObjectOrigin ObjectOrigin = null;
-        public bool Evaluated = false;
-    }
-
 
 }

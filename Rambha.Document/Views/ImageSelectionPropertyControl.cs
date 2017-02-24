@@ -27,12 +27,20 @@ namespace Rambha.Document.Views
             image = img;
             editorService = service;
             InitializeComponent();
-            if (img != null && img.Document != null)
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+            if (doc != null)
             {
-                foreach(MNReferencedImage rimg in img.Document.Images)
+                int i = 0;
+                int selected = -1;
+                foreach(MNReferencedImage rimg in doc.DefaultLanguage.Images)
                 {
+                    if (rimg == img)
+                        selected = i;
                     listBox1.Items.Add(rimg);
+                    i++;
                 }
+                if (selected >= 0)
+                    listBox1.SelectedIndex = selected;
             }
         }
 

@@ -43,6 +43,18 @@ namespace Rambha.Script
 
         public override bool getBooleanValue()
         {
+            switch (getStringValue().ToLower())
+            {
+                case "true":
+                case "yes":
+                case "1":
+                    return true;
+                case "false":
+                case "no":
+                case "0":
+                    return false;
+            }
+
             return getIntegerValue() != 0;
         }
 

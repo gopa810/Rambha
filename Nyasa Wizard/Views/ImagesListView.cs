@@ -27,7 +27,7 @@ namespace SlideMaker.Views
             listView1.Items.Clear();
             if (Document != null)
             {
-                foreach (MNReferencedImage img in Document.Images)
+                foreach (MNReferencedImage img in Document.DefaultLanguage.Images)
                 {
                     ListViewItem lvi = new ListViewItem();
                     UpdateListViewItem(lvi, img);
@@ -39,7 +39,7 @@ namespace SlideMaker.Views
         public void UpdateListViewItem(ListViewItem lvi, MNReferencedImage img)
         {
             lvi.SubItems.Clear();
-            lvi.Text = img.Title;
+            lvi.Text = img.Name;
             lvi.Tag = img;
             lvi.SubItems.Add(string.Format("{0}x{1}", img.ImageData.Size.Width, img.ImageData.Size.Height));
         }
@@ -61,7 +61,7 @@ namespace SlideMaker.Views
                     }
                     foreach (MNReferencedImage im in imgs)
                     {
-                        Document.Images.Remove(im);
+                        Document.DefaultLanguage.Images.Remove(im);
                     }
                 }
             }

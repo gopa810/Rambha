@@ -11,6 +11,8 @@ using System.Windows.Forms;
 using System.Diagnostics;
 
 using Rambha.Document;
+using Rambha.Script;
+using Rambha.Serializer;
 
 namespace SlideMaker.Views
 {
@@ -24,7 +26,7 @@ namespace SlideMaker.Views
 
         public IPageScrollArea ScrollAreaController = null;
 
-        public MNDocument Document { get; set; }
+        public MNDocument Document { get { return PageData != null ? PageData.Document : null; } }
 
         public Point LastUserPoint { get; set; }
 
@@ -40,6 +42,10 @@ namespace SlideMaker.Views
         private float zoom_ratio = 1f;
 
         private Size view_size = new Size(1024, 768);
+
+        private bool b_key_control = false;
+
+        public int AverageValueSelection = 0;
 
         public float ZoomRatio
         {
@@ -191,25 +197,31 @@ namespace SlideMaker.Views
 
         private void PageEditView_MouseUp(object sender, MouseEventArgs e)
         {
-            Context.isTracking = false;
-            Point offset = Context.TrackedDrawOffset;
-            Context.TrackedDrawOffset = Point.Empty;
-
-            if (Context.TrackedObjects.Count > 0)
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                foreach (SMControl obj in Context.TrackedObjects)
+            }
+            else
+            {
+                Context.isTracking = false;
+                Point offset = Context.TrackedDrawOffset;
+                Context.TrackedDrawOffset = Point.Empty;
+
+                if (Context.TrackedObjects.Count > 0)
                 {
-                    SMRectangleArea po = Page.GetArea(obj.Id);
-                    if (po.TrackedSelection != SMControlSelection.None)
+                    foreach (SMControl obj in Context.TrackedObjects)
                     {
-                        po.Move(Context, offset);
-                        if (obj.Autosize)
-                            obj.RecalculateSize(Context);
+                        SMRectangleArea po = Page.GetArea(obj.Id);
+                        if (po.TrackedSelection != SMControlSelection.None)
+                        {
+                            po.Move(Context, offset);
+                            if (obj.Autosize)
+                                obj.RecalculateSize(Context);
+                        }
                     }
                 }
-            }
 
-            Context.TrackedObjects.Clear();
+                Context.TrackedObjects.Clear();
+            }
 
             Invalidate();
         }
@@ -233,50 +245,59 @@ namespace SlideMaker.Views
 
         private void PageEditView_MouseDown(object sender, MouseEventArgs e)
         {
-            //Log("--- MOUSE DOWN EVENT ---\n");
-            if (PageData == null)
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                Debugger.Log(0,"","Page Data is null\n");
-                return;
+                LastUserPoint = new Point(e.X, e.Y);
+                contextMenuStrip2.Show(PointToScreen(new Point(e.X, e.Y)));
             }
-
-            Point logPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
-
-            Context.TrackedObjects.Clear();
-            foreach (SMControl sc in PageData.Objects)
+            else
             {
-                SMRectangleArea area = Page.GetArea(sc.Id);
-                area.TrackedSelection = SMControlSelection.None;
-            }
-
-            //
-            // test if user clicks into object that is already selected
-            // if yes, then copy all selected objects into tracked objects
-            // function returns true if we hit some boundary line, so in that case
-            // we just show properties for that boundary line (constraint)
-            // function returns false if we did not hit any constraint
-            //
-            if (!PreserveSelectionForMove(logPoint))
-            {
-                if (Context.TrackedObjects.Count == 0)
+                //Log("--- MOUSE DOWN EVENT ---\n");
+                if (PageData == null)
                 {
-                    SelectObjectsContainingPoint(logPoint);
+                    Debugger.Log(0, "", "Page Data is null\n");
+                    return;
                 }
 
-                Context.isTracking = (Context.TrackedObjects.Count > 0);
-                if (Context.isTracking)
+                Point logPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+
+                Context.TrackedObjects.Clear();
+                foreach (SMControl sc in PageData.Objects)
                 {
-                    MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", Context.TrackedObjects[0]);
-                    Context.TrackedStartLogical = logPoint;
-                    Context.TrackedDrawOffset = Point.Empty;
-                    Invalidate();
+                    SMRectangleArea area = Page.GetArea(sc.Id);
+                    area.TrackedSelection = SMControlSelection.None;
                 }
-                else
+
+                //
+                // test if user clicks into object that is already selected
+                // if yes, then copy all selected objects into tracked objects
+                // function returns true if we hit some boundary line, so in that case
+                // we just show properties for that boundary line (constraint)
+                // function returns false if we did not hit any constraint
+                //
+                if (!PreserveSelectionForMove(logPoint))
                 {
-                    UserClickOnEmptySpace(logPoint);
+                    if (Context.TrackedObjects.Count == 0)
+                    {
+                        if (!b_key_control)
+                            PageData.ClearSelection();
+                        SelectObjectsContainingPoint(logPoint);
+                    }
+
+                    Context.isTracking = (Context.TrackedObjects.Count > 0);
+                    if (Context.isTracking)
+                    {
+                        MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", Context.TrackedObjects[0]);
+                        Context.TrackedStartLogical = logPoint;
+                        Context.TrackedDrawOffset = Point.Empty;
+                        Invalidate();
+                    }
+                    else
+                    {
+                        UserClickOnEmptySpace(logPoint);
+                    }
                 }
             }
-
         }
 
         void INotificationTarget.OnNotificationReceived(object sender, string msg, params object[] args)
@@ -286,6 +307,26 @@ namespace SlideMaker.Views
                 switch (msg)
                 {
                     case "ObjectSelected":
+                        if (args != null && args.Length > 0)
+                        {
+                            if (args[0] is MNPage)
+                            {
+                                Page = args[0] as MNPage;
+                            }
+                            else if (args[0] is SMControl)
+                            {
+                                SMControl selectedControl = args[0] as SMControl;
+                                MNPage selectedPage = selectedControl.Page;
+                                SMRectangleArea area = selectedPage.GetArea(selectedControl.Id);
+                                if (Page != selectedPage)
+                                    Page = selectedPage;
+                                selectedPage.ClearSelection();
+                                if (area != null) area.Selected = true;
+                                Invalidate();
+                            }
+                        }
+                        break;
+                    case "NewPageInserted":
                         if (args != null && args.Length > 0)
                         {
                             if (args[0] is MNPage)
@@ -347,14 +388,13 @@ namespace SlideMaker.Views
 
         private void SelectObjectsContainingPoint(Point logPoint)
         {
-            PageData.ClearSelection();
             foreach (SMControl po in PageData.SortedObjects)
             {
                 SMRectangleArea area = Page.GetArea(po.Id);
                 SMControlSelection testResult = area.TestHitLogical(Context, logPoint);
                 if (testResult != SMControlSelection.None)
                 {
-                    area.Selected = true;
+                    area.Selected = !area.Selected;
                     area.TrackedSelection = SMControlSelection.All;
                     Context.TrackedObjects.Add(po);
                     break;
@@ -370,7 +410,49 @@ namespace SlideMaker.Views
         /// <returns></returns>
         private bool PreserveSelectionForMove(Point logPoint)
         {
+            SMControlSelection Result = SMControlSelection.None;
+
             foreach (SMControl po in PageData.SortedObjects)
+            {
+                SMRectangleArea area = Page.GetArea(po.Id);
+                SMControlSelection testResult;
+                if (area.Selected)
+                {
+                    testResult = area.TestHitLogical(Context, logPoint);
+                    if (testResult != SMControlSelection.None && testResult != SMControlSelection.All)
+                    {
+                        Result = testResult;
+                        break;
+                    }
+                    else if (testResult == SMControlSelection.All && Result == SMControlSelection.None)
+                    {
+                        Result = testResult;
+                    }
+                }
+                else
+                {
+                    if (area.TestHitLogical(Context, logPoint) != SMControlSelection.None)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            if (Result != SMControlSelection.None)
+            {
+                foreach (SMControl po in PageData.SortedObjects)
+                {
+                    SMRectangleArea area = Page.GetArea(po.Id);
+                    if (area.Selected)
+                    {
+                        area.TrackedSelection = Result;
+                        Context.TrackedObjects.Add(po);
+                    }
+                }
+            }
+            
+            
+             /*            foreach (SMControl po in PageData.SortedObjects)
             {
                 SMRectangleArea area = Page.GetArea(po.Id);
                 if (area.Selected)
@@ -410,6 +492,8 @@ namespace SlideMaker.Views
                     }
                 }
             }
+
+             */
             return false;
         }
 
@@ -501,31 +585,13 @@ namespace SlideMaker.Views
 
         private void insertLineToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MNLine line = new MNLine(PageData);
-            //line.StartPoint.AnchorPoint = LastRelativePoint;
-            //line.EndPoint.AnchorPoint = new Point(LastRelativePoint.X + 200, LastRelativePoint.Y + 100);
-
-            PageData.ClearSelection();
-            PageData.Objects.Add(line.StartPoint);
-            PageData.Objects.Add(line.EndPoint);
-            PageData.Objects.Add(line);
-
-            Invalidate();
-
-            MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", line);
-
         }
 
         public void OnNotificationReceived(object sender, string msg, params object[] args)
         {
             switch (msg)
             {
-                case "DocumentChanged":
-                    if (args != null && args.Length > 0 && args[0] is MNDocument)
-                    {
-                        Document = (MNDocument)args[0];
-                    }
-                    break;
+                case "DocumentChanged": break;
             }
         }
 
@@ -537,13 +603,29 @@ namespace SlideMaker.Views
                 if (ctrl != null && ctrl.Data != null)
                 {
                     object obj = PageData.TagToObject(ctrl.Data);
+
                     if (obj is SMControl)
                     {
                         SMControl pm = (SMControl)obj;
-                        pm.Id = Document.GetNextId();
+                        pm.Id = Document.Data.GetNextId();
 
                         // creating coordinates
-                        PlaceObjectIntoPage(e, pm);
+                        PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, ctrl.DefaultSize);
+
+                        // aplying special commands
+                        if (ctrl.Args.Length > 0)
+                        {
+                            string[] args = ctrl.Args.Split(';');
+                            foreach (string a in args)
+                            {
+                                string[] pa = a.Split('=');
+                                if (pa.Length == 2)
+                                {
+                                    pm.ExecuteMessage("set", new GSString(pa[0]), new GSString(pa[1]));
+                                }
+                            }
+                        }
+
                     }
                 }
             }
@@ -558,10 +640,10 @@ namespace SlideMaker.Views
                     {
                         MNReferencedImage ri = ao as MNReferencedImage;
                         SMImage pm = new SMImage(Page);
-                        pm.Image = ri;
-                        pm.Id = Document.GetNextId();
+                        pm.Img.Image = ri;
+                        pm.Id = Document.Data.GetNextId();
 
-                        PlaceObjectIntoPage(e, pm);
+                        PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
                     }
                 }
             }
@@ -569,10 +651,10 @@ namespace SlideMaker.Views
             {
                 MNReferencedImage ri = (MNReferencedImage)e.Data.GetData(typeof(MNReferencedImage));
                 SMImage pm = new SMImage(Page);
-                pm.Image = ri;
-                pm.Id = Document.GetNextId();
+                pm.Img.Image = ri;
+                pm.Id = Document.Data.GetNextId();
 
-                PlaceObjectIntoPage(e, pm);
+                PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
             }
             else if (e.Data.GetDataPresent(typeof(MNPage)))
             {
@@ -581,12 +663,42 @@ namespace SlideMaker.Views
                     Page.Template = template;
                 Invalidate();
             }
+            else if (e.Data.GetDataPresent(DataFormats.Bitmap))
+            {
+
+            }
+            else if (e.Data.GetDataPresent(DataFormats.UnicodeText))
+            {
+                string strType = "Label";
+                string text = (string)e.Data.GetData(DataFormats.UnicodeText);
+                text = text.Trim();
+                if (text.StartsWith("(@"))
+                {
+                    int i = text.IndexOf(")");
+                    if (i > 0)
+                    {
+                        strType = text.Substring(2, i - 2);
+                        text = text.Substring(i + 1).Trim();
+                    }
+                }
+
+                object obj = PageData.TagToObject(strType) ?? PageData.TagToObject("Label");
+                if (obj is SMControl)
+                {
+                    SMControl pm = (SMControl)obj;
+                    pm.Id = Document.Data.GetNextId();
+                    pm.Text = text;
+
+                    // creating coordinates
+                    PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
+                }
+            }
         }
 
-        private void PlaceObjectIntoPage(DragEventArgs e, SMControl pm)
+        private void PlaceObjectIntoPage(Point clientPoint, SMControl pm, Size defSizeInput)
         {
-            Size defSize = pm.GetDefaultSize();
-            Point center = this.PointToClient(new Point(e.X, e.Y));
+            Size defSize = defSizeInput.IsEmpty ? pm.GetDefaultSize() : defSizeInput;
+            Point center = clientPoint;
             SMRectangleArea area = Page.CreateNewArea(pm.Id);
             area.SetCenterSize(Context.PhysicalToLogical(center), defSize, DisplaySize);
 
@@ -596,6 +708,7 @@ namespace SlideMaker.Views
             pm.Style = Document.GetDefaultStyle();
 
             area.Selected = true;
+            area.RecalcAllBounds(Context);
             area.TrackedSelection = SMControlSelection.All;
             Invalidate();
 
@@ -622,6 +735,10 @@ namespace SlideMaker.Views
                 MNPage tmp = e.Data.GetData(typeof(MNPage)) as MNPage;
                 e.Effect = (tmp.IsTemplate ? DragDropEffects.Copy : DragDropEffects.None);
             }
+            else if (e.Data.GetDataPresent(DataFormats.UnicodeText))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
             else
             {
                 e.Effect = DragDropEffects.None;
@@ -641,6 +758,11 @@ namespace SlideMaker.Views
 
         private void PageEditView_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.KeyCode == Keys.ControlKey)
+            {
+                b_key_control = true;
+            }
+
             if (e.KeyCode == Keys.Delete)
             {
                 if (PageData != null && PageData.HasSelectedObjects())
@@ -652,11 +774,358 @@ namespace SlideMaker.Views
                     }
                 }
             }
+            else if (e.KeyCode == Keys.D)
+            {
+                if (e.Control)
+                {
+                    PageData.DuplicateSelectedObjects();
+                    Invalidate();
+                }
+            }
+            else if (e.Control && e.KeyCode == Keys.P)
+            {
+                DialogNewPageName dialog = new DialogNewPageName();
+                dialog.PageName = "<page>";
+
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (PageData != null)
+                    {
+                        PageData.Document.InsertPage(PageData, dialog.PageName, dialog.InsertAfter);
+                    }
+                }
+            }
+            else if (e.Control && e.KeyCode == Keys.C)
+            {
+                CopySelectedObjectsToClipboard();
+            }
+            else if (e.Control && e.KeyCode == Keys.V)
+            {
+                PasteSelectedObjectsFromClipboard();
+                Invalidate();
+            }
+        }
+
+        private void PasteSelectedObjectsFromClipboard()
+        {
+            if (Clipboard.ContainsText())
+            {
+                string text = Clipboard.GetText();
+                if (text.StartsWith("<PAGEPIECE>") && text.EndsWith("</PAGEPIECE>"))
+                {
+                    string textData = text.Substring(11, text.Length - 23);
+                    byte[] data = Convert.FromBase64String(textData);
+
+                    using (MemoryStream ms = new MemoryStream(data))
+                    {
+                        using (BinaryReader br = new BinaryReader(ms))
+                        {
+                            RSFileReader reader = new RSFileReader(br);
+                            PageData.PasteSelection(reader);
+                            PageData.RecalcAreasForSelection(Context);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void CopySelectedObjectsToClipboard()
+        {
+            if (PageData.GetSelectedCount() > 0)
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (BinaryWriter writer = new BinaryWriter(ms))
+                    {
+                        RSFileWriter bw = new RSFileWriter(writer);
+
+                        PageData.SaveSelection(bw);
+
+                        string text64 = Convert.ToBase64String(ms.GetBuffer());
+                        Clipboard.Clear();
+                        Clipboard.SetText(string.Format("<PAGEPIECE>{0}</PAGEPIECE>", text64));
+                    }
+                }
+
+            }
         }
 
         private void PageEditView_KeyUp(object sender, KeyEventArgs e)
         {
+            if (e.KeyCode == Keys.ControlKey)
+            {
+                b_key_control = false;
+            }
+
         }
+
+        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Clipboard.ContainsText(TextDataFormat.UnicodeText))
+            {
+                string strType = "Label";
+                string text =  (string)Clipboard.GetData(DataFormats.UnicodeText);
+                text = text.Trim();
+                if (text.StartsWith("(@"))
+                {
+                    int i = text.IndexOf(")");
+                    if (i > 0)
+                    {
+                        strType = text.Substring(2, i - 2);
+                        text = text.Substring(i + 1).Trim();
+                    }
+                }
+
+                object obj = PageData.TagToObject(strType) ?? PageData.TagToObject("Label");
+                if (obj is SMControl)
+                {
+                    SMControl pm = (SMControl)obj;
+                    pm.Id = Document.Data.GetNextId();
+                    pm.Text = text;
+
+                    // creating coordinates
+                    PlaceObjectIntoPage(LastUserPoint, pm, Size.Empty);
+                }
+            }
+            else if (Clipboard.ContainsImage())
+            {
+                MNReferencedImage ri = Document.CreateNewImage();
+                ri.ImageData = Clipboard.GetImage();
+                ri.Id = Document.Data.GetNextId();
+                ri.Name = "Image Pasted " + DateTime.Today.ToLongTimeString();
+
+                SMImage pm = new SMImage(Page);
+                pm.Id = Document.Data.GetNextId();
+                pm.Img.Image = ri;
+                pm.ContentScaling = SMContentScaling.Fit;
+
+                // creating coordinates
+                PlaceObjectIntoPage(LastUserPoint, pm, new Size(256,256));
+            }
+        }
+
+        public void AlignHorizontal()
+        {
+            int count = 0;
+            double value = 0;
+            double itemValue = 0;
+            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            {
+                if (ra.Selected)
+                {
+                    itemValue = (ra.TopRuler.GetRawValue(Context.DisplaySize) + ra.BottomRuler.GetRawValue(Context.DisplaySize)) / 2;
+                    if (AverageValueSelection == 0)
+                    {
+                        value += itemValue;
+                        count++;
+                    }
+                    else if (AverageValueSelection == 1)
+                    {
+                        value = Math.Max(value, itemValue);
+                        count = 1;
+                    }
+                    else if (AverageValueSelection == 2)
+                    {
+                        value = Math.Max(value, itemValue);
+                        count = 1;
+                    }
+                    else if (AverageValueSelection == 3)
+                    {
+                        value = itemValue;
+                        count = 1;
+                        break;
+                    }
+                }
+            }
+
+            if (count == 0)
+                return;
+
+            value = value / count;
+            double A, B;
+            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            {
+                if (ra.Selected)
+                {
+                    A = ra.TopRuler.GetRawValue(Context.DisplaySize);
+                    B = ra.BottomRuler.GetRawValue(Context.DisplaySize);
+                    itemValue = (A + B) / 2;
+                    ra.TopRuler.SetRawValue(Context.DisplaySize, A + (value - itemValue));
+                    ra.BottomRuler.SetRawValue(Context.DisplaySize, B + (value - itemValue));
+                    ra.RecalcAllBounds(Context);
+                }
+            }
+
+            this.Invalidate();
+        }
+
+        public void AlignVertical()
+        {
+            int count = 0;
+            double value = 0;
+            double itemValue = 0;
+            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            {
+                if (ra.Selected)
+                {
+                    itemValue = (ra.LeftRuler.GetRawValue(Context.DisplaySize)
+                        + ra.RightRuler.GetRawValue(Context.DisplaySize)) / 2;
+                    if (AverageValueSelection == 0)
+                    {
+                        value += itemValue;
+                        count++;
+                    }
+                    else if (AverageValueSelection == 1)
+                    {
+                        value = Math.Max(value, itemValue);
+                        count = 1;
+                    }
+                    else if (AverageValueSelection == 2)
+                    {
+                        value = Math.Max(value, itemValue);
+                        count = 1;
+                    }
+                    else if (AverageValueSelection == 3)
+                    {
+                        value = itemValue;
+                        count = 1;
+                        break;
+                    }
+                }
+            }
+
+            if (count == 0)
+                return;
+
+            value = value / count;
+            double A, B;
+            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            {
+                if (ra.Selected)
+                {
+                    A = ra.LeftRuler.GetRawValue(Context.DisplaySize);
+                    B = ra.RightRuler.GetRawValue(Context.DisplaySize);
+                    itemValue = (A + B) / 2;
+                    ra.LeftRuler.SetRawValue(Context.DisplaySize, A + (value - itemValue));
+                    ra.RightRuler.SetRawValue(Context.DisplaySize, B + (value - itemValue));
+                    ra.RecalcAllBounds(Context);
+                }
+            }
+
+            this.Invalidate();
+        }
+
+        public void AlignHeight()
+        {
+            int count = 0;
+            double value = 0;
+            double itemValue = 0;
+            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            {
+                if (ra.Selected)
+                {
+                    itemValue = Math.Abs(ra.TopRuler.GetRawValue(Context.DisplaySize) - ra.BottomRuler.GetRawValue(Context.DisplaySize));
+                    if (AverageValueSelection == 0)
+                    {
+                        value += itemValue;
+                        count++;
+                    }
+                    else if (AverageValueSelection == 1)
+                    {
+                        value = Math.Max(value, itemValue);
+                        count = 1;
+                    }
+                    else if (AverageValueSelection == 2)
+                    {
+                        value = Math.Max(value, itemValue);
+                        count = 1;
+                    }
+                    else if (AverageValueSelection == 3)
+                    {
+                        value = itemValue;
+                        count = 1;
+                        break;
+                    }
+                }
+            }
+
+            if (count == 0)
+                return;
+
+            value = value / count;
+            double A, B;
+            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            {
+                if (ra.Selected)
+                {
+                    A = ra.TopRuler.GetRawValue(Context.DisplaySize);
+                    B = ra.BottomRuler.GetRawValue(Context.DisplaySize);
+                    itemValue = (A + B) / 2;
+                    ra.TopRuler.SetRawValue(Context.DisplaySize, itemValue - value/2);
+                    ra.BottomRuler.SetRawValue(Context.DisplaySize, itemValue + value/2);
+                    ra.RecalcAllBounds(Context);
+                }
+            }
+
+            this.Invalidate();
+        }
+
+        public void AlignWidth()
+        {
+            int count = 0;
+            double value = 0;
+            double itemValue = 0;
+            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            {
+                if (ra.Selected)
+                {
+                    itemValue = Math.Abs(ra.LeftRuler.GetRawValue(Context.DisplaySize)
+                        - ra.RightRuler.GetRawValue(Context.DisplaySize));
+                    if (AverageValueSelection == 0)
+                    {
+                        value += itemValue;
+                        count++;
+                    }
+                    else if (AverageValueSelection == 1)
+                    {
+                        value = Math.Max(value, itemValue);
+                        count = 1;
+                    }
+                    else if (AverageValueSelection == 2)
+                    {
+                        value = Math.Max(value, itemValue);
+                        count = 1;
+                    }
+                    else if (AverageValueSelection == 3)
+                    {
+                        value = itemValue;
+                        count = 1;
+                        break;
+                    }
+                }
+            }
+
+            if (count == 0)
+                return;
+
+            value = value / count;
+            double A, B;
+            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            {
+                if (ra.Selected)
+                {
+                    A = ra.LeftRuler.GetRawValue(Context.DisplaySize);
+                    B = ra.RightRuler.GetRawValue(Context.DisplaySize);
+                    itemValue = (A + B) / 2;
+                    ra.LeftRuler.SetRawValue(Context.DisplaySize, itemValue - value/2);
+                    ra.RightRuler.SetRawValue(Context.DisplaySize, itemValue + value/2);
+                    ra.RecalcAllBounds(Context);
+                }
+            }
+
+            this.Invalidate();
+        }
+
 
     }
 
@@ -666,6 +1135,18 @@ namespace SlideMaker.Views
         public string Text { get; set; }
 
         public string Data { get; set; }
+
+        public string Args { get; set; }
+
+        public Size DefaultSize { get; set; }
+
+        public PageEditDraggableItem()
+        {
+            Text = "";
+            Data = "";
+            Args = "";
+            DefaultSize = Size.Empty;
+        }
 
         public override string ToString()
         {

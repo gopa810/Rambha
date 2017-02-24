@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2F7D6FD3-A289-4D66-9F17-5BD83F905828}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SlideMaker</RootNamespace>
+    <AssemblyName>GOFEditor</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DialogNewObject.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogNewObject.Designer.cs">
+      <DependentUpon>DialogNewObject.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogStyleName.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogStyleName.Designer.cs">
+      <DependentUpon>DialogStyleName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LocalizationMainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LocalizationMainForm.Designer.cs">
+      <DependentUpon>LocalizationMainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SVLanguageCollection.cs" />
+    <Compile Include="Views\EditControlImage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlImage.Designer.cs">
+      <DependentUpon>EditControlImage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditControlAudioText.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlAudioText.Designer.cs">
+      <DependentUpon>EditControlAudioText.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditControlSound.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlSound.Designer.cs">
+      <DependentUpon>EditControlSound.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditControlString.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlString.Designer.cs">
+      <DependentUpon>EditControlString.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditControlTextStyle.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditControlTextStyle.Designer.cs">
+      <DependentUpon>EditControlTextStyle.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditSpotsEditorView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditSpotsEditorView.Designer.cs">
+      <DependentUpon>EditSpotsEditorView.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="DialogNewObject.resx">
+      <DependentUpon>DialogNewObject.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogStyleName.resx">
+      <DependentUpon>DialogStyleName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationMainForm.resx">
+      <DependentUpon>LocalizationMainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="Views\EditControlImage.resx">
+      <DependentUpon>EditControlImage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditControlAudioText.resx">
+      <DependentUpon>EditControlAudioText.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditControlSound.resx">
+      <DependentUpon>EditControlSound.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditControlString.resx">
+      <DependentUpon>EditControlString.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditControlTextStyle.resx">
+      <DependentUpon>EditControlTextStyle.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\EditSpotsEditorView.resx">
+      <DependentUpon>EditSpotsEditorView.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Languages.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\file-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigate-up-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icon_add.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Folder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rambha.Document\Rambha.Document.csproj">
+      <Project>{9EC38D3A-B51A-4433-9BC7-0F8E9D2399E2}</Project>
+      <Name>Rambha.Document</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Rambha.Script\Rambha.Script.csproj">
+      <Project>{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}</Project>
+      <Name>Rambha.Script</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Rambha.Serializer\Rambha.Serializer.csproj">
+      <Project>{26C66C19-2795-442B-BC49-2FD971702999}</Project>
+      <Name>Rambha.Serializer</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

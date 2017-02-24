@@ -22,6 +22,9 @@ namespace SlideMaker.Views
             {
                 new TADocAddPage(View, "New Page", Document, true),
                 new TADocAddPage(View, "New Template", Document, false),
+                new TADocAddText(View, "New Script", Document, true),
+                new TADocAddText(View, "New Text", Document, false),
+                new TADocAddMenu(View, "New Menu", Document),
             };
         }
 
@@ -31,8 +34,11 @@ namespace SlideMaker.Views
             {
                 p_children = new TVItem[] 
                 {
-                    new TVItemPageArray(View) { Array = Document.Pages, Name = "Pages"},
-                    new TVItemPageArray(View) { Array = Document.Templates, Name = "Templates"} 
+                    new TVItemPageArray(View) { Array = Document.Data.Pages, Name = "Pages"},
+                    new TVItemPageArray(View) { Array = Document.Data.Templates, Name = "Templates"},
+                    new TVItemTextArray(View) { Array = Document.Data.Scripts, Name = "Executable Scripts"},
+                    new TVItemTextArray(View) { Array = Document.DefaultLanguage.Texts, Name = "Texts"},
+                    new TVItemMenuArray(View) { Array = Document.Data.Menus, Name = "Menus"}
                 };
             }
 
@@ -41,7 +47,7 @@ namespace SlideMaker.Views
 
         public override string GetName()
         {
-            return (Document != null && Document.BookTitle != null && Document.BookTitle.Length > 0) ? Document.BookTitle : "Document";
+            return (Document != null && Document.Book.BookTitle != null && Document.Book.BookTitle.Length > 0) ? Document.Book.BookTitle : "Document";
         }
 
         public override object GetContentData()

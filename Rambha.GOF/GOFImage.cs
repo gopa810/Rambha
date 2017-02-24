@@ -9,7 +9,7 @@ using Rambha.Serializer;
 
 namespace Rambha.GOF
 {
-    public class GOFImage: GOFCoreObject
+    public class GOFImage: MNReferencedCore
     {
         private byte[] p_data = null;
 

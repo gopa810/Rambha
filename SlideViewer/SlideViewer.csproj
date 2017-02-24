@@ -55,7 +55,31 @@
     <Compile Include="MNDocumentExecutor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SVLanguageCollection.cs" />
+    <Compile Include="SVBookLibrary.cs" />
+    <Compile Include="Views\UpdaterGetStatus.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\UpdaterGetStatus.Designer.cs">
+      <DependentUpon>UpdaterGetStatus.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UpdaterSelectFiles.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\UpdaterSelectFiles.Designer.cs">
+      <DependentUpon>UpdaterSelectFiles.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UpdaterView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\UpdaterView.Designer.cs">
+      <DependentUpon>UpdaterView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SelectLanguageView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\SelectLanguageView.Designer.cs">
+      <DependentUpon>SelectLanguageView.cs</DependentUpon>
+    </Compile>
     <Compile Include="ViewFrame.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -78,11 +102,23 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="Views\UpdaterGetStatus.resx">
+      <DependentUpon>UpdaterGetStatus.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\UpdaterSelectFiles.resx">
+      <DependentUpon>UpdaterSelectFiles.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\SelectLanguageView.resx">
+      <DependentUpon>SelectLanguageView.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ViewFrame.resx">
       <DependentUpon>ViewFrame.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Views\PageView.resx">
       <DependentUpon>PageView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\UpdaterView.resx">
+      <DependentUpon>UpdaterView.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
     <None Include="Properties\Settings.settings">
@@ -99,10 +135,6 @@
     <ProjectReference Include="..\Rambha.Document\Rambha.Document.csproj">
       <Project>{9EC38D3A-B51A-4433-9BC7-0F8E9D2399E2}</Project>
       <Name>Rambha.Document</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Rambha.GOF\Rambha.GOF.csproj">
-      <Project>{9C924DF5-CA5C-4CC8-A016-C2E2BACF8B7B}</Project>
-      <Name>Rambha.GOF</Name>
     </ProjectReference>
     <ProjectReference Include="..\Rambha.Script\Rambha.Script.csproj">
       <Project>{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}</Project>

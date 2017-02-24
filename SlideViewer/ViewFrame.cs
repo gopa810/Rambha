@@ -10,13 +10,13 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
 using Rambha.Document;
-using Rambha.GOF;
 
 namespace SlideViewer
 {
-    public partial class ViewFrame : Form
+    public partial class ViewFrame : Form, IMainFrameDelegate
     {
-        public List<MNBookHeader> Books = new List<MNBookHeader>();
+        public SVBookLibrary Library = new SVBookLibrary();
+        public MNBookHeader CurrentBook = null;
 
         public ViewFrame()
         {
@@ -25,6 +25,10 @@ namespace SlideViewer
 
             panelBook.Dock = DockStyle.Fill;
             panelFiles.Dock = DockStyle.Fill;
+            panelUpdater.Dock = DockStyle.Fill;
+            panelSelectLanguage.Dock = DockStyle.Fill;
+
+            Library.FetchRemote(null);
         }
 
         public MNDocument Document
@@ -40,11 +44,30 @@ namespace SlideViewer
             {
                 panelBook.Visible = false;
                 panelFiles.Visible = true;
+                panelUpdater.Visible = false;
+                panelSelectLanguage.Visible = false;
             }
             else if (panel == "book")
             {
                 panelBook.Visible = true;
                 panelFiles.Visible = false;
+                panelUpdater.Visible = false;
+                panelSelectLanguage.Visible = false;
+            }
+            else if (panel == "lang")
+            {
+                panelSelectLanguage.Visible = true;
+                panelBook.Visible = false;
+                panelFiles.Visible = false;
+                panelUpdater.Visible = false;
+            }
+            else if (panel == "updater")
+            {
+                panelSelectLanguage.Visible = false;
+                panelBook.Visible = false;
+                panelFiles.Visible = false;
+                panelUpdater.Visible = true;
+                panelUpdater.ParentFrame = this;
             }
         }
 
@@ -282,74 +305,16 @@ namespace SlideViewer
                 }
             }
 
-            List<string> bookFileNames = new List<string>();
-            List<string> langFileNames = new List<string>();
-
-            foreach (string s in Directory.EnumerateFiles(directory))
-            {
-                if (s.EndsWith(".smd"))
-                {
-                    bookFileNames.Add(s);
-                }
-                else if (s.EndsWith(".gof"))
-                {
-                    langFileNames.Add(s);
-                }
-            }
-
-            Books.Clear();
-            foreach (string file in bookFileNames)
-            {
-                MNBookHeader bh = new MNBookHeader();
-                if (bh.LoadHeader(file))
-                {
-                    Books.Add(bh);
-                }
-            }
-
-            foreach (string file in langFileNames)
-            {
-                MNBookLanguage bl = new MNBookLanguage();
-                PreviewLanguage(bl, file);
-                MNBookHeader bh = GetBookByCode(bl.BookCode);
-                if (bh != null)
-                    bh.Languages.Add(bl);
-            }
+            Library.GetCurrentBookDatabase(directory);
 
             listBox1.Items.Clear();
 
-            foreach (MNBookHeader bh in Books)
+            foreach (MNBookHeader bh in Library.Books)
             {
                 listBox1.Items.Add(bh);
             }
         }
 
-        public void PreviewLanguage(MNBookLanguage bl, string fileName)
-        {
-            GOFile file = new GOFile();
-            bl.FilePath = fileName;
-            file.Load(bl.FilePath, false);
-            bl.BookCode = file.GetProperty("BookCode");
-            bl.LanguageCode = file.GetProperty("LanguageCode");
-            bl.LanguageName = file.GetProperty("LanguageName");
-        }
-
-        public GOFile LoadLanguage(MNBookLanguage bl)
-        {
-            GOFile file = new GOFile();
-            file.Load(bl.FilePath, true);
-            return file;
-        }
-
-        public MNBookHeader GetBookByCode(string bookCode)
-        {
-            foreach (MNBookHeader bh in Books)
-            {
-                if (bh.BookCode.Equals(bookCode))
-                    return bh;
-            }
-            return null;
-        }
 
         private void buttonPlay_Click(object sender, EventArgs e)
         {
@@ -358,7 +323,17 @@ namespace SlideViewer
                 MNBookHeader bh = (MNBookHeader)(listBox1.Items[listBox1.SelectedIndex]);
                 if (bh != null)
                 {
-                    pageView1.CurrentDocument = bh.LoadFull();
+                    CurrentBook = bh;
+                    pageView1.CurrentBook = bh;
+                    pageView1.SetDocument(bh.LoadFull());
+                    // this is default loading of language file
+                    if (bh.Languages != null && bh.Languages.Count > 0)
+                    {
+                        MNLocalisation file = new MNLocalisation();
+                        file.Load(bh.Languages[0].FilePath, true);
+                        pageView1.CurrentDocument.CurrentLanguage = file;
+                    }
+                    // this is presenting book to the user
                     SetShowPanel("book");
                     pageView1.Start();
                 }
@@ -368,6 +343,91 @@ namespace SlideViewer
         private void buttonBrowse_Click(object sender, EventArgs e)
         {
             ShowFiles("");
+        }
+
+        public void showSelectLanguageDialog(MNBookHeader book)
+        {
+            if (book != null && book.Languages != null && book.Languages.Count > 0)
+            {
+                CurrentBook = book;
+                SetShowPanel("lang");
+                panelSelectLanguage.SetBook(book);
+                panelSelectLanguage.ParentFrame = this;
+            }
+        }
+
+        public void dialogDidSelectLanguage(MNBookLanguage lang)
+        {
+            if (CurrentBook != null)
+            {
+                if (lang != null)
+                {
+                    MNLocalisation file = new MNLocalisation();
+                    file.Load(lang.FilePath, true);
+                    pageView1.CurrentDocument.CurrentLanguage = file;
+                    pageView1.ReloadPage();
+                }
+                SetShowPanel("book");
+            }
+        }
+
+        private void listBox1_MeasureItem(object sender, MeasureItemEventArgs e)
+        {
+            MNBookHeader bh = GetBookAtIndex(e.Index);
+            if (bh == null)
+                return;
+
+            e.ItemHeight = 32;
+        }
+
+        private void listBox1_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            if ((e.State & DrawItemState.Selected) != 0)
+            {
+                e.Graphics.FillRectangle(SMGraphics.GetBrush(Color.LightBlue), e.Bounds);
+            }
+            else
+            {
+                e.Graphics.FillRectangle(SMGraphics.GetBrush(listBox1.BackColor), e.Bounds);
+            }
+
+            MNBookHeader bh = GetBookAtIndex(e.Index);
+            if (bh == null)
+                return;
+
+            Rectangle r = new Rectangle(e.Bounds.Left + 4, e.Bounds.Top + 4, e.Bounds.Height - 8, e.Bounds.Height - 8);
+
+            e.Graphics.FillRectangle(SMGraphics.GetBrush(bh.BookColor), r);
+            e.Graphics.DrawRectangle(Pens.Black, r);
+
+            r = new Rectangle(e.Bounds.Left + e.Bounds.Height + 16, e.Bounds.Top, e.Bounds.Width - e.Bounds.Height - 16, e.Bounds.Height);
+            e.Graphics.DrawString(bh.BookTitle, SMGraphics.GetFontVariation(MNFontName.LucidaSans, 12f),
+                SMGraphics.GetBrush(listBox1.ForeColor), r, SMGraphics.StrFormatLeftCenter);
+        }
+
+        public MNBookHeader GetBookAtIndex(int index)
+        {
+            if (index < 0 || index >= listBox1.Items.Count)
+                return null;
+
+            return listBox1.Items[index] as MNBookHeader;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            SetShowPanel("updater");
+            panelUpdater.Start(Library);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog d = new SaveFileDialog();
+            d.FileName = "root.txt";
+            if (d.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                string str = SVBookLibrary.DBToString(Library.GetLocalFileDatabase());
+                File.WriteAllText(d.FileName, str);
+            }
         }
     }
 }

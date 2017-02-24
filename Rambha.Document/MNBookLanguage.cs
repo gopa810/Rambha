@@ -8,8 +8,8 @@ namespace Rambha.Document
     public class MNBookLanguage
     {
         public string BookCode = "";
-        public string LanguageCode = "";
         public string LanguageName = "";
+        public string LastTimeSave = "";
         public string FilePath = "";
     }
 }

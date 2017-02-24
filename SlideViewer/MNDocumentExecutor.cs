@@ -10,58 +10,33 @@ namespace SlideViewer
 {
     public class MNDocumentExecutor: IDocumentViewDelegate
     {
-        public class GVGraphConnection
-        {
-            public string Title;
-            public GVGraphObject Source;
-            public GVGraphObject Target;
-        }
-
-        public class GVGraphConnControlFlow : GVGraphConnection { }
-        public class GVGraphConnOwnership : GVGraphConnection { }
-
-        public class GVGraph
-        {
-            public List<GVGraphConnection> Connections = null;
-        }
-
-        public class MNDocumentX
-        {
-            public GVGraph PageDynamics = null;
-        }
-
-        public void SetDocument(MNDocument doc)
-        {
-        }
-
-        public class GVGraphObject
-        {
-            public string executeAction(GVGraphAction a)
-            {
-                return "";
-            }
-        }
-
-        public class GVGraphAction : GVGraphObject { }
-        public class GVObjectScript : GVGraphObject
-        {
-            public GSCore CompiledScript;
-        }
-        public class GVObjectControlEntity : GVGraphObject { public SMControl Control; }
-        public class GVPageWithControls : GVGraphObject { public MNPage Page; }
-
         public GSExecutor Executor { get; set; }
 
         public GSCore ViewController { get; set; }
 
-        public MNDocumentX Document { get; set; }
+        private MNDocument p_doc = null;
+
+        public MNDocument Document 
+        {
+            get
+            {
+                return p_doc;
+            }
+            set
+            {
+                p_doc = value;
+                if (value != null && Executor != null)
+                    Executor.SetVariable("document", p_doc);
+            }
+        }
 
         public MNPage CurrentPage { get; set; }
+
+        private List<string> scheduledScripts = new List<string>();
 
         public MNDocumentExecutor(GSCore vc)
         {
             ViewController = vc;
-            Document = null;
             CurrentPage = null;
             Executor = new GSExecutor();
             Executor.SetVariable("executor", Executor);
@@ -79,7 +54,7 @@ namespace SlideViewer
         /// <param name="areaId"></param>
         /// <param name="area"></param>
         /// <param name="scriptKey"></param>
-        private void ExecuteScriptForKey(GSCore obj, GVObjectScript os)
+        private void ExecuteScriptForKey(GSCore obj, GSScript os)
         {
             if (obj is SMControl)
             {
@@ -91,14 +66,8 @@ namespace SlideViewer
                 Executor.SetVariable("control", null);
                 Executor.SetVariable("page", (MNPage)obj);
             }
-            Executor.ExecuteElement(os.CompiledScript);
+            Executor.ExecuteElement(os);
         }
-
-        private void ExecuteScriptForKey(MNPage page, GVObjectScript os)
-        {
-            Executor.ExecuteElement(os.CompiledScript);
-        }
-
 
         // control events
         public void OnDragFinished(SMControl control, SMTokenItem token, PVDragContext context)
@@ -109,282 +78,251 @@ namespace SlideViewer
             // find all activities in graph that are target conected to this control as source and have 
             // name of connection as this event
             // and execute them and then execute their successors
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnDragFinished");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnDragFinished");
+                ExecuteScheduledObjects(control);
             }
         }
         public bool OnDropWillFinish(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnDropWillFinish");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnDropWillFinish");
+                ExecuteScheduledObjects(control);
             }
             return true;
         }
 
         public void OnDropDidFinish(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnDropDidFinish");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnDropDidFinish");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnLongClick(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnLongClick");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnLongClick");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnDoubleClick(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnDoubleClick");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnDoubleClick");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnClick(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnClick");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnClick");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnDropMove(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnDropMove");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnDropMove");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnTapBegin(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnTapBegin");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnTapBegin");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnTapCancel(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnTapCancel");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnTapCancel");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnTapMove(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnTapMove");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnTapMove");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnTapEnd(SMControl control, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnTapEnd");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnTapEnd");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnDragStarted(SMControl control, SMTokenItem token, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnDragStarted");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnDragStarted");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnDragMove(SMControl control, SMTokenItem token, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(control, scheduled, "OnDragMove");
-                ExecuteScheduledObjects(control, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(control, scheduledScripts, "OnDragMove");
+                ExecuteScheduledObjects(control);
             }
         }
 
         public void OnDragHotTrackStarted(SMTokenItem item, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(context.trackedControl, scheduled, "OnDragHotTrackStarted");
-                ExecuteScheduledObjects(context.trackedControl, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(context.trackedControl, scheduledScripts, "OnDragHotTrackStarted");
+                ExecuteScheduledObjects(context.trackedControl);
             }
         }
 
         public void OnDragHotTrackEnded(SMTokenItem item, PVDragContext context)
         {
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractControlConnections(context.trackedControl, scheduled, "OnDragHotTrackEnded");
-                ExecuteScheduledObjects(context.trackedControl, scheduled);
+                scheduledScripts.Clear();
+                ExtractControlConnections(context.trackedControl, scheduledScripts, "OnDragHotTrackEnded");
+                ExecuteScheduledObjects(context.trackedControl);
             }
         }
 
-
-        // page events
-        public void OnPageWillAppear(MNPage page)
+        public void OnEvent(string eventName, GSCore parent)
         {
-            // to all procedures, that are connected as target with current page
-            // and control flow named "OnPageWillAppear"
-            if (Document != null && Document.PageDynamics != null)
+            if (Document != null)
             {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractPageConnections(page, scheduled, "OnPageWillAppear");
-                ExecuteScheduledObjects(page, scheduled);
+                if (eventName.Equals("OnPlaySound") && parent is MNReferencedSound)
+                {
+                    if (ViewController != null)
+                        ViewController.ExecuteMessage("playSound", parent);
+                }
+                else
+                {
+                    scheduledScripts.Clear();
+                    ExtractObjectConnections(parent, scheduledScripts, eventName);
+                    ExecuteScheduledObjects(parent);
+                }
             }
         }
-
-        public void OnPageDidAppear(MNPage page)
-        {
-            if (Document != null && Document.PageDynamics != null)
-            {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractPageConnections(page, scheduled, "OnPageDidAppear");
-                ExecuteScheduledObjects(page, scheduled);
-            }
-        }
-
-        public void OnPageWillDisappear(MNPage page)
-        {
-            if (Document != null && Document.PageDynamics != null)
-            {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractPageConnections(page, scheduled, "OnPageWillDisappear");
-                ExecuteScheduledObjects(page, scheduled);
-            }
-        }
-
-        public void OnPageDidDisappear(MNPage page)
-        {
-            if (Document != null && Document.PageDynamics != null)
-            {
-                List<GVGraphObject> scheduled = new List<GVGraphObject>();
-                ExtractPageConnections(page, scheduled, "OnPageDidDisappear");
-                ExecuteScheduledObjects(page, scheduled);
-            }
-        }
-
-
 
 
         /// <summary>
         /// Executes objects in the list and possibly add new objects in succession
         /// </summary>
-        /// <param name="control"></param>
+        /// <param name="parent"></param>
         /// <param name="scheduled"></param>
-        private void ExecuteScheduledObjects(GSCore control, List<GVGraphObject> scheduled)
+        private void ExecuteScheduledObjects(GSCore parent)
         {
-            string returnValue = null;
-
-            for (int i = 0; i < scheduled.Count; i++)
+            if (scheduledScripts != null)
             {
-                GVGraphObject go = scheduled[i];
-                if (go is GVGraphAction)
+                for (int i = 0; i < scheduledScripts.Count; i++)
                 {
-                    returnValue = null;
-                    // find source object of action
-                    GVGraphObject source = FindOwnerOfObject(go);
-                    if (source != null)
-                    {
-                        // execute action
-                        returnValue = source.executeAction(go as GVGraphAction);
-                    }
+                    GSScript go = new GSScript();
+                    go.readList(scheduledScripts[i]);
+                    ExecuteScriptForKey(parent, go);
+                }
+            }
 
-                    // after execution, include also successor objects for execution
-                    if (returnValue != null)
-                    {
-                        foreach (GVGraphConnection gc2 in Document.PageDynamics.Connections)
-                        {
-                            if (gc2 is GVGraphConnControlFlow && gc2.Source == go && gc2.Title.Equals(returnValue))
-                            {
-                                scheduled.Add(gc2.Target);
-                            }
-                        }
-                    }
-                }
-                else if (go is GVObjectScript)
-                {
-                    ExecuteScriptForKey(control, go as GVObjectScript);
-                }
+            scheduledScripts.Clear();
+        }
+
+        private void ExtractControlConnections(SMControl control, List<string> scheduled, string name)
+        {
+            if (control != null)
+            {
+                MNReferencedText rt = control.FindScript(name);
+                if (rt != null)
+                    scheduled.Add(rt.Text);
             }
         }
 
-        private GVGraphObject FindOwnerOfObject(GVGraphObject go)
+        private void ExtractObjectConnections(GSCore obj, List<string> scheduled, string name)
         {
-            foreach (GVGraphConnection gc in Document.PageDynamics.Connections)
+            if (obj is MNDocument)
             {
-                if (gc is GVGraphConnOwnership && gc.Target == go)
+                MNDocument doc = obj as MNDocument;
+                foreach (MNReferencedText rs in doc.Data.Scripts)
                 {
-                    return gc.Source;
+                    if (rs.Name.Equals(name))
+                        scheduled.Add(rs.Text);
                 }
+                foreach (MNPage page in doc.Data.Pages)
+                    ExtractObjectConnections(page, scheduled, name);
             }
-            return null;
-        }
-
-        private void ExtractControlConnections(SMControl control, List<GVGraphObject> scheduled, string name)
-        {
-            foreach (GVGraphConnection gc in Document.PageDynamics.Connections)
+            else if (obj is MNPage)
             {
-                if (gc is GVGraphConnControlFlow && gc.Source is GVObjectControlEntity
-                    && (gc.Source as GVObjectControlEntity).Control == control
-                    && gc.Title == name)
+                MNPage page = obj as MNPage;
+                foreach (MNReferencedText rt in page.Scripts)
                 {
-                    scheduled.Add(gc.Target);
+                    if (rt.Name.Equals(name))
+                        scheduled.Add(rt.Text);
                 }
+                foreach (SMControl smc in page.Objects)
+                {
+                    if (smc.ContainsScript(name))
+                        ExtractObjectConnections(smc, scheduled, name);
+                }
+
             }
-        }
-
-        private void ExtractPageConnections(MNPage page, List<GVGraphObject> scheduled, string name)
-        {
-            foreach (GVGraphConnection gc in Document.PageDynamics.Connections)
+            else if (obj is SMControl)
             {
-                if (gc is GVGraphConnControlFlow && gc.Source is GVPageWithControls
-                    && (gc.Source as GVPageWithControls).Page == page
-                    && gc.Title == name)
-                {
-                    scheduled.Add(gc.Target);
-                }
+                MNReferencedText rt = (obj as SMControl).FindScript(name);
+                if (rt != null)
+                    scheduled.Add(rt.Text);
             }
         }
 
 
+        public void OnMenuItem(MNMenuItem mi, MNPage page)
+        {
+            Executor.SetVariable("page", page);
+            GSScript os = new GSScript();
+            os.readList(mi.ActionScript);
+            Executor.ExecuteElement(os);
+        }
 
+        public void AddNextScript(string scriptText)
+        {
+            scheduledScripts.Add(scriptText);
+        }
     }
 }

@@ -66,7 +66,7 @@ namespace Rambha.Document
             }
             set
             {
-                if (startControl != null && startControl.Style.Clickable)
+                if (startControl != null && startControl.Clickable)
                 {
                     startControl.UIStatePressed = value;
                 }
@@ -85,7 +85,7 @@ namespace Rambha.Document
             }
             set
             {
-                if (endControl != null && startControl.Style.Droppable != SMDropResponse.None)
+                if (endControl != null && startControl.Droppable != SMDropResponse.None)
                 {
                     startControl.UIStateHover = value;
                 }

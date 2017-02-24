@@ -47,6 +47,11 @@
     <Compile Include="GSDateTime.cs" />
     <Compile Include="GSDouble.cs" />
     <Compile Include="GSExecutor.cs" />
+    <Compile Include="SysExecutors\GSExecutorBin.cs" />
+    <Compile Include="SysExecutors\GSExecutorDoubleMath.cs" />
+    <Compile Include="SysExecutors\GSExecutorLog.cs" />
+    <Compile Include="SysExecutors\GSExecutorMathInteger.cs" />
+    <Compile Include="SysExecutors\GSExecutorString.cs" />
     <Compile Include="GSInt16.cs" />
     <Compile Include="GSInt32.cs" />
     <Compile Include="GSList.cs" />

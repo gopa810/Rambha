@@ -10,18 +10,63 @@ using Rambha.Serializer;
 
 namespace Rambha.Document
 {
-    public class SMConnection: GSCore, IRSObjectOrigin
+    public class SMConnection: GSCore
     {
-        public MNDocument Document { get; set; }
-        public SMControl Source { get; set; }
-        public SMControl Target { get; set; }
+        public MNPage Page { get; set; }
+        public SMControl Source
+        {
+            get
+            {
+                if (p_source == null && p_source_lazy > 0)
+                {
+                    p_source = Page.FindObject(p_source_lazy);
+                    p_source_lazy = -1;
+                }
+                return p_source;
+            }
+            set
+            {
+                p_source = value;
+            }
+        }
+        public long SourceId
+        {
+            get { SMControl t = Source; return (t != null ? t.Id : p_source_lazy); }
+            set { p_source_lazy = value; }
+        }
+        private SMControl p_source = null;
+        private long p_source_lazy = -1;
+
+        public SMControl Target
+        {
+            get
+            {
+                if (p_target == null && p_target_lazy > 0)
+                {
+                    p_target = Page.FindObject(p_target_lazy);
+                    p_target_lazy = -1;
+                }
+                return p_target;
+            }
+            set
+            {
+                p_target = value;
+            }
+        }
+        public long TargetId
+        {
+            get { SMControl t = Target; return (t != null ? t.Id : p_target_lazy); }
+            set { p_target_lazy = value; }
+        }
+        private SMControl p_target = null;
+        private long p_target_lazy = -1;
 
         public SMConnectionStyle ConnectionStyle { get; set; }
 
-        public SMConnection(MNDocument doc)
+        public SMConnection(MNPage doc)
             : base()
         {
-            Document = doc;
+            Page = doc;
             ConnectionStyle = SMConnectionStyle.DirectLine;
             Source = null;
             Target = null;
@@ -79,32 +124,46 @@ namespace Rambha.Document
                 Convert.ToInt32(src.Y + Math.Sin(angle) * elipse.Height / 2));
         }
 
-        public Point IntersectionPointLineRect(Rectangle rect, Point tar)
+        public Point IntersectionPointLineRect(Rectangle bounds, Point tar)
         {
-            Point src = CenterPoint(rect);
-            Size vector = Vector(tar, src);
-            int ax = src.X;
-            int ay = src.Y;
-            int df = 0;
-            double t = 0.0;
+            Point cp = new Point((bounds.Left + bounds.Right) / 2, (bounds.Top + bounds.Bottom) / 2);
+            Point intPoint = new Point();
+            double Xc = tar.X - cp.X;
+            double Yc = tar.Y - cp.Y;
+            double rat = Convert.ToDouble(bounds.Height) / Convert.ToDouble(bounds.Width);
+            Xc *= rat;
 
-            if (tar.X > rect.Right || tar.X < rect.Left)
+            if (Xc * Xc + Yc * Yc == 0)
+                return cp;
+
+            if (Xc + Yc > 0) // B or C
             {
-                df = tar.X - src.X;
-                t = (rect.Width / 2) / df;
-                ax = Convert.ToInt32(t * df);
-                ay = Convert.ToInt32(t * df);
+                if (Xc < Yc) // C
+                {
+                    intPoint.X = cp.X + Convert.ToInt32((bounds.Bottom - cp.Y) * Xc / (Yc * rat));
+                    intPoint.Y = bounds.Bottom;
+                }
+                else // D
+                {
+                    intPoint.X = bounds.Right;
+                    intPoint.Y = cp.Y + Convert.ToInt32((bounds.Right - cp.X) * Yc * rat / Xc);
+                }
+            }
+            else // A or D
+            {
+                if (Xc < Yc) // B
+                {
+                    intPoint.X = bounds.Left;
+                    intPoint.Y = cp.Y + Convert.ToInt32((bounds.Left - cp.X) * Yc * rat / Xc);
+                }
+                else// A
+                {
+                    intPoint.X = cp.X + Convert.ToInt32((bounds.Top - cp.Y) * Xc / (Yc * rat));
+                    intPoint.Y = bounds.Top;
+                }
             }
 
-            if (ay < rect.Bottom || ay > rect.Top)
-            {
-                df = ay - src.Y;
-                t = (rect.Height / 2) / df;
-                ax = Convert.ToInt32(t * df);
-                ay = Convert.ToInt32(t * df);
-            }
-
-            return new Point(ax, ay);
+            return intPoint;
         }
 
         public static float IntersectionLines(int sX, int sY, int tX, int tY, int s2X, int s2Y, int t2X, int t2Y, out Point intersection)
@@ -158,25 +217,13 @@ namespace Rambha.Document
                     case 10:
                         /*Source = new SMControlLoadingPlaceholder() { controlId = br.ReadInt32() };
                         Target = new SMControlLoadingPlaceholder() { controlId = br.ReadInt32() };*/
-                        br.AddReference(Document, "SMControl", br.ReadInt64(), 10, this);
-                        br.AddReference(Document, "SMControl", br.ReadInt64(), 11, this);
+                        SourceId = br.ReadInt64();
+                        TargetId = br.ReadInt64();
                         ConnectionStyle = (SMConnectionStyle)br.ReadInt32();
                         break;
                 }
             }
         }
 
-        public void setReference(int tag, object obj)
-        {
-            switch (tag)
-            {
-                case 10:
-                    if (obj is SMControl) Source = (SMControl)obj;
-                    break;
-                case 11:
-                    if (obj is SMControl) Target = (SMControl)obj;
-                    break;
-            }
-        }
     }
 }

@@ -151,6 +151,16 @@ namespace SlideMaker.Views
             return p_expandable;
         }
 
+
+        public TVItem FindChild(string p)
+        {
+            foreach (TVItem item in Children)
+            {
+                if (item.GetName().Equals(p))
+                    return item;
+            }
+            return null;
+        }
     }
 
 }

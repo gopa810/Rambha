@@ -34,5 +34,29 @@ namespace SlideMaker.Properties {
                 this["UniqueID"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastDirectory {
+            get {
+                return ((string)(this["LastDirectory"]));
+            }
+            set {
+                this["LastDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastDirLang {
+            get {
+                return ((string)(this["LastDirLang"]));
+            }
+            set {
+                this["LastDirLang"] = value;
+            }
+        }
     }
 }

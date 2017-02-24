@@ -34,6 +34,23 @@ namespace Rambha.Document
         BottomLeft, BottomCenter, BottomRight
     }
 
+    public enum SMVerticalAlign
+    {
+        Top = 0,
+        Center = 1,
+        Bottom = 2,
+        Undefined = 3
+    }
+
+    public enum SMHorizontalAlign
+    {
+        Left = 0,
+        Center = 1,
+        Right = 2,
+        Justify = 3,
+        Undefined = 4
+    }
+
 
 
     [TypeConverter(typeof(ExpandableObjectConverter))]
@@ -101,6 +118,15 @@ namespace Rambha.Document
         Stretch
     }
 
+    public enum SMLineStyle
+    {
+        None,
+        Plain,
+        Dashed,
+        ZigZag,
+        Doted
+    }
+
     public enum SMBorderStyle
     {
         None,
@@ -113,6 +139,15 @@ namespace Rambha.Document
     {
         Vertical,
         Horizontal
+    }
+
+    public enum SMContentType
+    {
+        Undefined,
+        Text,
+        Audio,
+        AudioText,
+        Image
     }
 
     public enum SMDragResponse
@@ -134,11 +169,13 @@ namespace Rambha.Document
     public enum SMRunningLine
     {
         SingleWord,
-        FullLine
+        Justify,
+        Natural
     }
 
     public enum SMConnectionStyle
     {
+        Invisible,
         DirectLine
     }
 }

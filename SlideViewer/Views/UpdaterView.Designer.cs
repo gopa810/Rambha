@@ -31,6 +31,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.updaterDownloader1 = new SlideViewer.UpdaterDownloader();
             this.updaterSelectFiles1 = new SlideViewer.UpdaterSelectFiles();
             this.updaterGetStatus1 = new SlideViewer.UpdaterGetStatus();
             this.panel1.SuspendLayout();
@@ -54,6 +55,7 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.Controls.Add(this.updaterDownloader1);
             this.panel1.Controls.Add(this.updaterSelectFiles1);
             this.panel1.Controls.Add(this.updaterGetStatus1);
             this.panel1.Location = new System.Drawing.Point(20, 90);
@@ -64,6 +66,15 @@
             // backgroundWorker1
             // 
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            // 
+            // updaterDownloader1
+            // 
+            this.updaterDownloader1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.updaterDownloader1.Location = new System.Drawing.Point(5, 205);
+            this.updaterDownloader1.Name = "updaterDownloader1";
+            this.updaterDownloader1.Size = new System.Drawing.Size(196, 151);
+            this.updaterDownloader1.TabIndex = 2;
+            this.updaterDownloader1.OnDownloadComplete += new SlideViewer.GeneralArgsEvent(this.updaterDownloader1_OnDownloadComplete);
             // 
             // updaterSelectFiles1
             // 
@@ -105,5 +116,6 @@
         private UpdaterSelectFiles updaterSelectFiles1;
         private UpdaterGetStatus updaterGetStatus1;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private UpdaterDownloader updaterDownloader1;
     }
 }

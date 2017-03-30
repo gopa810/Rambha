@@ -21,6 +21,10 @@ namespace SlideMaker.Views
 
         private MNReferencedSpot CurrentSpot = null;
 
+        private Pen blackThickPen = null;
+        private Pen whiteThinPen = Pens.White;
+
+
         public MNReferencedImage Image 
         {
             get
@@ -37,6 +41,7 @@ namespace SlideMaker.Views
         public EditSpotsEditorView()
         {
             InitializeComponent();
+            blackThickPen = new Pen(Color.Black, 3);
         }
 
         private void ImageSpotsEditorView_Paint(object sender, PaintEventArgs e)
@@ -63,7 +68,7 @@ namespace SlideMaker.Views
             {
                 foreach (MNReferencedSpot spot in p_image.SafeSpots)
                 {
-                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot));
+                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot), blackThickPen, whiteThinPen);
                 }
             }
 
@@ -80,6 +85,7 @@ namespace SlideMaker.Views
             spot.AnchorB = new Point(0, 10);
 
             p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
             Invalidate();
         }
 
@@ -94,6 +100,7 @@ namespace SlideMaker.Views
             spot.AnchorB = new Point(0, 10);
 
             p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
             Invalidate();
         }
 
@@ -164,6 +171,7 @@ namespace SlideMaker.Views
                 {
                     Point newAbsCenter = new Point(e.X - p_moveCenterCorr.X, e.Y - p_moveCenterCorr.Y);
                     p_movedSpot.Center = p_image.AbsToRel(showRect, newAbsCenter);
+                    p_image.Modified = true;
                     Invalidate();
                 }
                 else if (p_resizedSpot != null)
@@ -175,6 +183,7 @@ namespace SlideMaker.Views
                         p_resizedSpot.AnchorA = p;
                     else
                         p_resizedSpot.AnchorB = p;
+                    p_image.Modified = true;
                     Invalidate();
                 }
             }
@@ -212,6 +221,7 @@ namespace SlideMaker.Views
                 if (MessageBox.Show("Do you want to delete selected spot area?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     p_image.SafeSpots.Remove(CurrentSpot);
+                    p_image.Modified = true;
                     Invalidate();
                 }
             }

@@ -49,6 +49,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioPlayer.cs" />
+    <Compile Include="Controls\SMTitledMessage.cs" />
+    <Compile Include="Controls\SMImageButton.cs" />
+    <Compile Include="Controls\SMOrderedList.cs" />
+    <Compile Include="Controls\SMSelection.cs" />
     <Compile Include="Dialogs\DialogNextPageConnection.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -89,6 +93,7 @@
     <Compile Include="SMConnection.cs" />
     <Compile Include="Controls\SMKeyboard.cs" />
     <Compile Include="Controls\SMMemoryGame.cs" />
+    <Compile Include="SMRichText.cs" />
     <Compile Include="SMTokenItem.cs" />
     <Compile Include="MNReferencedStyle.cs" />
     <Compile Include="SMWordToken.cs" />

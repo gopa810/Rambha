@@ -2,94 +2,168 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 
 using Rambha.Document;
 using Rambha.Script;
 
 namespace SlideMaker.Views
 {
-    public class TADocAddPage : NABase
+    public class TVAction : NABase
     {
-        bool IsPage = true;
-
-        public TADocAddPage(TreeObjectView v, string t, MNDocument doc, bool isPage)
+        public string Script { get; set; }
+        public TVAction(TreeObjectView v, string t)
             : base(t)
         {
-            View = v;
-            Document = doc;
-            IsPage = isPage;
-        }
-
-        public override void Execute()
-        {
-            GSCore newObject = null;
-            if (IsPage)
-                newObject = Document.CreateNewPage();
-            else
-                newObject = Document.CreateNewTemplate();
-            View.Invalidate(newObject);
-            base.Execute();
-        }
-    }
-
-    public class TADocAddMenu : NABase
-    {
-        public TADocAddMenu(TreeObjectView v, string t, MNDocument doc)
-            : base(t)
-        {
-            View = v;
-            Document = doc;
-        }
-
-        public override void Execute()
-        {
-            MNMenu menu = new MNMenu();
-            Document.Data.Menus.Add(menu);
-            base.Execute();
-        }
-    }
-
-    public class TADocAddText : NABase
-    {
-        bool IsScript = true;
-
-        public TADocAddText(TreeObjectView v, string t)
-            : base(t)
-        {
+            Script = "";
             View = v;
             Document = null;
-            IsScript = true;
         }
 
-
-        public TADocAddText(TreeObjectView v, string t, MNDocument doc, bool is_script) : base(t)
+        public TVAction(TreeObjectView v, string t, MNPage p)
+            : base(t)
         {
+            Script = "";
             View = v;
-            Document = doc;
-            IsScript = is_script;
+            Page = p;
+            Document = null;
         }
+
+        public TVAction(TreeObjectView v, string t, MNPage p, string script)
+            : base(t)
+        {
+            Script = "";
+            View = v;
+            Page = p;
+            Script = script;
+            Document = null;
+        }
+
+        public TVAction(TreeObjectView v, string t, MNDocument d)
+            : base(t)
+        {
+            Script = "";
+            View = v;
+            Page = null;
+            Document = d;
+        }
+
+        public TVAction(TreeObjectView v, string t, MNDocument d, string script)
+            : base(t)
+        {
+            Script = "";
+            View = v;
+            Page = null;
+            Script = script;
+            Document = d;
+        }
+
 
         public override void Execute()
         {
-            if (Document != null)
+            if (Script.Equals("insertPage"))
             {
-                Document.CreateNewText(IsScript);
+                if (Page != null)
+                {
+                    DialogEnterPageNames dlg = new DialogEnterPageNames();
+                    if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        string[] names = dlg.Names;
+                        if (names != null && names.Length > 0)
+                        {
+                            List<MNPage> pages = Page.Document.Data.Pages;
+                            int idx = pages.IndexOf(Page);
+                            if (idx >= 0 && idx < pages.Count)
+                            {
+                                foreach (string pageName in names)
+                                {
+                                    idx++;
+                                    MNPage p = new MNPage(Page.Document);
+                                    p.Title = pageName;
+                                    p.Id = Page.Document.Data.GetNextId();
+                                    pages.Insert(idx, p);
+                                }
+                            }
+
+                            MNNotificationCenter.BroadcastMessage(Page, "PageInserted");
+                        }
+                    }
+                }
             }
-            else if (Page != null)
+            else if (Script.Equals("addPage"))
             {
-                MNReferencedText rt = new MNReferencedText();
-                rt.Name = "Untitled";
-                Page.Scripts.Add(rt);
-                MNNotificationCenter.BroadcastMessage(Page, "TextInserted", rt);
+                if (Document != null)
+                    Document.CreateNewPage();
+                else if (Page != null)
+                    Page.Document.CreateNewPage();
+                MNNotificationCenter.BroadcastMessage(Page, "PageInserted");
             }
-            else if (Control != null)
+            else if (Script.Equals("deletePage"))
             {
-                MNReferencedText rt = new MNReferencedText();
-                rt.Name = "Untitled";
-                Control.Scripts.Add(rt);
-                MNNotificationCenter.BroadcastMessage(Control, "TextInserted", rt);
+                if (Page != null)
+                {
+                    if (MessageBox.Show("Are you sure to delete this page?", "Question", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        Page.Document.Data.Pages.Remove(Page);
+                        MNNotificationCenter.BroadcastMessage(Page, "PageInserted");
+                    }
+                }
             }
+            else if (Script.Equals("addToShared"))
+            {
+                if (Page != null)
+                {
+                    MNSharedObjects.AddTemplate(Page);
+                    MNSharedObjects.Save();
+                }
+            }
+            else if (Script.Equals("addTemplate"))
+            {
+                if (Document != null)
+                    Document.CreateNewTemplate();
+                else if (Page != null)
+                    Page.Document.CreateNewTemplate();
+                MNNotificationCenter.BroadcastMessage(Page, "PageInserted");
+            }
+            else if (Script.Equals("addMenu"))
+            {
+                MNMenu menu = new MNMenu();
+                if (Document != null)
+                    Document.Data.Menus.Add(menu);
+                else if (Page != null)
+                    Page.Document.Data.Menus.Add(menu);
+            }
+            else if (Script.Equals("addScript"))
+            {
+                if (Document != null)
+                {
+                    Document.CreateNewText(true);
+                }
+                else if (Page != null)
+                {
+                    MNReferencedText rt = new MNReferencedText();
+                    rt.Name = "Untitled";
+                    Page.Scripts.Add(rt);
+                    MNNotificationCenter.BroadcastMessage(Page, "TextInserted", rt);
+                }
+                else if (Control != null)
+                {
+                    MNReferencedText rt = new MNReferencedText();
+                    rt.Name = "Untitled";
+                    Control.Scripts.Add(rt);
+                    MNNotificationCenter.BroadcastMessage(Control, "TextInserted", rt);
+                }
+            }
+            else if (Script.Equals("addText"))
+            {
+                if (Document != null)
+                {
+                    Document.CreateNewText(false);
+                }
+            }
+
             base.Execute();
         }
     }
+
 }

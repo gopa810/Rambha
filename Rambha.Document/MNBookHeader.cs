@@ -43,6 +43,12 @@ namespace Rambha.Document
         [Browsable(true), DisplayName("Book Color"), Category("Document")]
         public Color BookColor { get; set; }
 
+        [Browsable(true), DisplayName("Ordering Priority"), Category("Presentation")]
+        public int BookPriority { get; set; }
+
+        [Browsable(false), Category("Presentation")]
+        public int DefaultFontSize { get; set; }
+
         [Editor(typeof(ImageSelectionPropertyEditor), typeof(UITypeEditor))]
         [Browsable(true), DisplayName("Book Icon"), Category("Document")]
         public MNReferencedImage BookImageRef { get; set; }
@@ -52,6 +58,9 @@ namespace Rambha.Document
 
         [Browsable(true), Category("Document")]
         public String StartPage { get; set; }
+
+        [Browsable(true), Category("Document")]
+        public String HomePage { get; set; }
 
         [Browsable(true), ReadOnly(true), Category("Saving")]
         public string LastTimeSave { get; set; }
@@ -63,6 +72,8 @@ namespace Rambha.Document
         }
 
         private MNFileWorkTime WorkTime = new MNFileWorkTime();
+
+        public int Version { get; set; }
 
         [Browsable(false)]
         public Image BookImage 
@@ -92,6 +103,10 @@ namespace Rambha.Document
             BookImageRef = null;
             BookPublisher = "";
             BookColor = Color.White;
+            BookPriority = 0;
+            HomePage = "start";
+            Version = 2;
+            DefaultFontSize = 32;
 
             WorkTime.SetTotalWorkTime(0);
         }
@@ -135,6 +150,18 @@ namespace Rambha.Document
             bw.WriteByte(21);
             bw.WriteInt64(WorkTime.GetTotalWorkTime());
 
+            bw.WriteByte(22);
+            bw.WriteInt32(BookPriority);
+
+            bw.WriteByte(23);
+            bw.WriteString(HomePage);
+
+            bw.WriteByte(24);
+            bw.WriteInt32(Version);
+
+            bw.WriteByte(25);
+            bw.WriteInt32(DefaultFontSize);
+
             bw.WriteByte(0);
         }
 
@@ -143,6 +170,7 @@ namespace Rambha.Document
             if (!br.ReadHeader(p_fileHeader))
                 throw new Exception("Invalid header for book file");
 
+            Version = 1;
             byte b;
             while ((b = br.ReadByte()) != 0)
             {
@@ -187,6 +215,18 @@ namespace Rambha.Document
                         break;
                     case 21:
                         WorkTime.SetTotalWorkTime(br.ReadInt64());
+                        break;
+                    case 22:
+                        BookPriority = br.ReadInt32();
+                        break;
+                    case 23:
+                        HomePage = br.ReadString();
+                        break;
+                    case 24:
+                        Version = br.ReadInt32();
+                        break;
+                    case 25:
+                        DefaultFontSize = br.ReadInt32();
                         break;
                 }
             }

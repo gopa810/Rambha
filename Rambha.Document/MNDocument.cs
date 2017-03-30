@@ -61,30 +61,18 @@ namespace Rambha.Document
 
         }
 
-        private void InitialiseDefaultStyles()
+        public void InitialiseDefaultStyles()
         {
             MNReferencedStyle ds = new MNReferencedStyle();
             ds.Name = "Default";
-            ds.FontSize = 20f;
-            ds.ForeColor = Color.Black;
-            ds.BackColor = Color.Transparent;
-            ds.BorderStyle = SMBorderStyle.None;
-            ds.Align = SMHorizontalAlign.Center;
-            ds.VertAlign = SMVerticalAlign.Center;
-            ds.HighForeColor = Color.Blue;
-            ds.HighBackColor = Color.LightBlue;
-            DefaultLanguage.Styles.Add(ds);
-
-            ds = new MNReferencedStyle();
-            ds.Name = "Normal";
-            ds.FontSize = 20f;
-            ds.ForeColor = Color.Black;
-            ds.BackColor = Color.Transparent;
-            ds.BorderStyle = SMBorderStyle.None;
-            ds.Align = SMHorizontalAlign.Left;
-            ds.VertAlign = SMVerticalAlign.Top;
-            ds.HighForeColor = Color.Blue;
-            ds.HighBackColor = Color.LightBlue;
+            ds.Font.Size = 14f;
+            ds.NormalState.ForeColor = Color.Black;
+            ds.NormalState.BackColor = Color.Transparent;
+            ds.NormalState.BorderStyle = SMBorderStyle.None;
+            ds.Paragraph.Align = SMHorizontalAlign.Left;
+            ds.Paragraph.VertAlign = SMVerticalAlign.Top;
+            ds.HighlightState.ForeColor = Color.Blue;
+            ds.HighlightState.BackColor = Color.LightBlue;
             ds.ContentPadding.Bottom = 5;
             ds.ContentPadding.Left = 5;
             ds.ContentPadding.Right = 5;
@@ -92,77 +80,113 @@ namespace Rambha.Document
             DefaultLanguage.Styles.Add(ds);
 
             ds = new MNReferencedStyle();
-            ds.Name = "NavigationButton";
-            ds.FontSize = 20f;
-            ds.ForeColor = Color.Black;
-            ds.BackColor = Color.White;
-            ds.BorderStyle = SMBorderStyle.RoundRectangle;
-            ds.BorderColor = Color.Black;
-            ds.BorderWidth = 1f;
-            ds.HighBackColor = Color.Gray;
-            ds.HighBorderColor = Color.DarkGreen;
-            ds.HighBorderStyle = SMBorderStyle.RoundRectangle;
-            ds.HighBorderWidth = 2f;
-            ds.HighForeColor = Color.DarkGreen;
-            ds.Align = SMHorizontalAlign.Center;
-            ds.VertAlign = SMVerticalAlign.Center;
+            ds.Name = "Default Centered";
+            ds.Font.Size = 14f;
+            ds.NormalState.ForeColor = Color.Black;
+            ds.NormalState.BackColor = Color.Transparent;
+            ds.NormalState.BorderStyle = SMBorderStyle.None;
+            ds.Paragraph.Align = SMHorizontalAlign.Left;
+            ds.Paragraph.VertAlign = SMVerticalAlign.Top;
+            ds.HighlightState.ForeColor = Color.Blue;
+            ds.HighlightState.BackColor = Color.LightBlue;
+            ds.ContentPadding.Bottom = 5;
+            ds.ContentPadding.Left = 5;
+            ds.ContentPadding.Right = 5;
+            ds.ContentPadding.Top = 5;
             DefaultLanguage.Styles.Add(ds);
-
 
             ds = new MNReferencedStyle();
-            ds.Name = "PageHeader";
-            ds.FontSize = 20f;
-            ds.ForeColor = Color.White;
-            ds.BackColor = Color.Gray;
-            ds.BorderStyle = SMBorderStyle.Rectangle;
-            ds.BorderColor = Color.LightGray;
-            ds.BorderWidth = 2f;
-            ds.Align = SMHorizontalAlign.Center;
-            ds.VertAlign = SMVerticalAlign.Center;
+            ds.Name = "NavigationButton White";
+            ds.Font.Size = 20f;
+            ds.NormalState.ForeColor = Color.Black;
+            ds.NormalState.BackColor = Color.White;
+            ds.NormalState.BorderStyle = SMBorderStyle.RoundRectangle;
+            ds.NormalState.BorderColor = Color.Black;
+            ds.NormalState.BorderWidth = 1f;
+            ds.HighlightState.BackColor = Color.Gray;
+            ds.HighlightState.BorderColor = Color.DarkGreen;
+            ds.HighlightState.BorderStyle = SMBorderStyle.RoundRectangle;
+            ds.HighlightState.BorderWidth = 2f;
+            ds.HighlightState.ForeColor = Color.DarkGreen;
+            ds.Paragraph.Align = SMHorizontalAlign.Center;
+            ds.Paragraph.VertAlign = SMVerticalAlign.Center;
             DefaultLanguage.Styles.Add(ds);
+
+            ds = new MNReferencedStyle();
+            ds.Name = "NavigationButton2";
+            ds.Font.Size = 20f;
+            ds.NormalState.ForeColor = Color.White;
+            ds.NormalState.BackColor = Color.FromArgb(255,192,128);
+            ds.NormalState.BorderStyle = SMBorderStyle.RoundRectangle;
+            ds.NormalState.BorderColor = Color.FromArgb(255,128,0);
+            ds.NormalState.BorderWidth = 2f;
+            ds.NormalState.CornerRadius = 15;
+            ds.HighlightState.BackColor = Color.FromArgb(255,128,0);
+            ds.HighlightState.BorderColor = Color.FromArgb(255,192,128);
+            ds.HighlightState.BorderStyle = SMBorderStyle.RoundRectangle;
+            ds.HighlightState.BorderWidth = 2f;
+            ds.HighlightState.CornerRadius = 15;
+            ds.HighlightState.ForeColor = Color.White;
+            ds.Paragraph.Align = SMHorizontalAlign.Center;
+            ds.Paragraph.VertAlign = SMVerticalAlign.Center;
+            DefaultLanguage.Styles.Add(ds);
+
 
             ds = new MNReferencedStyle();
             ds.Name = "Footnote";
-            ds.FontSize = 16f;
-            ds.ForeColor = Color.Black;
-            ds.BackColor = Color.Silver;
-            ds.BorderStyle = SMBorderStyle.RoundRectangle;
-            ds.CornerRadius = 10;
-            ds.ContentPadding.Bottom = 10;
-            ds.ContentPadding.Left = 15;
-            ds.ContentPadding.Right = 15;
+            ds.Font.Size = 16f;
+            ds.NormalState.ForeColor = Color.Black;
+            ds.NormalState.BackColor = Color.Silver;
+            ds.NormalState.BorderStyle = SMBorderStyle.RoundRectangle;
+            ds.NormalState.CornerRadius = 10;
+            ds.ContentPadding.Bottom = 20;
+            ds.ContentPadding.Left = 25;
+            ds.ContentPadding.Right = 25;
             ds.ContentPadding.Top = 10;
-            ds.Align = SMHorizontalAlign.Left;
-            ds.VertAlign = SMVerticalAlign.Top;
-            ds.HighForeColor = Color.Blue;
-            ds.HighBackColor = Color.LightBlue;
+            ds.Paragraph.Align = SMHorizontalAlign.Left;
+            ds.Paragraph.VertAlign = SMVerticalAlign.Top;
+            ds.HighlightState.ForeColor = Color.Blue;
+            ds.HighlightState.BackColor = Color.LightBlue;
+            ds.HighlightState.CornerRadius = 10;
             DefaultLanguage.Styles.Add(ds);
 
             ds = new MNReferencedStyle();
             ds.Name = "BigLetters";
-            ds.FontSize = 50f;
-            ds.ForeColor = Color.Black;
-            ds.BackColor = Color.Transparent;
-            ds.BorderStyle = SMBorderStyle.None;
-            ds.Align = SMHorizontalAlign.Center;
-            ds.VertAlign = SMVerticalAlign.Center;
-            ds.HighForeColor = Color.Blue;
-            ds.HighBackColor = Color.LightBlue;
+            ds.Font.Size = 50f;
+            ds.NormalState.ForeColor = Color.Black;
+            ds.NormalState.BackColor = Color.Transparent;
+            ds.NormalState.BorderStyle = SMBorderStyle.None;
+            ds.Paragraph.Align = SMHorizontalAlign.Center;
+            ds.Paragraph.VertAlign = SMVerticalAlign.Center;
+            ds.HighlightState.ForeColor = Color.Blue;
+            ds.HighlightState.BackColor = Color.LightBlue;
             DefaultLanguage.Styles.Add(ds);
 
             ds = new MNReferencedStyle();
-            ds.Name = "MediumLetters";
-            ds.FontSize = 35f;
-            ds.ForeColor = Color.Black;
-            ds.BackColor = Color.Transparent;
-            ds.BorderStyle = SMBorderStyle.None;
-            ds.Align = SMHorizontalAlign.Center;
-            ds.VertAlign = SMVerticalAlign.Center;
-            ds.HighForeColor = Color.Blue;
-            ds.HighBackColor = Color.LightBlue;
+            ds.Name = "ChildrenText Centered";
+            ds.Font.Size = 30f;
+            ds.NormalState.ForeColor = Color.Black;
+            ds.NormalState.BackColor = Color.Transparent;
+            ds.NormalState.BorderStyle = SMBorderStyle.None;
+            ds.Paragraph.Align = SMHorizontalAlign.Center;
+            ds.Paragraph.VertAlign = SMVerticalAlign.Center;
+            ds.HighlightState.ForeColor = Color.Blue;
+            ds.HighlightState.BackColor = Color.LightBlue;
             DefaultLanguage.Styles.Add(ds);
 
+            ds = new MNReferencedStyle();
+            ds.Name = "ChildrenText";
+            ds.Font.Size = 30f;
+            ds.NormalState.ForeColor = Color.Black;
+            ds.NormalState.BackColor = Color.Transparent;
+            ds.NormalState.BorderStyle = SMBorderStyle.None;
+            ds.Paragraph.Align = SMHorizontalAlign.Left;
+            ds.Paragraph.VertAlign = SMVerticalAlign.Top;
+            ds.HighlightState.ForeColor = Color.Blue;
+            ds.HighlightState.BackColor = Color.LightBlue;
+            DefaultLanguage.Styles.Add(ds);
 
+            DefaultLanguage.Modified = true;
         }
 
         ~MNDocument()
@@ -226,7 +250,10 @@ namespace Rambha.Document
             if (isScript)
                 Data.Scripts.Add(rt);
             else
+            {
                 DefaultLanguage.Texts.Add(rt);
+                DefaultLanguage.Modified = true;
+            }
 
             MNNotificationCenter.BroadcastMessage(this, "TextInserted", rt);
 
@@ -259,6 +286,8 @@ namespace Rambha.Document
             {
                 case "title":
                     return new GSString(Book.BookTitle);
+                case "page":
+                    return MNNotificationCenter.CurrentPage;
                 default:
                     return base.GetPropertyValue(s);
             }
@@ -268,7 +297,7 @@ namespace Rambha.Document
         {
             foreach (MNPage page in Data.Pages)
             {
-                if (page.Title.Equals(pageName))
+                if (page.Title.Equals(pageName, StringComparison.CurrentCultureIgnoreCase))
                     return page;
             }
             return null;
@@ -296,11 +325,16 @@ namespace Rambha.Document
 
         public MNReferencedImage FindImage(long imageId)
         {
+            Debugger.Log(0, "", "FindImage: " + imageId + "\n");
             foreach (MNReferencedImage img in DefaultLanguage.Images)
             {
                 if (img.Id == imageId)
+                {
+                    Debugger.Log(0, "", "FindImage: " + imageId + " - found\n");
                     return img;
+                }
             }
+            Debugger.Log(0, "", "FindImage: " + imageId + " - not found\n");
             return null;
         }
 
@@ -439,7 +473,8 @@ namespace Rambha.Document
                 switch (Book.Evaluation)
                 {
                     case MNEvaluationType.Immediate: return true;
-                    default: return false;
+                    case MNEvaluationType.Inherited: return true;
+                    default: return true;
                 }
             }
         }
@@ -451,7 +486,7 @@ namespace Rambha.Document
                 switch (Book.Evaluation)
                 {
                     case MNEvaluationType.Lazy: return true;
-                    case MNEvaluationType.Inherited: return true;
+                    case MNEvaluationType.Inherited: return false;
                     default: return false;
                 }
             }
@@ -472,6 +507,7 @@ namespace Rambha.Document
             MNReferencedImage image = new MNReferencedImage();
             image.Id = Data.GetNextId();
             DefaultLanguage.Images.Add(image);
+            DefaultLanguage.Modified = true;
             return image;
         }
 
@@ -496,6 +532,11 @@ namespace Rambha.Document
                 value = CurrentLanguage.FindObject(contentId);
             }
 
+            if (value == null && DefaultLanguage != null)
+            {
+                value = DefaultLanguage.FindObject(contentId);
+            }
+
             if (value == null && type == SMContentType.Text)
             {
                 MNReferencedText rt = FindText(contentId);
@@ -516,6 +557,16 @@ namespace Rambha.Document
             foreach (MNPage page in Data.Templates)
             {
                 if (page.Id == p_template_lazy)
+                    return page;
+            }
+            return null;
+        }
+
+        public MNPage FindTemplateName(string p_template_lazy)
+        {
+            foreach (MNPage page in Data.Templates)
+            {
+                if (page.Title.Equals(p_template_lazy, StringComparison.CurrentCultureIgnoreCase))
                     return page;
             }
             return null;
@@ -550,6 +601,61 @@ namespace Rambha.Document
             MNNotificationCenter.BroadcastMessage(this, "NewPageInserted", newPage);
 
             return newPage;
+        }
+
+        public MNReferencedSound FindSound(string soundName)
+        {
+            MNReferencedSound s = null;
+            if (CurrentLanguage != null)
+                s = CurrentLanguage.FindSound(soundName);
+            if (s != null)
+                return s;
+            if (DefaultLanguage != null)
+                s = DefaultLanguage.FindSound(soundName);
+            return s;
+        }
+
+        public string ResolveProperty(string p)
+        {
+            GSCore c = null;
+            if (HasViewer)
+            {
+                c = Viewer.ResolveProperty(p);
+            }
+            else
+            {
+                c = EvaluateProperty(p);
+            }
+            return c.getStringValue();
+        }
+
+        public void ReapplyStyles()
+        {
+            foreach (MNPage p in Data.Pages)
+            {
+                foreach (SMControl c in p.Objects)
+                {
+                    MNReferencedStyle style = DefaultLanguage.FindStyle(c.StyleName);
+                    if (style != null)
+                        c.ApplyStyle(style);
+                    else
+                        c.Font.Size = Math.Max(c.Font.Size, 12);
+                }
+            }
+
+            foreach (MNPage p in Data.Templates)
+            {
+                foreach (SMControl c in p.Objects)
+                {
+                    MNReferencedStyle style = DefaultLanguage.FindStyle(c.StyleName);
+                    if (style != null)
+                        c.ApplyStyle(style);
+                    else
+                        c.Font.Size = Math.Max(c.Font.Size, 12);
+                }
+            }
+
+            Book.Version = Math.Max(2, Book.Version);
         }
     }
 

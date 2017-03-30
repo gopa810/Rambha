@@ -11,5 +11,8 @@
     <Setting Name="LastDirLang" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="Pairs" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Th is</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

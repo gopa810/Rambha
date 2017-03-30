@@ -77,8 +77,8 @@ namespace Rambha.Document
             if (Source == null || Target == null)
                 return;
 
-            SMRectangleArea sa = context.CurrentPage.GetArea(Source.Id);
-            SMRectangleArea ta = context.CurrentPage.GetArea(Target.Id);
+            SMRectangleArea sa = Source.Area;
+            SMRectangleArea ta = Target.Area;
 
             Rectangle rs = sa.GetBounds(context);
             Rectangle rt = ta.GetBounds(context);
@@ -86,12 +86,12 @@ namespace Rambha.Document
             Point sc = Point.Empty;
             Point tc = Point.Empty;
 
-            if (Source.Style.BorderStyle == SMBorderStyle.Elipse)
+            if (Source.NormalState.BorderStyle == SMBorderStyle.Elipse)
                 sc = IntersectionPointLineElipse(rs, CenterPoint(rt));
             else
                 sc = IntersectionPointLineRect(rs, CenterPoint(rt));
 
-            if (Target.Style.BorderStyle == SMBorderStyle.Elipse)
+            if (Target.NormalState.BorderStyle == SMBorderStyle.Elipse)
                 tc = IntersectionPointLineElipse(rt, CenterPoint(rs));
             else
                 tc = IntersectionPointLineRect(rt, CenterPoint(rs));

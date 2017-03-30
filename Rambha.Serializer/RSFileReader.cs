@@ -66,7 +66,8 @@ namespace Rambha.Serializer
 
         public bool ReadHeader(byte[] ba)
         {
-            byte[] ha = br.ReadBytes(ba.Length);
+            Log("HEADER\n");
+            byte[] ha = ReadBytes(ba.Length);
             if (!ByteArrayCompare(ha, ba))
             {
                 Log("File Header does not equal to expected value.");

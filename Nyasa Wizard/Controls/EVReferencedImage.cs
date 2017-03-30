@@ -15,6 +15,7 @@ namespace SlideMaker
     {
         private MNDocument doc = null;
         private MNLazyImage image = null;
+        public SMImage control = null;
 
         public EVReferencedImage()
         {
@@ -33,6 +34,7 @@ namespace SlideMaker
             {
                 comboBox1.Items.Add(img);
             }
+            control = null;
         }
 
         public void SetImage(MNLazyImage li)
@@ -51,6 +53,7 @@ namespace SlideMaker
             }
             if (selected >= 0)
                 comboBox1.SelectedIndex = selected;
+            control = null;
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -82,6 +85,47 @@ namespace SlideMaker
                 SetDocument(doc);
         }
 
+        public string HeaderText
+        {
+            get
+            {
+                return label1.Text;
+            }
+            set
+            {
+                label1.Text = value;
+            }
+        }
 
+        public Color HeaderBackColor
+        {
+            get
+            {
+                return label1.BackColor;
+            }
+            set
+            {
+                label1.BackColor = value;
+            }
+        }
+
+        public void SetControl(SMImage sMImage)
+        {
+            SetDocument(sMImage.Document);
+            SetImage(sMImage.Img);
+            control = sMImage;
+            if (control != null)
+                trackBar1.Value = control.SourceOffsetX / 5;
+        }
+
+        private void trackBar1_ValueChanged(object sender, EventArgs e)
+        {
+            if (control != null)
+            {
+                control.SourceOffsetX = trackBar1.Value * 5;
+                control.SourceOffsetY = trackBar1.Value * 5;
+                EVContainer.Shared.OnValueUpdatedImmediate();
+            }
+        }
     }
 }

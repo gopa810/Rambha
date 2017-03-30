@@ -104,51 +104,64 @@ namespace SlideViewer
 
         public void Play()
         {
-            if (sound != null && sound.GetData() != null)
+            ErrorCatcher.currentOperation = "PlaySound ";
+            try
             {
-                if (Playing == true)
+                if (sound != null && sound.GetData() != null)
                 {
-                    Stop();
-                }
-
-                if (p_memoryStream == null)
-                {
-                    p_memoryStream = new MemoryStream(sound.GetData());
-                }
-
-                if (p_audioFileReader != null)
-                {
-                    p_audioFileReader.Dispose();
-                    p_audioFileReader = null;
-                }
-
-                if (p_audioFileReader == null)
-                {
-                    p_audioFileReader = GetAudioStream();
-                }
-
-                if (p_audioFileReader != null)
-                {
-                    TimeSpan length = p_audioFileReader.TotalTime;
-                    timer1.Interval = Convert.ToInt32(length.TotalMilliseconds);
-                    timer1.Start();
-
-                    if (p_waveChannel == null)
-                        p_waveChannel = new WaveChannel32(p_audioFileReader);
-
-                    if (p_waveOut == null)
+                    ErrorCatcher.currentOperation = "PlaySound " + sound.Name;
+                    if (Playing == true)
                     {
-                        p_waveOut = new DirectSoundOut();
-                        p_waveOut.Init(p_waveChannel);
+                        Stop();
                     }
 
-                    if (p_waveOut != null)
+                    if (p_memoryStream == null)
                     {
-                        Debugger.Log(0, "", "Audio Player start.\n");
-                        p_waveOut.Play();
-                        Playing = true;
+                        p_memoryStream = new MemoryStream(sound.GetData());
+                    }
+
+                    if (p_audioFileReader != null)
+                    {
+                        p_audioFileReader.Dispose();
+                        p_audioFileReader = null;
+                    }
+
+                    if (p_audioFileReader == null)
+                    {
+                        p_audioFileReader = GetAudioStream();
+                    }
+
+                    if (p_audioFileReader != null)
+                    {
+                        TimeSpan length = p_audioFileReader.TotalTime;
+                        timer1.Interval = Convert.ToInt32(length.TotalMilliseconds);
+                        timer1.Start();
+
+                        if (p_waveChannel == null)
+                            p_waveChannel = new WaveChannel32(p_audioFileReader);
+
+                        if (p_waveOut == null)
+                        {
+                            p_waveOut = new DirectSoundOut();
+                            p_waveOut.Init(p_waveChannel);
+                        }
+
+                        if (p_waveOut != null)
+                        {
+                            Debugger.Log(0, "", "Audio Player start.\n");
+                            p_waveOut.Play();
+                            Playing = true;
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                ErrorCatcher.Add("Exception: {0}\n\nStackTrace: {1}\n\n\n", ex.Message, ex.StackTrace);
+            }
+            finally
+            {
+                ErrorCatcher.currentOperation = "";
             }
         }
     }

@@ -41,8 +41,8 @@ namespace SlideMaker
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             if (b_omit_checked) return;
-            AssociatedControl.Visible = checkBox1.Checked;
-            ParentFrame.OnPanelVisibilityChange(this);
+            /*AssociatedControl.Visible = checkBox1.Checked;
+            ParentFrame.OnPanelVisibilityChange(this);*/
 
         }
 

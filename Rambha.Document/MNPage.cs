@@ -42,9 +42,50 @@ namespace Rambha.Document
         [Browsable(true), Category("Evaluation")]
         public MNEvaluationType Evaluation { get; set; }
 
+        [Browsable(true), DisplayName("Next Page Title"), Category("API")]
+        public string NextPage { get; set; }
+
+        [Browsable(false)]
+        public bool ShowMessageAlways { get; set; }
+
+        [Browsable(false)]
+        public string MessageTitle { get; set; }
+
+        [Browsable(false)]
+        public string MessageText { get; set; }
+
+        [Browsable(false)]
+        public string TextB { get; set; }
+
+        [Browsable(false)]
+        public string TextC { get; set; }
+
+        [Browsable(true)]
+        public bool ShowBackNavigation { get; set; }
+
+        [Browsable(true)]
+        public bool ShowForwardNavigation { get; set; }
+
+        [Browsable(true)]
+        public bool ShowHome { get; set; }
+        
+        [Browsable(true)]
+        public bool ShowHelp { get; set; }
+
+        [Browsable(true)]
+        public bool ShowTitle { get; set; }
+
+        [Browsable(true)]
+        public bool DefaultAudioState { get; set; }
+
+        [Browsable(true)]
+        public bool ShowAudio { get; set; }
+
         private Color backgroundColor = Color.White;
         private Brush nontransparentBackgroundBrush = null;
         private Brush semitransparentBackgroundBrush = null;
+
+        public const int HEADER_HEIGHT = 64;
 
         public Color BackgroundColor
         {
@@ -70,8 +111,6 @@ namespace Rambha.Document
 
         public List<MNReferencedText> Scripts = new List<MNReferencedText>();
 
-        public Dictionary<long, SMRectangleArea> Areas = new Dictionary<long, SMRectangleArea>();
-
         public List<SMConnection> Connections = new List<SMConnection>();
 
         public SMRectangleArea Area = new SMRectangleArea();
@@ -84,10 +123,18 @@ namespace Rambha.Document
         {
             get 
             {
-                if (p_template == null && p_template_lazy > 0)
+                if (p_template == null)
                 {
-                    p_template = Document.FindTemplateId(p_template_lazy);
-                    p_template_lazy = -1;
+                    if (p_templateName_lazy.Length > 0)
+                    {
+                        p_template = Document.FindTemplateName(p_templateName_lazy);
+                        p_templateName_lazy = "";
+                    }
+                    else if (p_template_lazy > 0)
+                    {
+                        p_template = Document.FindTemplateId(p_template_lazy);
+                        p_template_lazy = -1;
+                    }
                 }
                 return p_template;
             }
@@ -102,14 +149,20 @@ namespace Rambha.Document
             get { MNPage t = Template; return (t != null ? t.Id : p_template_lazy); }
             set { p_template_lazy = value; }
         }
+        [Browsable(false)]
+        public string TemplateName
+        {
+            get { MNPage t = Template; return (t != null ? t.Title : p_templateName_lazy); }
+            set { p_templateName_lazy = value; }
+        }
         private MNPage p_template = null;
         private long p_template_lazy = -1;
+        private string p_templateName_lazy = "";
 
 
         public int ItemHeight = 0;
         public int ItemTextHeight = 0;
         public int Index = 0;
-
 
         public override GSCore GetPropertyValue(string s)
         {
@@ -117,6 +170,15 @@ namespace Rambha.Document
             {
                 case "title":
                     return p_title_obj;
+                case "messageTitle":
+                    return new GSString(MessageTitle);
+                case "messageText":
+                case "textA":
+                    return new GSString(MessageText);
+                case "textB":
+                    return new GSString(TextB);
+                case "textC":
+                    return new GSString(TextC);
                 default:
                     return base.GetPropertyValue(s);
             }
@@ -160,6 +222,8 @@ namespace Rambha.Document
                         if (ctrl.UniqueName.Equals(key))
                             return ctrl;
                     return GSVoid.Void;
+                case "messageText":
+                    return new GSString(MessageText);
                 default:
                     return base.ExecuteMessage(token, args);
             }
@@ -189,15 +253,6 @@ namespace Rambha.Document
                 }
             }
 
-            // areas
-            bw.WriteByte(12);
-            bw.WriteInt32(Areas.Count);
-            foreach(KeyValuePair<long,SMRectangleArea> pp in Areas)
-            {
-                bw.WriteInt64(pp.Key);
-                pp.Value.Save(bw);
-            }
-
             // connections
             bw.WriteByte(13);
             bw.WriteInt32(Connections.Count);
@@ -218,6 +273,48 @@ namespace Rambha.Document
                 rt.Save(bw);
             }
 
+            bw.WriteByte(17);
+            bw.WriteString(NextPage);
+
+            bw.WriteByte(18);
+            bw.WriteString(MessageText);
+
+            bw.WriteByte(19);
+            bw.WriteString(TextB);
+
+            bw.WriteByte(20);
+            bw.WriteString(TextC);
+
+            bw.WriteByte(21);
+            bw.WriteString(TemplateName);
+
+            bw.WriteByte(22);
+            bw.WriteBool(ShowTitle);
+
+            bw.WriteByte(23);
+            bw.WriteBool(ShowBackNavigation);
+
+            bw.WriteByte(24);
+            bw.WriteBool(ShowHelp);
+
+            bw.WriteByte(25);
+            bw.WriteBool(ShowHome);
+
+            bw.WriteByte(26);
+            bw.WriteBool(ShowForwardNavigation);
+
+            bw.WriteByte(27);
+            bw.WriteString(MessageTitle);
+
+            bw.WriteByte(28);
+            bw.WriteBool(ShowMessageAlways);
+
+            bw.WriteByte(29);
+            bw.WriteBool(DefaultAudioState);
+
+            bw.WriteByte(30);
+            bw.WriteBool(ShowAudio);
+
             // end of object
             bw.WriteByte(0);
         }
@@ -226,6 +323,13 @@ namespace Rambha.Document
         {
             byte tag;
             int c;
+            ShowTitle = true;
+            ShowHome = true;
+            ShowHelp = false;
+            ShowBackNavigation = true;
+            ShowForwardNavigation = true;
+            bool showAudioLoaded = false;
+
             while ((tag = br.ReadByte()) != 0)
             {
                 switch (tag)
@@ -236,6 +340,7 @@ namespace Rambha.Document
                         Description = br.ReadString();
                         IsTemplate = br.ReadBool();
                         TemplateId = br.ReadInt64();
+                        TemplateId = -1;
                         Evaluation = (MNEvaluationType)br.ReadInt32();
                         break;
                     case 11:
@@ -254,13 +359,21 @@ namespace Rambha.Document
                         break;
                     case 12:
                         c = br.ReadInt32();
-                        Areas.Clear();
                         for (int i = 0; i < c; i++)
                         {
                             long key = br.ReadInt64();
-                            SMRectangleArea sa = new SMRectangleArea();
-                            sa.Load(br);
-                            Areas.Add(key, sa);
+                            SMControl sa = FindObject(key);
+                            if (sa != null)
+                            {
+                                sa.Area.Load(br);
+                            }
+                            else
+                            {
+                                // throw away area with unknown ID
+                                SMRectangleArea ar = new SMRectangleArea();
+                                ar.Load(br);
+                                ar = null;
+                            }
                         }
                         break;
                     case 13:
@@ -284,8 +397,62 @@ namespace Rambha.Document
                         rt.Load(br);
                         Scripts.Add(rt);
                         break;
+                    case 17:
+                        NextPage = br.ReadString();
+                        break;
+                    case 18:
+                        MessageText = br.ReadString();
+                        if (MessageText.Length > 0)
+                            ShowHelp = true;
+                        break;
+                    case 19:
+                        TextB = br.ReadString();
+                        break;
+                    case 20:
+                        TextC = br.ReadString();
+                        break;
+                    case 21:
+                        TemplateName = br.ReadString();
+                        TemplateName = "";
+                        break;
+                    case 22: ShowTitle = br.ReadBool(); break;
+                    case 23: ShowBackNavigation = br.ReadBool(); break;
+                    case 24: ShowHelp = br.ReadBool(); break;
+                    case 25: ShowHome = br.ReadBool(); break;
+                    case 26: ShowForwardNavigation = br.ReadBool(); break;
+                    case 27:
+                        MessageTitle = br.ReadString();
+                        break;
+                    case 28: ShowMessageAlways = br.ReadBool(); break;
+                    case 29:
+                        DefaultAudioState = br.ReadBool();
+                        break;
+                    case 30:
+                        ShowAudio = br.ReadBool();
+                        showAudioLoaded = true;
+                        break;
                     default:
                         break;
+                }
+            }
+
+
+            if (!showAudioLoaded)
+            {
+                foreach (SMControl s in Objects)
+                {
+                    if (s.ContentId.Length > 0 && s.ContentType == SMContentType.Audio)
+                    {
+                        ShowAudio = !(s.ContentId.Equals("Title"));
+                        DefaultAudioState = (s.ContentId.Equals("Title"));
+                        showAudioLoaded = true;
+                        break;
+                    }
+                }
+
+                if (!showAudioLoaded)
+                {
+                    ShowAudio = false;
                 }
             }
 
@@ -297,6 +464,20 @@ namespace Rambha.Document
             Document = doc;
             IsTemplate = false;
             BackgroundColor = Color.White;
+            NextPage = string.Empty;
+            MessageText = "";
+            MessageTitle = "Notes for parents and teachers";
+            TextB = "";
+            TextC = "";
+            Evaluation = MNEvaluationType.Inherited;
+            ShowTitle = true;
+            ShowHome = true;
+            ShowHelp = false;
+            ShowBackNavigation = true;
+            ShowForwardNavigation = true;
+            ShowMessageAlways = false;
+            DefaultAudioState = false;
+            ShowAudio = false;
         }
 
         public override string ToString()
@@ -304,152 +485,11 @@ namespace Rambha.Document
             return Title;
         }
 
-        public IEnumerable<SMControl> SortedObjects
-        {
-            get
-            {
-                return new EnumerableSortedObjects(this);
-            }
-        }
-
-        /*public SMControlGroup FindControlGroup(SMControl ctrl)
-        {
-            if (ctrl == null) return null;
-            foreach (SMControl obj in Objects)
-            {
-                if (obj is SMControlGroup)
-                {
-                    if ((obj as SMControlGroup).ContainsControl(ctrl))
-                        return obj as SMControlGroup;
-                }
-            }
-            return null;
-        }*/
-
-        public SMRectangleArea FindAreaGroup(long areaId, SMRectangleArea ctrl)
-        {
-            foreach (KeyValuePair<long,SMRectangleArea> obj in Areas)
-            {
-                if (obj.Key != areaId)
-                {
-                    if (obj.Value.GetRawRectangle(PageEditDisplaySize.LandscapeBig).Contains(ctrl.GetRawRectangle(PageEditDisplaySize.LandscapeBig)))
-                        return obj.Value;
-                }
-            }
-            return null;
-        }
-
-        public class EnumerableSortedObjects : IEnumerable<SMControl>
-        {
-            private MNPage _currentPage;
-            public EnumerableSortedObjects(MNPage page)
-            {
-                _currentPage = page;
-            }
-
-            // Must implement GetEnumerator, which returns a new StreamReaderEnumerator.
-            public IEnumerator<SMControl> GetEnumerator()
-            {
-                return new EnumeratorSortedObjects(_currentPage);
-            }
-
-            // Must also implement IEnumerable.GetEnumerator, but implement as a private method.
-            private IEnumerator GetEnumerator1()
-            {
-                return this.GetEnumerator();
-            }
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator1();
-            }
-        }
-
-        public class EnumeratorSortedObjects: IEnumerator<SMControl>
-        {
-            public MNPage startPage = null;
-            public MNPage currentPage = null;
-            public int curIndex = -1;
-            public int mode = 0;
-            public SMControl currentObject = null;
-
-            public EnumeratorSortedObjects(MNPage p)
-            {
-                startPage = p;
-                currentPage = null;
-                Reset();
-            }
-
-            public bool MoveNext()
-            {
-                // go through nongroup
-                while (mode < 2)
-                {
-                    if (currentPage == null)
-                        currentPage = startPage;
-                    if (currentPage == null)
-                        return false;
-
-                    curIndex++;
-
-                    if (curIndex >= currentPage.Objects.Count)
-                    {
-                        currentPage = currentPage.Document.GetTemplate(currentPage.TemplateId);
-                        if (currentPage == null)
-                        {
-                            // go to mode 1
-                            mode++;
-                        }
-                        curIndex = -1;
-                        continue;
-                    }
-
-                    if (mode == 0)
-                    {
-                        if (!currentPage.Objects[curIndex].GroupControl)
-                        {
-                            currentObject = currentPage.Objects[curIndex];
-                            return true;
-                        }
-                    }
-                    // go through groups
-                    else if (mode == 1)
-                    {
-                        if (currentPage.Objects[curIndex].GroupControl)
-                        {
-                            currentObject = currentPage.Objects[curIndex];
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-
-                return false;
-            }
-
-            public void Reset() { curIndex = -1; currentPage = startPage; mode = 0; }
-
-            void IDisposable.Dispose() { }
-
-            public SMControl Current
-            {
-                get { return currentObject; }
-            }
-
-
-            object IEnumerator.Current
-            {
-                get { return Current; }
-            }
-        }
-
         public bool HasSelectedObjects()
         {
-            foreach (KeyValuePair<long, SMRectangleArea> area in Areas)
+            foreach (SMControl s in Objects)
             {
-                if (area.Value.Selected) return true;
+                if (s.Area.Selected) return true;
             }
 
             return false;
@@ -462,8 +502,7 @@ namespace Rambha.Document
                 List<SMControl> lc = new List<SMControl>();
                 foreach (SMControl item in Objects)
                 {
-                    SMRectangleArea area = GetArea(item.Id);
-                    if (area.Selected)
+                    if (item.Area.Selected)
                         lc.Add(item);
                 }
                 return lc;
@@ -472,11 +511,13 @@ namespace Rambha.Document
 
         public void ClearSelection()
         {
-            foreach (KeyValuePair<long, SMRectangleArea> area in Areas)
+            foreach (SMControl s in Objects)
             {
-                area.Value.Selected = false;
-                area.Value.TrackedSelection = SMControlSelection.None;
+                s.Area.Selected = false;
             }
+
+            if (Template != null)
+                Template.ClearSelection();
         }
 
         public void DeleteSelectedObjects()
@@ -486,8 +527,7 @@ namespace Rambha.Document
 
             foreach (SMControl item in Objects)
             {
-                SMRectangleArea area = GetArea(item.Id);
-                if (area.Selected)
+                if (item.Area.Selected)
                 {
                     objectsForDelete.Add(item);
                 }
@@ -504,27 +544,111 @@ namespace Rambha.Document
             }
         }
 
-        public void DuplicateSelectedObjects()
-        {
-            int i, m = Objects.Count;
-            for (i = 0; i < m; i++)
-            {
-                SMControl item = Objects[i];
-                SMRectangleArea area = GetArea(item.Id);
-                if (area.Selected)
-                {
-                    area.Selected = false;
-                    SMControl duplicated = item.Duplicate();
-                    if (duplicated != null)
-                    {
-                        SMRectangleArea area2 = GetArea(duplicated.Id);
-                        area2.Set(area, 30, 30);
-                        area2.Selected = true;
 
-                        Objects.Add(duplicated);
+
+        public void DuplicateSelectedObjects(int rows, int columns, bool hz, bool vt, int spacing)
+        {
+            int i, t;
+            if (hz || vt)
+                spacing = Math.Max(spacing, 10);
+
+            List<SMControl> selectedObjects = SelectedObjects;
+
+            Rectangle totalRect = Rectangle.Empty;
+
+            // get relative coordinates of selection
+            for (i = 0; i < selectedObjects.Count; i++)
+            {
+                SMControl item = selectedObjects[i];
+                Rectangle rcArea = item.Area.GetRawRectangle(PageEditDisplaySize.LandscapeBig);
+                if (totalRect.IsEmpty)
+                {
+                    totalRect = rcArea;
+                }
+                else
+                {
+                    MergeRectangles(ref totalRect, rcArea);
+                }
+            }
+
+            if (totalRect.IsEmpty)
+                return;
+
+            Point offset = Point.Empty;
+
+            if (hz)
+            {
+                for (int r = 1; r < rows; r++)
+                {
+                    Rectangle newRect = new Rectangle(totalRect.Left, totalRect.Top + r * (totalRect.Height + spacing) - spacing,
+                        columns * (totalRect.Width + spacing) - spacing, spacing);
+
+                    SMDrawable d = new SMDrawable(this);
+                    d.Drawings = "line 0 50 100 50";
+                    d.Id = Document.Data.GetNextId();
+                    d.Area.SetRawRectangle(PageEditDisplaySize.LandscapeBig, newRect);
+                    d.Area.Selected = true;
+                    Objects.Add(d);
+                }
+            }
+
+            if (vt)
+            {
+                for (int c = 1; c < columns; c++)
+                {
+                    Rectangle newRect = new Rectangle(totalRect.Left + c * (totalRect.Width + spacing) - spacing, totalRect.Top,
+                        spacing, rows * (totalRect.Height + spacing ) - spacing);
+
+                    SMDrawable d = new SMDrawable(this);
+                    d.Drawings = "line 50 0 50 100";
+                    d.Id = Document.Data.GetNextId();
+                    d.Area.SetRawRectangle(PageEditDisplaySize.LandscapeBig, newRect);
+                    d.Area.Selected = true;
+                    Objects.Add(d);
+                }
+            }
+
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < columns; c++)
+                {
+                    if (r == 0 && c == 0)
+                        continue;
+                    offset.X = c * (totalRect.Width + spacing);
+                    offset.Y = r * (totalRect.Height + spacing);
+                    foreach (SMControl item in selectedObjects)
+                    {
+                        SMControl duplicated = item.Duplicate();
+                        if (duplicated != null)
+                        {
+                            duplicated.Area.MoveRaw(offset.X, offset.Y);
+                            duplicated.Area.Selected = true;
+
+                            Objects.Add(duplicated);
+                        }
                     }
                 }
             }
+        }
+
+        public static void MergeRectangles(ref Rectangle totalRect, Rectangle rcArea)
+        {
+            if (totalRect.IsEmpty)
+            {
+                totalRect = rcArea;
+            }
+            else
+            {
+                Rectangle r = new Rectangle();
+                r.X = Math.Min(totalRect.X, rcArea.X);
+                r.Y = Math.Min(totalRect.Y, rcArea.Y);
+                r.Width = Math.Max(totalRect.Right, rcArea.Right);
+                r.Height = Math.Max(totalRect.Bottom, rcArea.Bottom);
+                r.Width = r.Width - r.X;
+                r.Height = r.Height - r.Y;
+                totalRect = r;
+            }
+
         }
 
         public SMControl FindObject(long id)
@@ -537,28 +661,41 @@ namespace Rambha.Document
             return null;
         }
 
-        public void Paint(MNPageContext context)
+        public void PaintBackground(MNPageContext context)
         {
+            context.g.FillRectangle(nontransparentBackgroundBrush, 0, 0, context.PageWidth, context.PageHeight);
+        }
+
+        public void Paint(MNPageContext context, bool topControls)
+        {
+            //Debugger.Log(0, "", "\n\n\n");
             try
             {
+                if (Template != null && Template != this)
+                    Template.Paint(context, topControls);
+
                 Graphics g = context.g;
 
-                g.FillRectangle(nontransparentBackgroundBrush, 0, 0, context.PageWidth, context.PageHeight);
-
                 // draw connections
-                foreach (SMConnection connection in this.Connections)
+                if (!topControls)
                 {
-                    connection.Paint(context);
+                    foreach (SMConnection connection in this.Connections)
+                    {
+                        connection.Paint(context);
+                    }
                 }
 
                 // draw objects
-                foreach (SMControl po in this.SortedObjects)
+                foreach (SMControl po in this.Objects)
                 {
-                    if (!po.UIStateVisible)
+                    if (!po.UIStateVisible || po.AlwaysOnTop != topControls)
                         continue;
 
-                    SMRectangleArea area = GetArea(po.Id);
-                    Rectangle rect = context.isTracking ? area.GetBoundsRecalc(context) : area.GetBounds(context);
+                    SMRectangleArea area = po.Area;
+                    Rectangle rect = area.RelativeArea;
+
+                    /*if (area.Selected && context.drawSelectionMarks)
+                        area.PaintSelectionMarks(context);*/
 
                     po.Paint(context);
 
@@ -573,7 +710,7 @@ namespace Rambha.Document
 
                     if (context.drawSelectionMarks)
                     {
-                        g.DrawRectangle(Pens.LightGray, rect);
+                        g.DrawRectangle((area.Selected ? Pens.Pink : Pens.LightGray), rect);
                     }
 
                     if (!po.UIStateEnabled)
@@ -582,6 +719,61 @@ namespace Rambha.Document
                     }
                 }
 
+                if (topControls)
+                {
+                    int height = HEADER_HEIGHT;
+                    int leftX = 0;
+                    int rightX = context.PageWidth;
+                    if (ShowBackNavigation)
+                    {
+                        g.FillRectangle((context.hitHeaderButton == 1 ? Brushes.Blue : Brushes.Black), leftX, 0, height, height);
+                        if (context.navigIconBack != null)
+                            g.DrawImage(context.navigIconBack, leftX, 0, height, height);
+                        if (context.navigArrowBack != null)
+                            g.DrawImage(context.navigArrowBack, 0, context.PageHeight / 2 - 100, 80, 200); 
+                        leftX += height;
+                    }
+
+                    if (ShowForwardNavigation)
+                    {
+                        rightX -= height;
+                        g.FillRectangle((context.hitHeaderButton == 4 ? Brushes.Blue : Brushes.Black), rightX, 0, height, height);
+                        if (context.navigIconFwd != null)
+                            g.DrawImage(context.navigIconFwd, rightX, 0, height, height);
+                        if (context.navigArrowFwd != null)
+                            g.DrawImage(context.navigArrowFwd, context.PageWidth - 80, context.PageHeight / 2 - 100, 80, 200);
+                    }
+
+                    if (ShowHome)
+                    {
+                        g.FillRectangle((context.hitHeaderButton == 2 ? Brushes.Blue : Brushes.Black), leftX, 0, height, height);
+                        if (context.navigIconHome != null)
+                            g.DrawImage(context.navigIconHome, leftX, 0, height, height);
+                        leftX += height;
+                    }
+
+                    if (ShowHelp && !ShowMessageAlways)
+                    {
+                        rightX -= height;
+                        g.FillRectangle((context.hitHeaderButton == 3 ? Brushes.Blue : Brushes.Black), rightX, 0, height, height);
+                        if (context.navigIconHelp != null)
+                            g.DrawImage(context.navigIconHelp, rightX, 0, height, height);
+                    }
+
+                    if (ShowAudio && context.navigSpeakerOn != null && context.navigSpeakerOff != null)
+                    {
+                        rightX -= height;
+                        g.FillRectangle((context.hitHeaderButton == 5 ? Brushes.Blue : Brushes.Black), rightX, 0, height, height);
+                        g.DrawImage(MNNotificationCenter.AudioOn ? context.navigSpeakerOn : context.navigSpeakerOff, rightX, 0, height, height);
+                    }
+
+                    if (ShowTitle)
+                    {
+                        g.FillRectangle(Brushes.Black, leftX, 0, rightX - leftX, height);
+                        g.DrawString(TextB, context.PageTitleFont, Brushes.White, leftX + 16, 16);
+                    }
+
+                }
             }
             catch (Exception ex)
             {
@@ -590,70 +782,29 @@ namespace Rambha.Document
             }
         }
 
-
-        public SMRectangleArea CreateNewArea(long areaId)
-        {
-            SMRectangleArea area = new SMRectangleArea();
-            Areas.Add(areaId, area);
-            return area;
-        }
-
-        /// <summary>
-        /// test for existence of the area in this page (or this template)
-        /// </summary>
-        /// <param name="areaId"></param>
-        /// <returns></returns>
-        public bool ContainsArea(long areaId)
-        {
-            return Areas.ContainsKey(areaId);
-        }
-
-        /// <summary>
-        /// Retrieves area for drawing and editing. If area does not exist in current page, it looks for
-        /// this area in templates, and if it exists in the templates, then copies it into current page.
-        /// If area does not exist in the templates even, it creates new one just for this page.
-        /// </summary>
-        /// <param name="areaId"></param>
-        /// <returns></returns>
-        public SMRectangleArea GetArea(long areaId)
-        {
-            // lokk up in this page
-            if (Areas.ContainsKey(areaId))
-                return Areas[areaId];
-
-            // look up in the templates
-            long template = TemplateId;
-            SMRectangleArea area = null;
-            while (TemplateId > 0)
-            {
-                MNPage templatePage = Document.GetTemplate(template);
-                if (templatePage == null)
-                    break;
-                if (templatePage.ContainsArea(areaId))
-                {
-                    area = templatePage.GetArea(areaId);
-                    break;
-                }
-                template = templatePage.TemplateId;
-            }
-
-            // if area is null, then creates new fresh area
-            area = new SMRectangleArea(area);
-            Areas.Add(areaId, area);
-            return area;
-        }
-
-
         public void ClearConnections()
         {
             Connections.Clear();
+        }
+
+        public SMConnection FindConnection(SMControl control)
+        {
+            foreach (SMConnection sc in Connections)
+            {
+                if (sc.Source.Id == control.Id || sc.Target.Id == control.Id)
+                {
+                    return sc;
+                }
+            }
+            return null;
         }
 
         public SMConnection FindConnection(SMControl from, SMControl to)
         {
             foreach (SMConnection sc in Connections)
             {
-                if (sc.Source == from && sc.Target == to)
+                if ((sc.Source.Id == from.Id && sc.Target.Id == to.Id)
+                    || (sc.Source == to && sc.Target == from))
                 {
                     return sc;
                 }
@@ -663,7 +814,8 @@ namespace Rambha.Document
 
         public void AddConnection(SMConnection conn)
         {
-            Connections.Add(conn);
+            if (FindConnection(conn.Source, conn.Target) == null)
+                Connections.Add(conn);
         }
 
         public void AddConnection(SMControl from, SMControl to)
@@ -674,12 +826,12 @@ namespace Rambha.Document
             }
         }
 
-        public void RemoveConnectionWithSource(SMControl source)
+        public void RemoveConnectionsForControl(SMControl target)
         {
             List<SMConnection> listToRemove = new List<SMConnection>();
             foreach (SMConnection conn in Connections)
             {
-                if (conn.Source == source)
+                if (conn.Target == target || conn.Source == target)
                     listToRemove.Add(conn);
             }
             foreach (SMConnection conn in listToRemove)
@@ -688,37 +840,12 @@ namespace Rambha.Document
             }
         }
 
-        public void RemoveConnectionWithTarget(SMControl target)
-        {
-            List<SMConnection> listToRemove = new List<SMConnection>();
-            foreach (SMConnection conn in Connections)
-            {
-                if (conn.Target == target)
-                    listToRemove.Add(conn);
-            }
-            foreach (SMConnection conn in listToRemove)
-            {
-                Connections.Remove(conn);
-            }
-        }
-
-        public int CountConnectionsWithSource(SMControl source)
+        public int CountConnectionsWithControl(SMControl source)
         {
             int count = 0;
             foreach (SMConnection conn in Connections)
             {
-                if (conn.Source == source)
-                    count++;
-            }
-            return count;
-        }
-
-        public int CountConnectionsWithTarget(SMControl target)
-        {
-            int count = 0;
-            foreach (SMConnection conn in Connections)
-            {
-                if (conn.Target == target)
+                if (conn.Source == source || conn.Target == source)
                     count++;
             }
             return count;
@@ -757,6 +884,7 @@ namespace Rambha.Document
             if (a == typeof(SMDrawable)) return "Drawable";
             if (a == typeof(SMFreeDrawing)) return "FreeDrawing";
             if (a == typeof(SMImage)) return "Image";
+            if (a == typeof(SMImageButton)) return "ImageButton";
             if (a == typeof(SMLabel)) return "Label";
             if (a == typeof(SMLetterInput)) return "LetterInput";
             if (a == typeof(SMTextContainer)) return "TextContainer";
@@ -765,6 +893,8 @@ namespace Rambha.Document
             if (a == typeof(SMTextView)) return "TextView";
             if (a == typeof(SMKeyboard)) return "Keyboard";
             if (a == typeof(SMMemoryGame)) return "MemoryGame";
+            if (a == typeof(SMOrderedList)) return "OrderedList";
+            if (a == typeof(SMSelection)) return "Selection";
 
             return Document.ObjectTypeToTag(a);
         }
@@ -777,6 +907,7 @@ namespace Rambha.Document
                 case "Drawable": return new SMDrawable(this);
                 case "FreeDrawing": return new SMFreeDrawing(this);
                 case "Image": return new SMImage(this);
+                case "ImageButton": return new SMImageButton(this);
                 case "Label": return new SMLabel(this);
                 case "LetterInput": return new SMLetterInput(this);
                 case "TextContainer": return new SMTextContainer(this);
@@ -785,6 +916,9 @@ namespace Rambha.Document
                 case "TextView": return new SMTextView(this);
                 case "MemoryGame": return new SMMemoryGame(this);
                 case "Keyboard": return new SMKeyboard(this);
+                case "Matrix": return new SMOrderedList(this);
+                case "OrderedList": return new SMOrderedList(this);
+                case "Selection": return new SMSelection(this);
                 default: return Document.TagToObject(tag);
             }
         }
@@ -919,8 +1053,8 @@ namespace Rambha.Document
         public int GetSelectedCount()
         {
             int count = 0;
-            foreach(SMRectangleArea area in Areas.Values)
-                if (area.Selected) count++;
+            foreach(SMControl c in Objects)
+                if (c.Area.Selected) count++;
             return count;
         }
 
@@ -931,16 +1065,11 @@ namespace Rambha.Document
 
             foreach (SMControl c in Objects)
             {
-                SMRectangleArea area = GetArea(c.Id);
-                if (area.Selected)
+                if (c.Area.Selected)
                 {
                     bw.WriteByte(20);
                     bw.WriteString(ObjectTypeToTag(c.GetType()));
                     c.Save(bw);
-
-                    bw.WriteByte(30);
-                    bw.WriteInt64(c.Id);
-                    area.Save(bw);
                 }
             }
 
@@ -952,7 +1081,6 @@ namespace Rambha.Document
             byte b;
             long areaId = -1;
             long pageId = -1;
-            Dictionary<long, SMRectangleArea> tempAreas = new Dictionary<long, SMRectangleArea>();
             List<SMControl> tempControls = new List<SMControl>();
             SMControl returnedValue = null;
 
@@ -973,39 +1101,27 @@ namespace Rambha.Document
                             tempControls.Add(sc);
                         }
                         break;
-                    case 30:
-                        areaId = br.ReadInt64();
-                        SMRectangleArea ra = new SMRectangleArea();
-                        ra.Load(br);
-                        tempAreas.Add(areaId, ra);
-                        break;
                 }
             }
 
             ClearSelection();
 
-            double offsetX = (pageId == this.Id ? 32/1024.0 : 0);
+            double offsetX = (pageId == this.Id ? 32 / 1024.0 : 0);
             double offsetY = (pageId == this.Id ? 32 / 768.0 : 0);
 
             foreach (SMControl c in tempControls)
             {
-                if (tempAreas.ContainsKey(c.Id))
+                c.Id = Document.Data.GetNextId();
+                c.Area.Selected = true;
+
+                if (returnedValue == null)
+                    returnedValue = c;
+
+                Objects.Add(c);
+
+                if (pageId == this.Id)
                 {
-                    SMRectangleArea a = tempAreas[c.Id];
-                    c.Id = Document.Data.GetNextId();
-                    a.Selected = true;
-                    a.TrackedSelection = SMControlSelection.All;
-
-                    if (returnedValue == null)
-                        returnedValue = c;
-
-                    Objects.Add(c);
-                    Areas.Add(c.Id, a);
-
-                    if (pageId == this.Id)
-                    {
-                        a.MoveRaw(32 / 1024.0, 32 / 768.0);
-                    }
+                    c.Area.MoveRaw(32, 32);
                 }
             }
 
@@ -1014,13 +1130,120 @@ namespace Rambha.Document
 
         public void RecalcAreasForSelection(MNPageContext context)
         {
-            foreach (SMRectangleArea area in Areas.Values)
+            foreach (SMControl c in Objects)
             {
-                if (area.Selected)
+                if (c.Area.Selected)
                 {
-                    area.RecalcAllBounds(context);
+                    c.Area.RecalcAllBounds(context);
                 }
             }
         }
+
+        public Rectangle GetTotalSelectionRect()
+        {
+            Rectangle tr = Rectangle.Empty;
+
+            foreach (SMControl po in SelectedObjects)
+            {
+                MergeRectangles(ref tr, po.Area.GetRawRectangle(PageEditDisplaySize.LandscapeBig));
+            }
+
+            return tr;
+        }
+
+        public bool HasSelectedObject()
+        {
+            foreach (SMControl c in Objects)
+            {
+                SMRectangleArea ar = c.Area;
+                if (ar.Selected)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public SMControl FindObjectContainingPoint(MNPageContext context, Point logPoint)
+        {
+            SMControl c = FindObjectContainingPoint(context, logPoint, true);
+            if (c == null)
+                c = FindObjectContainingPoint(context, logPoint, false);
+            return c;
+        }
+
+        public SMControl FindObjectContainingPoint(MNPageContext context, Point logPoint, bool topControls)
+        {
+            for (int i = Objects.Count - 1; i >= 0; i--)
+            {
+                SMControl po = Objects[i];
+                if (po.AlwaysOnTop == topControls)
+                {
+                    if (po.Area.TestHitLogical(context, logPoint))
+                    {
+                        return po;
+                    }
+                }
+            }
+
+            /*if (Template != null)
+            {
+                return Template.FindObjectContainingPoint(context, logPoint, topControls);
+            }*/
+
+            return null;
+        }
+
+        public void LimitGroupChecked(string GroupName, int p)
+        {
+            if (GroupName.Length == 0)
+                return;
+
+            int count = 0;
+            foreach (SMControl sc in Objects)
+            {
+                if (sc.GroupName.Equals(GroupName))
+                    if (sc.UIStateChecked)
+                        count++;
+                if (count > p)
+                    sc.UIStateChecked = false;
+            }
+        }
+
+        public int CountGroupChecked(string GroupName)
+        {
+            int count = 0;
+            foreach (SMControl sc in Objects)
+            {
+                if (sc.GroupName.Equals(GroupName))
+                    if (sc.UIStateChecked)
+                        count++;
+            }
+            return count;
+        }
+
+        public static void CopyControlsFrom(MNPage sourcePage, MNPage destinationPage)
+        {
+            byte[] buffer;
+            foreach (SMControl ctrl in sourcePage.Objects)
+            {
+                buffer = ctrl.GetBytes();
+                SMControl new_control = SMControl.FromBytes(destinationPage, buffer);
+                new_control.Id = destinationPage.Document.Data.GetNextId();
+                destinationPage.Objects.Add(new_control);
+            }
+        }
+
+
+        public SMControl FindObjectWithAPIName(string controlApiName)
+        {
+            foreach (SMControl s in Objects)
+            {
+                if (s.UniqueName.Equals(controlApiName))
+                    return s;
+            }
+
+            return null;
+        }
+
     }
 }

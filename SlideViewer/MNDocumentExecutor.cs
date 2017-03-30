@@ -30,7 +30,13 @@ namespace SlideViewer
             }
         }
 
-        public MNPage CurrentPage { get; set; }
+        private MNPage _current_page = null;
+
+        public MNPage CurrentPage 
+        {
+            get { return _current_page; }
+            set { _current_page = value; SetExecVars(value); }
+        }
 
         private List<string> scheduledScripts = new List<string>();
 
@@ -39,8 +45,52 @@ namespace SlideViewer
             ViewController = vc;
             CurrentPage = null;
             Executor = new GSExecutor();
-            Executor.SetVariable("executor", Executor);
-            Executor.SetVariable("view", ViewController);
+        }
+
+        public void SetExecVars(MNPage page)
+        {
+            if (page != null && Executor != null)
+            {
+                Executor.ClearVariables();
+                foreach (SMControl ctrl in page.Objects)
+                {
+                    if (ctrl.UniqueName.Length > 0)
+                        Executor.SetVariable(ctrl.UniqueName, ctrl);
+                }
+                Executor.SetVariable("executor", Executor);
+                Executor.SetVariable("view", ViewController);
+                Executor.SetVariable("document", page.Document);
+                Executor.SetVariable("page", page);
+            }
+        }
+
+        public GSCore GetPropertyValue(string token)
+        {
+            if (token.Equals("page"))
+                return CurrentPage;
+            else if (token.Equals("document"))
+                return Document;
+            else if (token.Equals("view"))
+                return ViewController;
+            else
+                return Executor;
+        }
+
+        public GSCore ResolveProperty(string Token)
+        {
+            int dotPos = Token.IndexOf('.');
+            if (dotPos >= 0)
+            {
+                string str = Token.Substring(0, dotPos);
+                GSCore obj = GetPropertyValue(str);
+                if (obj == null)
+                    return GSVoid.Void;
+                return obj.EvaluateProperty(Token.Substring(dotPos + 1));
+            }
+            else
+            {
+                return GetPropertyValue(Token);
+            }
         }
 
         /// <summary>
@@ -59,12 +109,10 @@ namespace SlideViewer
             if (obj is SMControl)
             {
                 Executor.SetVariable("control", (SMControl)obj);
-                Executor.SetVariable("page", ((SMControl)obj).Page);
             }
             else if (obj is MNPage)
             {
                 Executor.SetVariable("control", null);
-                Executor.SetVariable("page", (MNPage)obj);
             }
             Executor.ExecuteElement(os);
         }
@@ -131,7 +179,8 @@ namespace SlideViewer
             if (Document != null)
             {
                 scheduledScripts.Clear();
-                ExtractControlConnections(control, scheduledScripts, "OnClick");
+                if (control.ScriptOnClick.Length > 0)
+                    scheduledScripts.Add(control.ScriptOnClick);
                 ExecuteScheduledObjects(control);
             }
         }
@@ -230,7 +279,12 @@ namespace SlideViewer
         {
             if (Document != null)
             {
-                if (eventName.Equals("OnPlaySound") && parent is MNReferencedSound)
+                if (eventName.Equals("invalidate"))
+                {
+                    if (ViewController != null)
+                        ViewController.ExecuteMessage("imvalidate");
+                }
+                else if (eventName.Equals("OnPlaySound") && parent is MNReferencedSound)
                 {
                     if (ViewController != null)
                         ViewController.ExecuteMessage("playSound", parent);

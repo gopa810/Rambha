@@ -18,16 +18,51 @@ namespace SlideViewer
         public SVBookLibrary Library = new SVBookLibrary();
         public MNBookHeader CurrentBook = null;
 
+        private UpdaterDownloader panelDownload = null;
+
         public ViewFrame()
         {
             InitializeComponent();
             AdjustLayoutPageView();
+
+            pageView1.mainFrameDelegate = this;
+            pageView1.InitBitmaps();
 
             panelBook.Dock = DockStyle.Fill;
             panelFiles.Dock = DockStyle.Fill;
             panelUpdater.Dock = DockStyle.Fill;
             panelSelectLanguage.Dock = DockStyle.Fill;
 
+            panelDownload = new UpdaterDownloader();
+            panelDownload.Parent = this;
+            panelDownload.Location = panelBook.Location;
+            panelDownload.Size = panelBook.Size;
+            this.Controls.Add(panelDownload);
+            panelDownload.Dock = DockStyle.Fill;
+            panelDownload.OnExit += new GeneralArgsEvent(panelDownload_OnExit);
+            panelDownload.OnDownloadComplete += new GeneralArgsEvent(panelDownload_OnDownloadComplete);
+            panelDownload.Visible = false;
+
+            string dir = Properties.Settings.Default.FilesDirectory;
+            if (!Directory.Exists(dir))
+            {
+                bool bOdmietnute = true;
+                while (bOdmietnute)
+                {
+                    FolderBrowserDialog fbd = new FolderBrowserDialog();
+                    fbd.Description = "Select folder on your local computer, where all data files will be stored for this application.";
+                    if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        dir = fbd.SelectedPath;
+                        Properties.Settings.Default.FilesDirectory = dir;
+                        Properties.Settings.Default.Save();
+                        bOdmietnute = false;
+                    }
+                }
+            }
+            Library.LastDirectory = dir;
+            Library.GetCurrentBookDatabase(dir);
+            Library.CalculateDatabaseStatus();
             Library.FetchRemote(null);
         }
 
@@ -46,6 +81,7 @@ namespace SlideViewer
                 panelFiles.Visible = true;
                 panelUpdater.Visible = false;
                 panelSelectLanguage.Visible = false;
+                panelDownload.Visible = false;
             }
             else if (panel == "book")
             {
@@ -53,6 +89,7 @@ namespace SlideViewer
                 panelFiles.Visible = false;
                 panelUpdater.Visible = false;
                 panelSelectLanguage.Visible = false;
+                panelDownload.Visible = false;
             }
             else if (panel == "lang")
             {
@@ -60,6 +97,7 @@ namespace SlideViewer
                 panelBook.Visible = false;
                 panelFiles.Visible = false;
                 panelUpdater.Visible = false;
+                panelDownload.Visible = false;
             }
             else if (panel == "updater")
             {
@@ -68,6 +106,15 @@ namespace SlideViewer
                 panelFiles.Visible = false;
                 panelUpdater.Visible = true;
                 panelUpdater.ParentFrame = this;
+                panelDownload.Visible = false;
+            }
+            else if (panel == "downloader")
+            {
+                panelSelectLanguage.Visible = false;
+                panelBook.Visible = false;
+                panelFiles.Visible = false;
+                panelUpdater.Visible = false;
+                panelDownload.Visible = true;
             }
         }
 
@@ -307,6 +354,11 @@ namespace SlideViewer
 
             Library.GetCurrentBookDatabase(directory);
 
+            RefreshList();
+        }
+
+        public void RefreshList()
+        {
             listBox1.Items.Clear();
 
             foreach (MNBookHeader bh in Library.Books)
@@ -351,24 +403,67 @@ namespace SlideViewer
             {
                 CurrentBook = book;
                 SetShowPanel("lang");
-                panelSelectLanguage.SetBook(book);
+                panelSelectLanguage.SetBook(Library.FindBook(book.BookTitle));
                 panelSelectLanguage.ParentFrame = this;
             }
         }
 
-        public void dialogDidSelectLanguage(MNBookLanguage lang)
+        private string p_fileDown = null;
+
+        public void dialogDidSelectLanguage(RemoteFileRef book, RemoteFileRef lang)
         {
-            if (CurrentBook != null)
+            if (book == null)
             {
-                if (lang != null)
+                SetShowPanel("book");
+                return;
+            }
+
+            MNBookHeader bh = Library.FindBookHeader(book.Text);
+            if (bh != null && lang != null)
+            {
+                if (lang.Local)
                 {
-                    MNLocalisation file = new MNLocalisation();
-                    file.Load(lang.FilePath, true);
-                    pageView1.CurrentDocument.CurrentLanguage = file;
-                    pageView1.ReloadPage();
+                    if (lang.Text.Equals("Default"))
+                    {
+                        pageView1.CurrentDocument.CurrentLanguage = null;
+                        pageView1.ReloadPage();
+                    }
+                    else
+                    {
+                        MNLocalisation file = new MNLocalisation();
+                        file.Load(Library.GetLocalFile(lang.FileName), true);
+                        pageView1.CurrentDocument.CurrentLanguage = file;
+                        pageView1.ReloadPage();
+                    }
+                    SetShowPanel("book");
                 }
+                else
+                {
+                    p_fileDown = lang.FileName;
+                    panelDownload.FilesToDownload.Clear();
+                    panelDownload.FilesToDownload.Add(lang.FileName);
+                    panelDownload.Start(Library);
+                    SetShowPanel("downloader");
+                }
+            }
+            else
+            {
                 SetShowPanel("book");
             }
+        }
+
+        void panelDownload_OnExit(object sender, EventArgs e)
+        {
+            SetShowPanel("book");
+        }
+
+        void panelDownload_OnDownloadComplete(object sender, EventArgs e)
+        {
+            MNLocalisation file = new MNLocalisation();
+            file.Load(Library.GetLocalFile(p_fileDown), true);
+            pageView1.CurrentDocument.CurrentLanguage = file;
+            pageView1.ReloadPage();
+            SetShowPanel("book");
         }
 
         private void listBox1_MeasureItem(object sender, MeasureItemEventArgs e)
@@ -428,6 +523,11 @@ namespace SlideViewer
                 string str = SVBookLibrary.DBToString(Library.GetLocalFileDatabase());
                 File.WriteAllText(d.FileName, str);
             }
+        }
+
+        private void ViewFrame_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            ErrorCatcher.Save();
         }
     }
 }

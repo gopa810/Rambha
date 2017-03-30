@@ -20,11 +20,11 @@ namespace SlideMaker.Views
         {
             return new NABase[]
             {
-                new TADocAddPage(View, "New Page", Document, true),
-                new TADocAddPage(View, "New Template", Document, false),
-                new TADocAddText(View, "New Script", Document, true),
-                new TADocAddText(View, "New Text", Document, false),
-                new TADocAddMenu(View, "New Menu", Document),
+                new TVAction(View, "New Page", Document, "addPage"),
+                new TVAction(View, "New Template", Document, "addTemplate"),
+                new TVAction(View, "New Script", Document, "addScript"),
+                new TVAction(View, "New Text", Document, "addText"),
+                new TVAction(View, "New Menu", Document, "addMenu"),
             };
         }
 

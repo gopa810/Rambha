@@ -84,6 +84,15 @@ namespace Rambha.Script
                 args.Add(this[n]);
             return args;
         }
+
+        public GSCoreCollection getEvaluatedSublist(GSExecutor x, int fromIndex)
+        {
+            GSCoreCollection args = new GSCoreCollection();
+            for (int n = fromIndex; n < Count; n++)
+                args.Add(x.ExecuteElement(this[n]));
+            return args;
+        }
+
     }
 
     public enum GSCoreDataType

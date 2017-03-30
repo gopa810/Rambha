@@ -16,16 +16,26 @@ namespace Rambha.Document
     [Serializable()]
     public class SMImage: SMControl
     {
-        [Editor(typeof(ImageSelectionPropertyEditor),typeof(UITypeEditor))]
+        [Browsable(true), Category("Layout")]
+        public SMContentArangement ContentArangement { get; set; }
 
         [Browsable(true), Category("Layout")]
         public SMContentScaling ContentScaling { get; set; }
+
+        [Browsable(true), Category("Source Offset Fill")]
+        public int SourceOffsetX { get; set; }
+
+        [Browsable(true), Category("Source Offset Fill")]
+        public int SourceOffsetY { get; set; }
 
         public MNLazyImage Img = null;
 
         public string DroppedTag { get; set; }
 
+        private Rectangle sourceRect = Rectangle.Empty;
         private Rectangle showRect = Rectangle.Empty;
+
+        private SMRichText rt = null;
 
         public SMImage(MNPage p): base(p)
         {
@@ -33,6 +43,10 @@ namespace Rambha.Document
             ContentScaling = SMContentScaling.Fit;
             Evaluation = MNEvaluationType.Inherited;
             DroppedTag = "";
+            ContentArangement = SMContentArangement.ImageOnly;
+            SourceOffsetX = 50;
+            SourceOffsetY = 50;
+            rt = new SMRichText(this);
         }
 
         public override Size GetDefaultSize()
@@ -44,65 +58,116 @@ namespace Rambha.Document
         {
             Graphics g = context.g;
             SMImage pi = this;
-            SMRectangleArea area = context.CurrentPage.GetArea(Id);
-            Rectangle rect = area.GetBounds(context);
+            Rectangle rect = Area.GetBounds(context);
+
+            SMConnection conn = context.CurrentPage.FindConnection(this);
+            if (conn != null)
+                UIStateHover = true;
 
             PrepareBrushesAndPens();
 
-            DrawStyledBorder(context, rect);
-
-            Rectangle bounds = Style.ApplyPadding(rect);
+            Rectangle bounds = ContentPadding.ApplyPadding(rect);
+            SMContentArangement argm = this.ContentArangement;
 
             Image image = GetContentImage();
+            if (image == null)
+                argm = SMContentArangement.TextOnly;
 
-            if (image != null)
+            if (argm == SMContentArangement.ImageOnly)
             {
                 SMContentScaling scaling = ContentScaling;
-                if (scaling == SMContentScaling.Normal)
-                    scaling = SMContentScaling.Fit;
-                if (scaling == SMContentScaling.Fit)
+                Rectangle rc = DrawImage(context, bounds, image, scaling, SourceOffsetX, SourceOffsetY);
+                if (ContentScaling == SMContentScaling.Fill)
                 {
-                    Size imageSize = image.Size;
-                    if (imageSize.Width > bounds.Width || imageSize.Height > bounds.Height)
-                    {
-                        double ratio = Math.Max(imageSize.Width / Convert.ToDouble(bounds.Width),
-                            imageSize.Height / Convert.ToDouble(bounds.Height));
-                        imageSize = new Size(Convert.ToInt32(imageSize.Width / ratio), Convert.ToInt32(imageSize.Height / ratio));
-                    }
-
-                    switch (GetVerticalAlign())
-                    {
-                        case SMVerticalAlign.Top:
-                            break;
-                        case SMVerticalAlign.Center:
-                            bounds.Y += (bounds.Height - imageSize.Height) / 2;
-                            break;
-                        case SMVerticalAlign.Bottom:
-                            bounds.Y += (bounds.Height - imageSize.Height);
-                            break;
-                    }
-                    switch (GetHorizontalAlign())
-                    {
-                        case SMHorizontalAlign.Left:
-                            break;
-                        case SMHorizontalAlign.Center:
-                        case SMHorizontalAlign.Justify:
-                            bounds.X += (bounds.Width - imageSize.Width)/2;
-                            break;
-                        case SMHorizontalAlign.Right:
-                            bounds.X += (bounds.Width - imageSize.Width);
-                            break;
-                    }
-                    bounds.Width = imageSize.Width;
-                    bounds.Height = imageSize.Height;
-
+                    showRect = bounds;
+                    sourceRect = rc;
                 }
-                g.DrawImage(image, bounds);
-                showRect = bounds;
+                else
+                {
+                    showRect = rc;
+                    sourceRect = new Rectangle(0, 0, image.Width, image.Height);
+                }
+            }
+            else
+            {
+                Rectangle imgRect = bounds;
+                Size textSize = Size.Empty;
+                Font usedFont = GetUsedFont();
+                string plainText = Text;
+                if (plainText.IndexOf("_") > 0 && DroppedTag.Length > 0)
+                    plainText = plainText.Replace("_", DroppedTag);
+                if (plainText.Length != 0)
+                {
+                    textSize = rt.MeasureString(context, plainText, bounds.Width);
+                }
+
+                Rectangle textRect = bounds;
+
+                if (argm == SMContentArangement.ImageAbove)
+                {
+                    textRect.Height = textSize.Height;
+                    textRect.Y = bounds.Bottom - textRect.Height;
+                    textRect.X = (textRect.Left + textRect.Right) / 2 - textSize.Width/2;
+                    textRect.Width = textSize.Width;
+                    imgRect.Height = bounds.Height - textRect.Height - ContentPadding.Top;
+                }
+                else if (argm == SMContentArangement.ImageBelow)
+                {
+                    textRect.Height = textSize.Height;
+                    textRect.X = (textRect.Left + textRect.Right) / 2 - textSize.Width/2;
+                    textRect.Width = textSize.Width;
+                    imgRect.Y = textRect.Bottom + ContentPadding.Bottom;
+                    imgRect.Height = bounds.Height - textRect.Height - ContentPadding.Bottom;
+                }
+                else if (argm == SMContentArangement.ImageOnLeft)
+                {
+                    textRect.Width = textSize.Width;
+                    textRect.X = bounds.Right - textSize.Width;
+                    imgRect.Width = bounds.Width - textSize.Width - ContentPadding.Left;
+                }
+                else if (argm == SMContentArangement.ImageOnRight)
+                {
+                    textRect.Width = textSize.Width;
+                    imgRect.X = textRect.Right + ContentPadding.Right;
+                    imgRect.Width = bounds.Width - textSize.Width - ContentPadding.Right;
+                }
+                else if (argm == SMContentArangement.ImageOnly)
+                {
+                    textRect = Rectangle.Empty;
+                }
+                else if (argm == SMContentArangement.TextOnly)
+                {
+                    imgRect = Rectangle.Empty;
+                }
+
+
+                if (!imgRect.IsEmpty)
+                {
+                    Rectangle rc = DrawImage(context, imgRect, image, ContentScaling, SourceOffsetX, SourceOffsetY);
+                    if (ContentScaling == SMContentScaling.Fill)
+                    {
+                        showRect = imgRect;
+                        sourceRect = rc;
+                    }
+                    else
+                    {
+                        showRect = rc;
+                        sourceRect = new Rectangle(0, 0, image.Width, image.Height);
+                    }
+                }
+
+                if (!textRect.IsEmpty)
+                {
+                    textRect.Inflate(1, 1);
+                    rt.DrawString(context, plainText, textRect);
+                }
             }
 
             base.Paint(context);
         }
+
+
+
 
         private System.Drawing.Image GetContentImage()
         {
@@ -113,6 +178,7 @@ namespace Rambha.Document
         {
             if (base.Load(br))
             {
+                br.Log("* * * SMImage * * *\n");
                 byte tag;
                 while ((tag = br.ReadByte()) != 0)
                 {
@@ -121,6 +187,13 @@ namespace Rambha.Document
                         case 10:
                             Img.ImageId = br.ReadInt64();
                             ContentScaling = (SMContentScaling)br.ReadInt32();
+                            break;
+                        case 13:
+                            ContentArangement = (SMContentArangement)br.ReadInt32();
+                            break;
+                        case 14:
+                            SourceOffsetX = br.ReadInt32();
+                            SourceOffsetY = br.ReadInt32();
                             break;
                         default: 
                             return false;
@@ -155,7 +228,7 @@ namespace Rambha.Document
         {
             base.OnTapEnd(dc);
 
-            MNReferencedSpot spot = Img.Image.FindSpot(showRect, dc.lastPoint);
+            MNReferencedSpot spot = Img.Image.FindSpot(showRect, sourceRect, dc.lastPoint);
             if (spot != null)
             {
                 MNReferencedCore obj = Document.FindContentObject(spot.ContentType, spot.ContentId);
@@ -165,19 +238,6 @@ namespace Rambha.Document
                     Document.Viewer.OnEvent("OnPlaySound", obj as MNReferencedSound);
                 } 
             }
-        }
-
-        public override SMControl Duplicate()
-        {
-            SMImage label = new SMImage(Page);
-
-            CopyContentTo(label);
-
-            // copy label
-            label.Img = new MNLazyImage(this.Img);
-            label.ContentScaling = this.ContentScaling;
-
-            return label;
         }
 
         public Size RestrictSize(Size size, int dim)
@@ -205,6 +265,7 @@ namespace Rambha.Document
 
         public override bool OnDropFinished(PVDragContext dc)
         {
+
             if (HasImmediateEvaluation)
             {
                 if (!Tag.ToLower().Equals(dc.draggedItem.Tag.ToLower()))
@@ -213,6 +274,7 @@ namespace Rambha.Document
                 }
             }
 
+            DroppedTag = dc.draggedItem.Tag;
             DroppedItems.Clear();
 
             if (base.OnDropFinished(dc))
@@ -223,8 +285,9 @@ namespace Rambha.Document
                     mri.ImageData = dc.draggedItem.Image;
                     DroppedTag = dc.draggedItem.Tag;
                     Img.Image = mri;
-                    return true;
                 }
+
+                return true;
             }
 
             return false;
@@ -234,9 +297,17 @@ namespace Rambha.Document
         {
             base.Save(bw);
 
+            bw.Log("* * * SMImage * * *\n");
             bw.WriteByte(10);
             bw.WriteInt64(Img.ImageId);
             bw.WriteInt32((Int32)ContentScaling);
+
+            bw.WriteByte(13);
+            bw.WriteInt32((Int32)ContentArangement);
+
+            bw.WriteByte(14);
+            bw.WriteInt32(SourceOffsetX);
+            bw.WriteInt32(SourceOffsetY);
 
             bw.WriteByte(0);
         }

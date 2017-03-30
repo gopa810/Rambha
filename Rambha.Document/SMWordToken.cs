@@ -8,7 +8,9 @@ namespace Rambha.Document
 {
     public class SMWordBase
     {
-        protected SMControl Parent = null;
+        public SMStatusLayout NormalState = null;
+        public SMStatusLayout HighlightState = null;
+        public SMFont Font = null;
         public int LineNo = 0;
         public int ColumnNo = 0;
         public int PageNo = 0;
@@ -16,10 +18,13 @@ namespace Rambha.Document
         public string tag = string.Empty;
         public MNEvaluationType Evaluation = MNEvaluationType.Lazy;
         private SMDragResponse draggable = SMDragResponse.Undef;
+        public int lineOffset = 0;
 
-        public SMWordBase(SMControl ctrl)
+        public SMWordBase(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
         {
-            Parent = ctrl;
+            NormalState = pn;
+            HighlightState = hn;
+            Font = f;
         }
 
         public virtual SMTokenItem GetDraggableItem()
@@ -32,7 +37,7 @@ namespace Rambha.Document
             return false;
         }
 
-        public virtual void Paint(MNPageContext context)
+        public virtual void Paint(MNPageContext context, int X, int Y)
         {
         }
     
@@ -57,37 +62,50 @@ namespace Rambha.Document
 
     public enum SMWordSpecialType
     {
-        Newline,
-        HorizontalLine
+        Newline = 0,
+        HorizontalLine = 1,
+        NewColumn = 2,
+        NewPage = 3
     }
 
     public class SMWordSpecial : SMWordBase
     {
-        public SMWordSpecial(SMControl ct)
-            : base(ct)
+        public SMWordSpecial(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
+            : base(pn,hn,f)
         {
         }
 
         public SMWordSpecialType Type {get;set;}
+
+        public override void Paint(MNPageContext context, int X, int Y)
+        {
+            if (Type == SMWordSpecialType.HorizontalLine)
+            {
+                context.g.DrawLine(Pens.Black, rect.X + X, rect.Y + Y + rect.Height / 2, rect.Right + X, rect.Y + Y + rect.Height / 2);
+            }
+            base.Paint(context, X, Y);
+        }
     }
 
     public class SMWordText: SMWordTextBase
     {
         public string text = string.Empty;
-        public SMWordText(SMControl ct): base(ct)
+        public SMWordText(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
+            : base(pn, hn, f)
         {
         }
 
-        public SMWordText(SMControl ct, SMTokenItem item): base(ct)
+        public SMWordText(SMStatusLayout pn, SMStatusLayout hn, SMFont f, SMTokenItem item)
+            : base(pn, hn, f)
         {
             text = item.Text ?? text;
             tag = item.Tag;
         }
 
-        public override void Paint(MNPageContext context)
+        public override void Paint(MNPageContext context, int X, int Y)
         {
             //context.g.FillRectangle(Brushes.LightGreen, rect);
-            context.g.DrawString(this.text, this.Font, this.TextBrush, this.rect.Location);
+            context.g.DrawString(this.text, this.WinFont, this.TextBrush, rect.X + X, rect.Y + Y + this.lineOffset*rect.Height/100);
         }
 
         public override bool IsSpace()
@@ -120,49 +138,34 @@ namespace Rambha.Document
             return item;
         }
 
-        public SMWordImage(SMControl ct): base(ct)
+        public SMWordImage(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
+            : base(pn, hn, f)
         {
         }
 
-        public SMWordImage(SMControl ct, SMTokenItem item): base (ct)
+        public SMWordImage(SMStatusLayout pn, SMStatusLayout hn, SMFont f, SMTokenItem item)
+            : base(pn, hn, f)
         {
             tag = item.Tag;
             image = item.Image;
         }
 
-        public override void Paint(MNPageContext context)
+        public override void Paint(MNPageContext context, int X, int Y)
         {
-            context.g.DrawImage(image, rect);
+            context.g.DrawImage(image, rect.X + X, rect.Y + Y, rect.Width, rect.Height);
         }
     }
 
     public class SMWordTextBase: SMWordBase
     {
         private Brush textBrush = Brushes.Black;
-        private Font font = null;
-        public bool fontStyleValid = false;
-        public FontStyle fontStyle = FontStyle.Regular;
 
-
-        public Font Font
+        public Font WinFont
         {
             get
             {
-                Font f = font;
-                if (f == null) f = Parent.GetUsedFont();
-                if (f == null) f = SystemFonts.DefaultFont;
-                if (fontStyleValid)
-                {
-                    if (fontStyle != f.Style)
-                    {
-                        f = SMGraphics.GetFontVariation(f, fontStyle);
-                    }
-                }
+                Font f = Font.Font;
                 return f;
-            }
-            set
-            {
-                font = value;
             }
         }
 
@@ -171,7 +174,7 @@ namespace Rambha.Document
             get
             {
                 if (textBrush == null)
-                    textBrush = new SolidBrush(Parent.Style.ForeColor);
+                    textBrush = SMGraphics.GetBrush(NormalState.ForeColor);
                 return textBrush;
             }
             set
@@ -180,45 +183,73 @@ namespace Rambha.Document
             }
         }
 
-        public SMWordTextBase(SMControl ct)
-            : base(ct)
+        public SMWordTextBase(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
+            : base(pn, hn, f)
         {
         }
     }
 
     public class SMWordToken: SMWordTextBase
     {
-        private SMDropResponse droppable = SMDropResponse.Undef;
+        private SMConnectionCardinality droppable = SMConnectionCardinality.Undef;
         public SMTokenItem droppedItem = null;
         public bool UIStateHover = false;
         public MNEvaluationResult UIStateError = MNEvaluationResult.NotEvaluated;
         public string text = string.Empty;
+        public bool Editable = false;
+        public bool Focused = false;
+        public string editedText = "";
 
 
-        public SMDropResponse Droppable
+        public SMConnectionCardinality Cardinality
         {
             get { return droppable; }
             set { droppable = value; }
         }
 
-        public SMWordToken(SMControl ct): base(ct)
+        public SMWordToken(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
+            : base(pn, hn, f)
         {
         }
 
-        public override void Paint(MNPageContext context)
+        public string GetCurrentText()
         {
-            if (UIStateHover)
+            if (Editable)
             {
-                context.g.FillRectangle(SMGraphics.GetBrush(Parent.Style.HighBackColor), this.rect);
-            }
-            if (droppedItem != null)
-            {
-                context.g.DrawString(droppedItem.Text, this.Font, this.TextBrush, this.rect.Location);
+                return editedText + (editedText.Length < text.Length ? text.Substring(editedText.Length) : "") + (Focused ? " " : "");
             }
             else
             {
-                context.g.DrawString(this.text, this.Font, this.TextBrush, this.rect.Location);
+                if (droppedItem != null)
+                {
+                    return droppedItem.Text;
+                }
+                else
+                {
+                    return this.text;
+                }
             }
+        }
+
+        public override void Paint(MNPageContext context, int X, int Y)
+        {
+            string s = GetCurrentText();
+
+            Brush b = SMGraphics.GetBrush(HighlightState.BackColor);
+
+            if (UIStateHover)
+            {
+                context.g.FillRectangle(b, rect.X + X, rect.Y + Y, rect.Width, rect.Height);
+            }
+
+            if (Editable && Focused)
+            {
+                context.g.DrawRectangle(SMGraphics.GetPen(HighlightState.BackColor, 2), rect.X + X, rect.Y + Y, rect.Width, rect.Height);
+                SizeF sz = context.g.MeasureString(editedText, this.Font.Font);
+                context.g.FillRectangle(Brushes.Blue, rect.X + X + (int)sz.Width, rect.Y + Y + 1, 10, rect.Height - 2);
+            }
+
+            context.g.DrawString(s, this.Font.Font, this.TextBrush, rect.Location.X + X, rect.Location.Y + Y);
         }
 
         /// <summary>
@@ -227,7 +258,7 @@ namespace Rambha.Document
         /// <param name="p"></param>
         public override void HoverPoint(Point p)
         {
-            if (Droppable == SMDropResponse.One || Droppable == SMDropResponse.Many)
+            if (Cardinality == SMConnectionCardinality.One || Cardinality == SMConnectionCardinality.Many)
             {
                 UIStateHover = rect.Contains(p);
             }
@@ -275,8 +306,6 @@ namespace Rambha.Document
         // <tag attr2="val1" attr3='val3' attr4=val5>
         public static List<SMWordBase> WordListFromString(string text, SMControl control)
         {
-            if (control.Style == null)
-                return new List<SMWordBase>();
             List<SMWordBase> list = new List<SMWordBase>();
             TextParseMode mode = TextParseMode.General;
             StringBuilder word = new StringBuilder();
@@ -285,7 +314,10 @@ namespace Rambha.Document
             TextTag tt = new TextTag();
             RunningFormat fmt = new RunningFormat();
             string argumentName = "";
-            fmt.fontStyle = control.Style.Font.Style;
+            fmt.SetFontStyle(control.Font.Style);
+            fmt.fontSize = control.Font.Size;
+            fmt.fontName = control.Font.Name;
+            fmt.defaultFontSize = fmt.fontSize;
 
             foreach (char readedChar in text)
             {
@@ -307,7 +339,7 @@ namespace Rambha.Document
                     {
                         ClearWordBuffer(list, word, control, fmt);
                         if (readedChar == '\n')
-                            list.Add(new SMWordSpecial(control) { Type = SMWordSpecialType.Newline });
+                            list.Add(new SMWordSpecial(control.NormalState, control.HighlightState, control.Font) { Type = SMWordSpecialType.Newline });
                         else
                             AppendWord(list, " ", control, fmt);
                     }
@@ -546,8 +578,24 @@ namespace Rambha.Document
                 word.Clear();
             }
 
+            // set first editable as focused
+            foreach (SMWordBase wb in list)
+            {
+                if (wb is SMWordToken)
+                {
+                    SMWordToken wt = (SMWordToken)wb;
+                    if (wt.Editable)
+                    {
+                        wt.Focused = true;
+                        break;
+                    }
+                }
+            }
+
             return list;
         }
+
+
 
         public static char GetCharFromCode(string charCode)
         {
@@ -583,8 +631,37 @@ namespace Rambha.Document
         private class RunningFormat
         {
             public SMDragResponse dragResponse = SMDragResponse.None;
-            public FontStyle fontStyle = FontStyle.Regular;
-            public bool fontStyleValid = false;
+            public bool Bold = false;
+            public bool Italic = false;
+            public bool Underline = false;
+            public bool Strikeout = false;
+            public FontStyle fontStyle 
+            {
+                get
+                {
+                    FontStyle fs = FontStyle.Regular;
+                    if (Bold) fs |= FontStyle.Bold;
+                    if (Italic) fs |= FontStyle.Italic;
+                    if (Underline) fs |= FontStyle.Underline;
+                    if (Strikeout) fs |= FontStyle.Strikeout;
+                    return fs;
+                }
+            }
+            public float defaultFontSize = 20;
+            public float fontSize = 20;
+            public MNFontName fontName = MNFontName.LucidaSans;
+            public SMFont GetFont()
+            {
+                return SMGraphics.GetVirtFontVariation(fontName, fontSize, Bold, Italic, Underline, Strikeout);
+            }
+
+            internal void SetFontStyle(FontStyle fontStyle)
+            {
+                Bold = ((fontStyle & FontStyle.Bold) != 0);
+                Italic = ((fontStyle & FontStyle.Italic) != 0);
+                Underline = ((fontStyle & FontStyle.Underline) != 0);
+                Strikeout = ((fontStyle & FontStyle.Strikeout) != 0);
+            }
         }
 
         private static void AppendTag(List<SMWordBase> list, StringBuilder word, TextTag tt, SMControl control, RunningFormat fmt)
@@ -601,67 +678,111 @@ namespace Rambha.Document
                     break;
                 case "drop":
                     {
-                        SMWordToken wt = new SMWordToken(control);
+                        SMWordToken wt = new SMWordToken(control.NormalState, control.HighlightState, control.Font);
                         wt.text = tt.attrs.ContainsKey("text") ? tt.attrs["text"] : "_____";
                         wt.tag = tt.attrs.ContainsKey("tag") ? tt.attrs["tag"] : "";
-                        wt.Draggable = control.Draggable;
-                        wt.Droppable = control.Droppable;
-                        if (fmt.fontStyleValid)
-                        {
-                            wt.fontStyle = fmt.fontStyle;
-                            wt.fontStyleValid = true;
-                        }
-                        wt.Droppable = SMDropResponse.One;
+                        wt.Draggable = SMDragResponse.None;
+                        wt.Cardinality = SMConnectionCardinality.One;
                         wt.Evaluation = control.HasLazyEvaluation ? MNEvaluationType.Lazy : MNEvaluationType.Immediate;
                         list.Add(wt);
                     }
                     break;
+                case "edit":
+                    {
+                        SMWordToken wt = new SMWordToken(control.NormalState, control.HighlightState, control.Font);
+                        wt.text = tt.attrs.ContainsKey("text") ? tt.attrs["text"] : "_____";
+                        wt.tag = tt.attrs.ContainsKey("tag") ? tt.attrs["tag"] : "";
+                        wt.Draggable = SMDragResponse.None;
+                        wt.Editable = true;
+                        wt.Cardinality = SMConnectionCardinality.One;
+                        wt.Evaluation = control.HasLazyEvaluation ? MNEvaluationType.Lazy : MNEvaluationType.Immediate;
+                        list.Add(wt);
+                    }
+                    break;
+                case "page":
+                    ClearWordBuffer(list, word, control, fmt);
+                    list.Add(new SMWordSpecial(control.NormalState, control.NormalState, control.Font) { Type = SMWordSpecialType.NewPage });
+                    break;
+                case "hr":
+                    ClearWordBuffer(list, word, control, fmt);
+                    list.Add(new SMWordSpecial(control.NormalState, control.NormalState, control.Font) { Type = SMWordSpecialType.HorizontalLine });
+                    break;
                 case "br":
                     ClearWordBuffer(list, word, control, fmt);
-                    list.Add(new SMWordSpecial(control) { Type = SMWordSpecialType.Newline });
+                    list.Add(new SMWordSpecial(control.NormalState, control.HighlightState, control.Font) { Type = SMWordSpecialType.Newline });
                     AppendWord(list, "\n", control, fmt);
+                    break;
+                case "col":
+                    ClearWordBuffer(list, word, control, fmt);
+                    list.Add(new SMWordSpecial(control.NormalState, control.HighlightState, control.Font) { Type = SMWordSpecialType.NewColumn });
+                    //AppendWord(list, "\n", control, fmt);
                     break;
                 case "r":
                     ClearWordBuffer(list, word, control, fmt);
-                    fmt.fontStyle = FontStyle.Regular;
-                    fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    fmt.Bold = false;
+                    fmt.Italic = false;
+                    fmt.Strikeout = false;
+                    fmt.Underline = false;
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
                 case "/r":
                     ClearWordBuffer(list, word, control, fmt);
-                    fmt.fontStyle = control.Style.Font.Style;
-                    fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    fmt.Bold = control.Font.Bold;
+                    fmt.Italic = control.Font.Italic;
+                    fmt.Underline = control.Font.Underline;
+                    fmt.Strikeout = false;
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
                 case "b":
                     ClearWordBuffer(list, word, control, fmt);
-                    fmt.fontStyle |= FontStyle.Bold;
-                    fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    fmt.Bold = true;
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
                 case "/b":
                     ClearWordBuffer(list, word, control, fmt);
-                    fmt.fontStyle = fmt.fontStyle & ~FontStyle.Bold;
-                    fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    fmt.Bold = false;
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
                 case "i":
                     ClearWordBuffer(list, word, control, fmt);
-                    fmt.fontStyle |= FontStyle.Italic; 
-                    fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    fmt.Italic = true; 
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
                 case "/i":
                     ClearWordBuffer(list, word, control, fmt);
-                    fmt.fontStyle = fmt.fontStyle & ~FontStyle.Italic; 
-                    fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    fmt.Italic = false; 
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
                 case "u":
                     ClearWordBuffer(list, word, control, fmt);
-                    fmt.fontStyle |= FontStyle.Underline;
-                    fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    fmt.Underline = true;
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
                 case "/u":
                     ClearWordBuffer(list, word, control, fmt);
-                    fmt.fontStyle = fmt.fontStyle & ~FontStyle.Underline;
-                    fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    fmt.Underline = false;
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
-                    
+                case "so":
+                    ClearWordBuffer(list, word, control, fmt);
+                    fmt.Strikeout = true;
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    break;
+                case "/so":
+                    ClearWordBuffer(list, word, control, fmt);
+                    fmt.Strikeout = false;
+                    //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
+                    break;
+                default:
+                    if (tt.tag.StartsWith("fs"))
+                    {
+                        int arg = 0;
+                        if (int.TryParse(tt.tag.Substring(2), out arg))
+                        {
+                            fmt.fontSize = (float)arg / 100 * fmt.defaultFontSize;
+                        }
+                    }
+                    break;
             }
         }
 
@@ -678,22 +799,43 @@ namespace Rambha.Document
         {
             // TODO
 
-            SMWordText wt = new SMWordText(control);
+            SMWordText wt = new SMWordText(control.NormalState, control.HighlightState, control.Font);
             wt.text = text;
-            wt.tag = text.ToLower();
-            wt.TextBrush = SMGraphics.GetBrush(control.Style.ForeColor);
-            if (fmt.fontStyleValid)
-            {
-                wt.fontStyle = fmt.fontStyle;
-                wt.fontStyleValid = true;
-            }
+            wt.tag = text.Trim().ToLower();
+            wt.TextBrush = SMGraphics.GetBrush(control.NormalState.ForeColor);
             wt.Draggable = fmt.dragResponse;
             wt.Evaluation = MNEvaluationType.None;
+            wt.Font = fmt.GetFont();
             list.Add(wt);
+        }
+
+        public void AcceptBack()
+        {
+            if (Editable)
+            {
+                if (editedText.Length > 0)
+                    editedText = editedText.Substring(0, editedText.Length - 1);
+            }
+        }
+
+        public void AcceptString(string p)
+        {
+            if (Editable && p != null)
+            {
+                editedText += p;
+            }
         }
     }
 
     public class SMWordLine: List<SMWordBase>
     {
+    }
+
+    public class SMRichLayout
+    {
+        public List<SMWordLine> Lines = null;
+        public int Pages = 0;
+        public int bottomY = 0;
+        public int rightX = 0;
     }
 }

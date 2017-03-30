@@ -5,7 +5,7 @@ using System.Drawing;
 using System.Drawing.Design;
 using System.Linq;
 using System.Text;
-
+using System.Diagnostics;
 
 using Rambha.Document.Views;
 using Rambha.Serializer;
@@ -14,8 +14,9 @@ namespace Rambha.Document
 {
     public class SMFreeDrawing: SMControl
     {
-        public float PenWidth = 10.0f;
+        public float PenWidth = 6.0f;
         public Color PenColor = Color.Black;
+        public double minDistance = 20;
 
         private float oldWidth = 0;
         private Color oldColor = Color.Transparent;
@@ -55,6 +56,7 @@ namespace Rambha.Document
         {
             Text = "Free Paint";
             BackgroundImage = null;
+            Draggable = SMDragResponse.None;
         }
 
         public override System.Drawing.Size GetDefaultSize()
@@ -93,8 +95,7 @@ namespace Rambha.Document
 
         public override void Paint(MNPageContext context)
         {
-            SMRectangleArea area = context.CurrentPage.GetArea(Id);
-            Rectangle bounds = area.GetBounds(context);
+            Rectangle bounds = Area.GetBounds(context);
 
             Rectangle textBounds = bounds;
             Pen currentPen;
@@ -121,8 +122,11 @@ namespace Rambha.Document
                     context.g.DrawLines(currentPen, dp.pts);
                 }
 
-                currentPen = SMGraphics.GetPen(tempPoints.penColor, tempPoints.penWidth);
-                context.g.DrawLines(currentPen, tempPoints.pts.ToArray<Point>());
+                if (tempPoints.pts.Count > 1)
+                {
+                    currentPen = SMGraphics.GetPen(tempPoints.penColor, tempPoints.penWidth);
+                    context.g.DrawLines(currentPen, tempPoints.pts.ToArray<Point>());
+                }
             }
 
             // draw selection marks
@@ -134,17 +138,32 @@ namespace Rambha.Document
             tempPoints.penColor = PenColor;
             tempPoints.penWidth = PenWidth;
             tempPoints.pts.Clear();
+            Debugger.Log(0, "", "Temp Start\n");
             base.OnTapBegin(dc);
         }
 
         public override void OnTapMove(PVDragContext dc)
         {
-            tempPoints.pts.Add(dc.lastPoint);
+            if (tempPoints.pts.Count > 0)
+            {
+                Point lp = tempPoints.pts[tempPoints.pts.Count - 1];
+                if (Math.Sqrt((lp.X - dc.lastPoint.X)*(lp.X - dc.lastPoint.X) + (lp.Y - dc.lastPoint.Y)*(lp.Y - dc.lastPoint.Y)) >= minDistance)
+                {
+                    tempPoints.pts.Add(dc.lastPoint);
+                    Debugger.Log(0, "", "Temp Move B " + tempPoints.pts.Count + "\n");
+                }
+            }
+            else
+            {
+                tempPoints.pts.Add(dc.lastPoint);
+                Debugger.Log(0, "", "Temp Move A " + tempPoints.pts.Count + "\n");
+            }
             base.OnTapMove(dc);
         }
 
         public override void OnTapEnd(PVDragContext dc)
         {
+            Debugger.Log(0, "", "Temp End " + tempPoints.pts.Count + "\n");
             drawPoints.Add(tempPoints.GetPoints());
             tempPoints.pts.Clear();
             base.OnTapEnd(dc);

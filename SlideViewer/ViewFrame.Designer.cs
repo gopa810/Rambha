@@ -28,20 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            Rambha.Document.MNPageContext mnPageContext2 = new Rambha.Document.MNPageContext();
-            System.Drawing.Drawing2D.Matrix matrix3 = new System.Drawing.Drawing2D.Matrix();
-            System.Drawing.Drawing2D.Matrix matrix4 = new System.Drawing.Drawing2D.Matrix();
-            SlideViewer.Views.PageViewController pageViewController2 = new SlideViewer.Views.PageViewController();
+            Rambha.Document.MNPageContext mnPageContext1 = new Rambha.Document.MNPageContext();
+            System.Drawing.Drawing2D.Matrix matrix1 = new System.Drawing.Drawing2D.Matrix();
+            System.Drawing.Drawing2D.Matrix matrix2 = new System.Drawing.Drawing2D.Matrix();
+            SlideViewer.Views.PageViewController pageViewController1 = new SlideViewer.Views.PageViewController();
             this.pageView1 = new SlideViewer.Views.PageView();
             this.panelBook = new System.Windows.Forms.Panel();
             this.panelSelectLanguage = new SlideViewer.SelectLanguageView();
             this.panelFiles = new System.Windows.Forms.Panel();
+            this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.buttonBrowse = new System.Windows.Forms.Button();
             this.buttonPlay = new System.Windows.Forms.Button();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.panelUpdater = new SlideViewer.UpdaterView();
-            this.button2 = new System.Windows.Forms.Button();
             this.panelBook.SuspendLayout();
             this.panelFiles.SuspendLayout();
             this.SuspendLayout();
@@ -50,11 +50,13 @@
             // 
             this.pageView1.BackColor = System.Drawing.SystemColors.Window;
             this.pageView1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            mnPageContext2.CurrentPage = null;
-            mnPageContext2.DisplaySize = Rambha.Document.PageEditDisplaySize.LandscapeBig;
-            mnPageContext2.LastInvertMatrix = matrix3;
-            mnPageContext2.LastMatrix = matrix4;
-            this.pageView1.Context = mnPageContext2;
+            mnPageContext1.CurrentPage = null;
+            mnPageContext1.DisplaySize = Rambha.Document.PageEditDisplaySize.LandscapeBig;
+            mnPageContext1.hitHeaderButton = 0;
+            mnPageContext1.isMovingTag = false;
+            mnPageContext1.LastInvertMatrix = matrix1;
+            mnPageContext1.LastMatrix = matrix2;
+            this.pageView1.Context = mnPageContext1;
             this.pageView1.CurrentDocument = null;
             this.pageView1.CurrentPage = null;
             this.pageView1.DisplayedMenu = null;
@@ -62,8 +64,8 @@
             this.pageView1.Name = "pageView1";
             this.pageView1.Size = new System.Drawing.Size(303, 290);
             this.pageView1.TabIndex = 0;
-            pageViewController2.View = this.pageView1;
-            this.pageView1.ViewController = pageViewController2;
+            pageViewController1.View = this.pageView1;
+            this.pageView1.ViewController = pageViewController1;
             // 
             // panelBook
             // 
@@ -99,6 +101,17 @@
             this.panelFiles.Name = "panelFiles";
             this.panelFiles.Size = new System.Drawing.Size(355, 261);
             this.panelFiles.TabIndex = 3;
+            // 
+            // button2
+            // 
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.button2.Location = new System.Drawing.Point(285, 198);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(65, 23);
+            this.button2.TabIndex = 4;
+            this.button2.Text = "Export";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // button1
             // 
@@ -158,17 +171,6 @@
             this.panelUpdater.Size = new System.Drawing.Size(168, 169);
             this.panelUpdater.TabIndex = 4;
             // 
-            // button2
-            // 
-            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.button2.Location = new System.Drawing.Point(285, 198);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(65, 23);
-            this.button2.TabIndex = 4;
-            this.button2.Text = "Export";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
             // ViewFrame
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -180,6 +182,7 @@
             this.Controls.Add(this.panelUpdater);
             this.Name = "ViewFrame";
             this.Text = "Page Views";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ViewFrame_FormClosing);
             this.Shown += new System.EventHandler(this.ViewFrame_Shown);
             this.panelBook.ResumeLayout(false);
             this.panelFiles.ResumeLayout(false);

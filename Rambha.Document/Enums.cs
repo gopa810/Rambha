@@ -5,6 +5,13 @@ using System.Text;
 
 namespace Rambha.Document
 {
+    public enum Bool3
+    {
+        False = 0,
+        True = 1,
+        Undef = 2
+    }
+
     public enum PageEditDisplaySize
     {
         LandscapeBig = 0,   // 0,0 

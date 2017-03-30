@@ -24,7 +24,7 @@ namespace SlideMaker.Views
         {
             return new NABase[]
             {
-                new TADocAddText(View, "New Script") { Control = this.Control }
+                new TVAction(View, "New Script") { Control = this.Control, Script = "addScript" }
             };
         }
 

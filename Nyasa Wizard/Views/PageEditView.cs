@@ -39,6 +39,10 @@ namespace SlideMaker.Views
 
         public MNPageContext Context = new MNPageContext();
 
+        public SMRectangleArea SelectionArea = new SMRectangleArea();
+
+        public KeyPageActions pageActions = null;
+
         private float zoom_ratio = 1f;
 
         private Size view_size = new Size(1024, 768);
@@ -46,6 +50,9 @@ namespace SlideMaker.Views
         private bool b_key_control = false;
 
         public int AverageValueSelection = 0;
+        private Pen markRectPen;
+
+        private Font p_bigFont = null;
 
         public float ZoomRatio
         {
@@ -112,8 +119,9 @@ namespace SlideMaker.Views
             set
             {
                 PageData = value;
-                /*if (PageData != null && PageData.Document != null)
-                    ViewSize = PageData.Document.PageSize;*/
+                if (PageData != null)
+                    PageData.ClearSelection();
+                SelectionArea.Clear();
                 RecalculateZoomSizeMatrix();
                 Invalidate();
             }
@@ -127,10 +135,22 @@ namespace SlideMaker.Views
             Context.cursorBoundaryReady = new Cursor(new MemoryStream(Properties.Resources.cursor_b_ready));
             Context.cursorBoundaryMoving = new Cursor(new MemoryStream(Properties.Resources.cursor_b_move));
             Context.cursorBoundaryAnchor = new Cursor(new MemoryStream(Properties.Resources.cursor_b_anchor));
+            Context.navigIconBack = Properties.Resources.navigIconBack;
+            Context.navigIconFwd = Properties.Resources.navigIconFwd;
+            Context.navigIconHelp = Properties.Resources.navigIconHelp;
+            Context.navigIconHome = Properties.Resources.navigIconHome;
+            Context.navigArrowBack = Properties.Resources.navigArrowLeft;
+            Context.navigArrowFwd = Properties.Resources.navigArrowRight;
+            Context.navigSpeakerOn = Properties.Resources.SpeakerOn;
+            Context.navigSpeakerOff = Properties.Resources.SpeakerOff;
 
             MNNotificationCenter.AddReceiver(this, "ObjectSelected");
 
             this.MouseWheel += PageEditView_MouseWheel;
+
+            markRectPen = SMGraphics.GetPen(Color.Gray, 2);
+
+            p_bigFont = new Font(FontFamily.GenericSansSerif, 40);
         }
 
         private void PageEditView_Paint(object sender, PaintEventArgs e)
@@ -148,8 +168,32 @@ namespace SlideMaker.Views
             Context.PageHeight = view_size.Height;
             Context.drawSelectionMarks = true;
 
-            PageData.Paint(Context);
+            PageData.PaintBackground(Context);
+            PageData.Paint(Context, false);
+            PageData.Paint(Context, true);
 
+            if (HasSelectedObjects)
+            {
+                SelectionArea.PaintSelectionMarks(Context);
+            }
+
+            if (Context.isMarkingArea)
+            {
+                e.Graphics.DrawRectangle(markRectPen, Context.GetMarkingRect());
+            }
+            else if (Context.isMovingTag)
+            {
+                SizeF sz = e.Graphics.MeasureString(p_moved_tag, p_bigFont);
+                Rectangle r = new Rectangle(Context.lastClientPoint.X - (int)(sz.Width / 2), Context.lastClientPoint.Y - (int)(sz.Height / 2),
+                    (int)sz.Width + 2, (int)sz.Height + 2);
+                e.Graphics.FillRectangle(Brushes.Pink, r);
+                e.Graphics.DrawString(p_moved_tag, p_bigFont, Brushes.DarkViolet, r);
+            }
+
+            if (PageData.ShowMessageAlways)
+            {
+                Context.PaintMessageBox(false);
+            }
         }
 
         private void setPictureToolStripMenuItem_Click(object sender, EventArgs e)
@@ -175,12 +219,14 @@ namespace SlideMaker.Views
 
         private void PageEditView_MouseClick(object sender, MouseEventArgs e)
         {
+            if (pageActions.IsKeyActionMode) pageActions.StopKeyActionMode();
+
             if (e.Button == System.Windows.Forms.MouseButtons.Right && PageData != null)
             {
-                Point clientPoint = new Point(e.X, e.Y);
+                /*Point clientPoint = new Point(e.X, e.Y);
                 LastUserPoint = PointToScreen(clientPoint);
                 LastRelativePoint = Context.PhysicalToRelative(clientPoint);
-                contextMenuStrip1.Show(LastUserPoint);
+                contextMenuStrip1.Show(LastUserPoint);*/
             }
         }
 
@@ -197,37 +243,62 @@ namespace SlideMaker.Views
 
         private void PageEditView_MouseUp(object sender, MouseEventArgs e)
         {
+            if (pageActions.IsKeyActionMode) pageActions.StopKeyActionMode();
+
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
             }
             else
             {
-                Context.isTracking = false;
+                if (Context.isMarkingArea)
+                {
+                    RefreshOriginalAreas();
+                }
+
+                Context.isMarkingArea = false;
+                Context.trackingType = SMControlSelection.None;
                 Point offset = Context.TrackedDrawOffset;
                 Context.TrackedDrawOffset = Point.Empty;
 
-                if (Context.TrackedObjects.Count > 0)
+                if (Context.isMovingTag)
                 {
-                    foreach (SMControl obj in Context.TrackedObjects)
+                    Point logPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                    SMControl c = PageData.FindObjectContainingPoint(Context, logPoint);
+                    if (c != null)
                     {
-                        SMRectangleArea po = Page.GetArea(obj.Id);
-                        if (po.TrackedSelection != SMControlSelection.None)
-                        {
-                            po.Move(Context, offset);
-                            if (obj.Autosize)
-                                obj.RecalculateSize(Context);
-                        }
+                        c.Tag = p_moved_tag;
                     }
                 }
+                else
+                {
+                }
 
-                Context.TrackedObjects.Clear();
             }
+
+            Context.isMovingTag = false;
+
 
             Invalidate();
         }
 
+        private void RefreshOriginalAreas()
+        {
+            origTotalSelectionRect = SelectionArea.RelativeArea;
+            origAreas.Clear();
+            foreach (SMControl c in PageData.SelectedObjects)
+            {
+                SMRectangleArea area = c.Area;
+                origAreas[c.Id] = area.GetRawRectangle(Context.DisplaySize);
+            }
+        }
+
+        private Rectangle origTotalSelectionRect = Rectangle.Empty;
+        private Dictionary<long, Rectangle> origAreas = new Dictionary<long, Rectangle>();
+
         private void PageEditView_MouseWheel(object sender, MouseEventArgs e)
         {
+            if (pageActions.IsKeyActionMode) pageActions.StopKeyActionMode();
+
             //you can do anything here
             if (e.Delta < 0)
             {
@@ -242,13 +313,20 @@ namespace SlideMaker.Views
 
         }
 
+        private string p_moved_tag = "";
 
         private void PageEditView_MouseDown(object sender, MouseEventArgs e)
         {
+            if (pageActions.IsKeyActionMode) pageActions.StopKeyActionMode();
+
+            Context.startClientPoint.X = e.X;
+            Context.startClientPoint.Y = e.Y;
+
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                LastUserPoint = new Point(e.X, e.Y);
-                contextMenuStrip2.Show(PointToScreen(new Point(e.X, e.Y)));
+                LastUserPoint = Context.startClientPoint;
+                pasteToolStripMenuItem.Enabled = (PageData.Objects.Count > 0);
+                contextMenuStrip2.Show(PointToScreen(LastUserPoint));
             }
             else
             {
@@ -260,43 +338,99 @@ namespace SlideMaker.Views
                 }
 
                 Point logPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                Context.startClientPoint = logPoint;
 
-                Context.TrackedObjects.Clear();
-                foreach (SMControl sc in PageData.Objects)
+                if (b_key_movetag)
                 {
-                    SMRectangleArea area = Page.GetArea(sc.Id);
-                    area.TrackedSelection = SMControlSelection.None;
+                    SMControl obj = PageData.FindObjectContainingPoint(Context, logPoint);
+                    if (obj != null)
+                    {
+                        p_moved_tag = obj.SafeTag;
+                        Context.isMovingTag = true;
+                    }
                 }
-
-                //
-                // test if user clicks into object that is already selected
-                // if yes, then copy all selected objects into tracked objects
-                // function returns true if we hit some boundary line, so in that case
-                // we just show properties for that boundary line (constraint)
-                // function returns false if we did not hit any constraint
-                //
-                if (!PreserveSelectionForMove(logPoint))
+                else
                 {
-                    if (Context.TrackedObjects.Count == 0)
+                    //
+                    // test if user clicks into object that is already selected
+                    // if yes, then copy all selected objects into tracked objects
+                    // function returns true if we hit some boundary line, so in that case
+                    // we just show properties for that boundary line (constraint)
+                    // function returns false if we did not hit any constraint
+                    //
+                    if (!PreserveSelectionForMove(logPoint))
                     {
                         if (!b_key_control)
                             PageData.ClearSelection();
-                        SelectObjectsContainingPoint(logPoint);
+                        SelectObjectsContainingPoint(Context, logPoint);
                     }
 
-                    Context.isTracking = (Context.TrackedObjects.Count > 0);
                     if (Context.isTracking)
                     {
-                        MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", Context.TrackedObjects[0]);
+                        MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", PageData.SelectedObjects[0]);
                         Context.TrackedStartLogical = logPoint;
                         Context.TrackedDrawOffset = Point.Empty;
+                        RefreshOriginalAreas();
                         Invalidate();
                     }
                     else
                     {
                         UserClickOnEmptySpace(logPoint);
+                        origAreas.Clear();
                     }
                 }
+            }
+        }
+
+        public void SelectObjectsContainingPoint(MNPageContext Context, Point logPoint)
+        {
+            SelectionArea.RelativeArea = Rectangle.Empty;
+
+            for (int i = PageData.Objects.Count - 1; i >= 0; i--)
+            {
+                SMControl po = PageData.Objects[i];
+                if (po.Area.TestHitLogical(Context, logPoint))
+                {
+                    po.Area.Selected = !po.Area.Selected;
+                }
+
+                if (po.Area.Selected)
+                {
+                    //Debugger.Log(0, "", " - merging rect\n");
+                    MNPage.MergeRectangles(ref SelectionArea.RelativeArea, po.Area.GetRawRectangle(PageEditDisplaySize.LandscapeBig));
+                    Context.trackingType = SMControlSelection.All;
+                    break;
+                }
+            }
+
+            //Debugger.Log(0,"", "SelectObjectsContainingPoint TotalSelectionrect = " + TotalSelectionRect + "\n");
+        }
+
+        public void SelectObjectsIntersectingRect(MNPageContext Context, Rectangle r)
+        {
+            SelectionArea.RelativeArea = Rectangle.Empty;
+
+            foreach (SMControl po in PageData.Objects)
+            {
+                SMRectangleArea area = po.Area;
+                SMControlSelection testResult = area.TestHitLogical(Context, r);
+                if (testResult != SMControlSelection.None)
+                {
+                    area.Selected = true;
+                    Debugger.Log(0, "", " - merging rect\n");
+                    MNPage.MergeRectangles(ref SelectionArea.RelativeArea, area.GetRawRectangle(Context.DisplaySize));
+                }
+            }
+
+            Debugger.Log(0, "", "SelectObjectsIntersectingRect TotalSelectionrect = " + SelectionArea.RelativeArea + "\n");
+
+        }
+
+        private bool HasSelectedObjects
+        {
+            get
+            {
+                return !SelectionArea.RelativeArea.IsEmpty;
             }
         }
 
@@ -312,16 +446,18 @@ namespace SlideMaker.Views
                             if (args[0] is MNPage)
                             {
                                 Page = args[0] as MNPage;
+                                MNNotificationCenter.CurrentPage = Page;
                             }
                             else if (args[0] is SMControl)
                             {
                                 SMControl selectedControl = args[0] as SMControl;
                                 MNPage selectedPage = selectedControl.Page;
-                                SMRectangleArea area = selectedPage.GetArea(selectedControl.Id);
+                                SMRectangleArea area = selectedControl.Area;
                                 if (Page != selectedPage)
                                     Page = selectedPage;
                                 selectedPage.ClearSelection();
                                 if (area != null) area.Selected = true;
+                                MNNotificationCenter.CurrentPage = Page;
                                 Invalidate();
                             }
                         }
@@ -339,39 +475,6 @@ namespace SlideMaker.Views
             }
         }
 
-        /// <summary>
-        /// Finds ruler that was hit by current logical point
-        /// </summary>
-        /// <param name="logPoint">Input point in logical coordinate system</param>
-        /// <returns>Ruler that was hit</returns>
-        private SMRuler FindBoundaryRuler(Point logPoint)
-        {
-            foreach (SMControl obj in PageData.Objects)
-            {
-                SMRectangleArea po = Page.GetArea(obj.Id);
-                if (po.Selected)
-                {
-                    SMControlSelection testResult = po.TestHitLogical(Context, logPoint);
-                    switch (testResult & SMControlSelection.All)
-                    {
-                        case SMControlSelection.None:
-                            return null;
-                        case SMControlSelection.Left:
-                            return po.LeftRuler;
-                        case SMControlSelection.Top:
-                            return po.TopRuler;
-                        case SMControlSelection.Right:
-                            return po.RightRuler;
-                        case SMControlSelection.Bottom:
-                            return po.BottomRuler;
-                        default:
-                            return null;
-                    }
-                }
-            }
-
-            return null;
-        }
 
         private void UserClickOnEmptySpace(Point logPoint)
         {
@@ -379,26 +482,11 @@ namespace SlideMaker.Views
                 logPoint.Y > 0 && logPoint.Y < Context.PageHeight)
             {
                 MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", Page);
+                Context.isMarkingArea = true;
             }
             else
             {
                 MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", Document);
-            }
-        }
-
-        private void SelectObjectsContainingPoint(Point logPoint)
-        {
-            foreach (SMControl po in PageData.SortedObjects)
-            {
-                SMRectangleArea area = Page.GetArea(po.Id);
-                SMControlSelection testResult = area.TestHitLogical(Context, logPoint);
-                if (testResult != SMControlSelection.None)
-                {
-                    area.Selected = !area.Selected;
-                    area.TrackedSelection = SMControlSelection.All;
-                    Context.TrackedObjects.Add(po);
-                    break;
-                }
             }
         }
 
@@ -410,158 +498,243 @@ namespace SlideMaker.Views
         /// <returns></returns>
         private bool PreserveSelectionForMove(Point logPoint)
         {
-            SMControlSelection Result = SMControlSelection.None;
-
-            foreach (SMControl po in PageData.SortedObjects)
+            if (!SelectionArea.RelativeArea.IsEmpty)
             {
-                SMRectangleArea area = Page.GetArea(po.Id);
-                SMControlSelection testResult;
-                if (area.Selected)
-                {
-                    testResult = area.TestHitLogical(Context, logPoint);
-                    if (testResult != SMControlSelection.None && testResult != SMControlSelection.All)
-                    {
-                        Result = testResult;
-                        break;
-                    }
-                    else if (testResult == SMControlSelection.All && Result == SMControlSelection.None)
-                    {
-                        Result = testResult;
-                    }
-                }
-                else
-                {
-                    if (area.TestHitLogical(Context, logPoint) != SMControlSelection.None)
-                    {
-                        return false;
-                    }
-                }
+                Context.trackingType = AreaTestHitLogical(Context, SelectionArea, logPoint);
+            }
+            else
+            {
+                Context.trackingType = SMControlSelection.None;
             }
 
-            if (Result != SMControlSelection.None)
-            {
-                foreach (SMControl po in PageData.SortedObjects)
-                {
-                    SMRectangleArea area = Page.GetArea(po.Id);
-                    if (area.Selected)
-                    {
-                        area.TrackedSelection = Result;
-                        Context.TrackedObjects.Add(po);
-                    }
-                }
-            }
-            
-            
-             /*            foreach (SMControl po in PageData.SortedObjects)
-            {
-                SMRectangleArea area = Page.GetArea(po.Id);
-                if (area.Selected)
-                {
-                    SMControlSelection testResult = area.TestHitLogical(Context, logPoint);
-                    if (testResult != SMControlSelection.None)
-                    {
-                        if ((testResult & SMControlSelection.AnyBoundary) != SMControlSelection.None)
-                        {
-                            MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", area.GetBoundaryRuler(testResult));
-                            return true;
-                        }
+            Debugger.Log(0, "", "Preserve Selection result: " + Context.trackingType + "\n");
 
-                        foreach (SMControl po2 in PageData.Objects)
-                        {
-                            SMRectangleArea area2 = Page.GetArea(po2.Id);
-                            if (area2.Selected)
-                            {
-                                // if we hit some boundary tracking anchor
-                                // then we do not track other selected items
-                                // only that one, which is directly hit
-                                area2.TrackedSelection = (testResult == SMControlSelection.All ? SMControlSelection.All : SMControlSelection.None);
-                                Context.TrackedObjects.Add(po2);
-                            }
-                        }
-                        // control that is directly hit is tracked according its hitpoint
-                        area.TrackedSelection = testResult;
-                        break;
-                    }
-                }
-                else
-                {
-                    SMControlSelection testResult = area.TestHitLogical(Context, logPoint);
-                    if (testResult != SMControlSelection.None)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-             */
-            return false;
+            return Context.isTracking;
         }
+
+
 
         private void PageEditView_MouseMove(object sender, MouseEventArgs e)
         {
-            Point logPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+            //if (b_is_key_action_mode) StopKeyActionMode();
+
+            Context.lastClientPoint.X = e.X;
+            Context.lastClientPoint.Y = e.Y;
+
+            Point logPoint = Context.PhysicalToLogical(Context.lastClientPoint);
+            Context.lastClientPoint = logPoint;
+
             if (PageData == null) return;
 
             if (Context.isTracking)
             {
                 // these data we need for tracking
-                Context.TrackedDrawOffset.X = logPoint.X - Context.TrackedStartLogical.X;
-                Context.TrackedDrawOffset.Y = logPoint.Y - Context.TrackedStartLogical.Y;
+                int relX = logPoint.X - Context.TrackedStartLogical.X;
+                int relY = logPoint.Y - Context.TrackedStartLogical.Y;
+
+                switch (Context.trackingType)
+                {
+                    case SMControlSelection.All:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X + relX;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y + relY;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height;
+                        break;
+                    case SMControlSelection.Bottom | SMControlSelection.Left:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X + relX;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width - relX;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height + relY;
+                        break;
+                    case SMControlSelection.Bottom | SMControlSelection.Right:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width + relX;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height + relY;
+                        break;
+                    case SMControlSelection.Top | SMControlSelection.Left:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X + relX;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y + relY;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width - relX;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height - relY;
+                        break;
+                    case SMControlSelection.Top | SMControlSelection.Right:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y + relY;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height - relY;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width + relX;
+                        break;
+                    case SMControlSelection.Right:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width + relX;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height;
+                        break;
+                    case SMControlSelection.Left:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X + relX;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width - relX;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height;
+                        break;
+                    case SMControlSelection.Bottom:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height + relY;
+                        break;
+                    case SMControlSelection.Top:
+                        SelectionArea.RelativeArea.X = origTotalSelectionRect.X;
+                        SelectionArea.RelativeArea.Y = origTotalSelectionRect.Y + relY;
+                        SelectionArea.RelativeArea.Width = origTotalSelectionRect.Width;
+                        SelectionArea.RelativeArea.Height = origTotalSelectionRect.Height - relY;
+                        break;
+                }
+                RecalculateSelectedControls();
+
+                //Context.TrackedDrawOffset.X = logPoint.X - Context.TrackedStartLogical.X;
+                //Context.TrackedDrawOffset.Y = logPoint.Y - Context.TrackedStartLogical.Y;
+                Invalidate();
+                ChangeCursorAccordingSelection(logPoint);
+            }
+            else if (Context.isMarkingArea)
+            {
+                ClearSelection();
+                SelectObjectsIntersectingRect(Context, Context.GetMarkingRect());
                 Invalidate();
             }
-
-            ChangeCursorAccordingSelection(logPoint);
+            else if (Context.isMovingTag)
+            {
+                Invalidate();
+            }
+            else
+            {
+                ChangeCursorAccordingSelection(logPoint);
+            }
 
         }
 
+        private void RecalculateSelectedControls()
+        {
+            Rectangle abst = Rectangle.Empty;
+            foreach (SMControl c in PageData.SelectedObjects)
+            {
+                SMRectangleArea area = c.Area;
+                if (origAreas.ContainsKey(c.Id))
+                {
+                    Rectangle relativeRect = origAreas[c.Id];
+                    ConvertRelativeToAbstract(ref origTotalSelectionRect, ref relativeRect, ref abst);
+                    ConvertAbstractToRelative(ref SelectionArea.RelativeArea, ref abst, ref relativeRect);
+                    area.SetRawRectangle(PageEditDisplaySize.LandscapeBig, relativeRect);
+                }
+            }
+        }
+
+        private void ConvertRelativeToAbstract(ref Rectangle total, ref Rectangle relativeArea, ref Rectangle abstractArea)
+        {
+            abstractArea.X = (relativeArea.X - total.X) * 1000 / total.Width;
+            abstractArea.Y = (relativeArea.Y - total.Y) * 1000 / total.Height;
+            abstractArea.Width = relativeArea.Width * 1000 / total.Width;
+            abstractArea.Height = relativeArea.Height * 1000 / total.Height;
+        }
+
+        private void ConvertAbstractToRelative(ref Rectangle total, ref Rectangle abstractArea, ref Rectangle relativeArea)
+        {
+            relativeArea.X = abstractArea.X * total.Width / 1000 + total.X;
+            relativeArea.Y = abstractArea.Y * total.Height / 1000 + total.Y;
+            relativeArea.Width = abstractArea.Width * total.Width / 1000;
+            relativeArea.Height = abstractArea.Height * total.Height / 1000;
+        }
+
+        public bool HitDist(int a, int b)
+        {
+            return Math.Abs(a - b) <= 3;
+        }
+
+        public virtual SMControlSelection AreaTestHitLogical(MNPageContext context, SMRectangleArea area, Point logicalPoint)
+        {
+            if (HitDist(area.RelativeArea.Left, logicalPoint.X))
+            {
+                if (HitDist(area.RelativeArea.Top, logicalPoint.Y))
+                {
+                    return SMControlSelection.Top | SMControlSelection.Left;
+                }
+                else if (HitDist(area.RelativeArea.Bottom, logicalPoint.Y))
+                {
+                    return SMControlSelection.Bottom | SMControlSelection.Left;
+                }
+                else if (HitDist(area.CenterY, logicalPoint.Y))
+                {
+                    return SMControlSelection.Left;
+                }
+            }
+            else if (HitDist(area.RelativeArea.Right, logicalPoint.X))
+            {
+                if (HitDist(area.RelativeArea.Top, logicalPoint.Y))
+                {
+                    return SMControlSelection.Top | SMControlSelection.Right;
+                }
+                else if (HitDist(area.RelativeArea.Bottom, logicalPoint.Y))
+                {
+                    return SMControlSelection.Bottom | SMControlSelection.Right;
+                }
+                else if (HitDist(area.CenterY, logicalPoint.Y))
+                {
+                    return SMControlSelection.Right;
+                }
+            }
+            else if (HitDist(area.CenterX, logicalPoint.X))
+            {
+                if (HitDist(area.RelativeArea.Top, logicalPoint.Y))
+                {
+                    return SMControlSelection.Top;
+                }
+                else if (HitDist(area.RelativeArea.Bottom, logicalPoint.Y))
+                {
+                    return SMControlSelection.Bottom;
+                }
+            }
+
+            return area.RelativeArea.Contains(logicalPoint) ? SMControlSelection.All : SMControlSelection.None;
+        }
 
         private void ChangeCursorAccordingSelection(Point logPoint)
         {
             bool cursorSet = false;
-            foreach (SMControl po in Page.Objects)
+            if (!HasSelectedObjects)
+                return;
+            SMRectangleArea area = SelectionArea;
+            area.Selected = true;
+            SMControlSelection testResult = AreaTestHitLogical(Context, SelectionArea, logPoint);
+            switch (testResult)
             {
-                SMRectangleArea area = Page.GetArea(po.Id);
-                if (area.Selected)
-                {
-                    SMControlSelection testResult = area.TestHitLogical(Context, logPoint);
-                    switch (testResult)
-                    {
-                        case SMControlSelection.None:
-                            break;
-                        case SMControlSelection.All:
-                            Cursor = Cursors.SizeAll;
-                            cursorSet = true;
-                            break;
-                        case SMControlSelection.Top | SMControlSelection.Left:
-                        case SMControlSelection.Bottom | SMControlSelection.Right:
-                            Cursor = Cursors.SizeNWSE;
-                            cursorSet = true;
-                            break;
-                        case SMControlSelection.Top:
-                        case SMControlSelection.Bottom:
-                            Cursor = Cursors.SizeNS;
-                            cursorSet = true;
-                            break;
-                        case SMControlSelection.Top | SMControlSelection.Right:
-                        case SMControlSelection.Bottom | SMControlSelection.Left:
-                            Cursor = Cursors.SizeNESW;
-                            cursorSet = true;
-                            break;
-                        case SMControlSelection.Left:
-                        case SMControlSelection.Right:
-                            Cursor = Cursors.SizeWE;
-                            cursorSet = true;
-                            break;
-                        case SMControlSelection.LeftBoundary:
-                        case SMControlSelection.TopBoundary:
-                        case SMControlSelection.RightBoundary:
-                        case SMControlSelection.BottomBoundary:
-                            Cursor = Context.cursorBoundaryReady;
-                            cursorSet = true;
-                            break;
-                    }
-                }
+                case SMControlSelection.None:
+                    break;
+                case SMControlSelection.All:
+                    Cursor = Cursors.SizeAll;
+                    cursorSet = true;
+                    break;
+                case SMControlSelection.Top | SMControlSelection.Left:
+                case SMControlSelection.Bottom | SMControlSelection.Right:
+                    Cursor = Cursors.SizeNWSE;
+                    cursorSet = true;
+                    break;
+                case SMControlSelection.Top:
+                case SMControlSelection.Bottom:
+                    Cursor = Cursors.SizeNS;
+                    cursorSet = true;
+                    break;
+                case SMControlSelection.Top | SMControlSelection.Right:
+                case SMControlSelection.Bottom | SMControlSelection.Left:
+                    Cursor = Cursors.SizeNESW;
+                    cursorSet = true;
+                    break;
+                case SMControlSelection.Left:
+                case SMControlSelection.Right:
+                    Cursor = Cursors.SizeWE;
+                    cursorSet = true;
+                    break;
             }
+
             if (!cursorSet)
             {
                 this.Cursor = Cursors.Default;
@@ -639,22 +812,55 @@ namespace SlideMaker.Views
                     if (ao is MNReferencedImage)
                     {
                         MNReferencedImage ri = ao as MNReferencedImage;
-                        SMImage pm = new SMImage(Page);
-                        pm.Img.Image = ri;
-                        pm.Id = Document.Data.GetNextId();
+                        SMControl fc = Page.FindObjectContainingPoint(Context, Context.PhysicalToLogical(PointToClient(new Point(e.X, e.Y))));
+                        if (fc != null)
+                        {
+                            if (fc is SMImage)
+                            {
+                                (fc as SMImage).Img.Image = ri;
+                            }
+                            else if (fc is SMOrderedList)
+                            {
+                                (fc as SMOrderedList).AddImage(ri);
+                            }
+                            Invalidate();
+                        }
+                        else
+                        {
+                            SMImage pm = new SMImage(Page);
+                            pm.Img.Image = ri;
+                            pm.Id = Document.Data.GetNextId();
 
-                        PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
+                            PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
+                        }
                     }
                 }
             }
             else if (e.Data.GetDataPresent(typeof(MNReferencedImage)))
             {
                 MNReferencedImage ri = (MNReferencedImage)e.Data.GetData(typeof(MNReferencedImage));
-                SMImage pm = new SMImage(Page);
-                pm.Img.Image = ri;
-                pm.Id = Document.Data.GetNextId();
 
-                PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
+                SMControl fc = Page.FindObjectContainingPoint(Context, Context.PhysicalToLogical(new Point(e.X, e.Y)));
+                if (fc != null)
+                {
+                    if (fc is SMImage)
+                    {
+                        (fc as SMImage).Img.Image = ri;
+                    }
+                    else if (fc is SMOrderedList)
+                    {
+                        (fc as SMOrderedList).AddImage(ri);
+                    }
+                    Invalidate();
+                }
+                else
+                {
+                    SMImage pm = new SMImage(Page);
+                    pm.Img.Image = ri;
+                    pm.Id = Document.Data.GetNextId();
+
+                    PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
+                }
             }
             else if (e.Data.GetDataPresent(typeof(MNPage)))
             {
@@ -682,15 +888,31 @@ namespace SlideMaker.Views
                     }
                 }
 
-                object obj = PageData.TagToObject(strType) ?? PageData.TagToObject("Label");
-                if (obj is SMControl)
+                SMControl fc = Page.FindObjectContainingPoint(Context, Context.PhysicalToLogical(new Point(e.X, e.Y)));
+                if (fc != null)
                 {
-                    SMControl pm = (SMControl)obj;
-                    pm.Id = Document.Data.GetNextId();
-                    pm.Text = text;
+                    if (fc is SMOrderedList)
+                    {
+                        (fc as SMOrderedList).AddText(text);
+                    }
+                    else
+                    {
+                        fc.Text = text;
+                    }
+                    Invalidate();
+                }
+                else
+                {
+                    object obj = PageData.TagToObject(strType) ?? PageData.TagToObject("Label");
+                    if (obj is SMControl)
+                    {
+                        SMControl pm = (SMControl)obj;
+                        pm.Id = Document.Data.GetNextId();
+                        pm.Text = text;
 
-                    // creating coordinates
-                    PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
+                        // creating coordinates
+                        PlaceObjectIntoPage(this.PointToClient(new Point(e.X, e.Y)), pm, Size.Empty);
+                    }
                 }
             }
         }
@@ -699,17 +921,15 @@ namespace SlideMaker.Views
         {
             Size defSize = defSizeInput.IsEmpty ? pm.GetDefaultSize() : defSizeInput;
             Point center = clientPoint;
-            SMRectangleArea area = Page.CreateNewArea(pm.Id);
-            area.SetCenterSize(Context.PhysicalToLogical(center), defSize, DisplaySize);
+            pm.Area.SetCenterSize(Context.PhysicalToLogical(center), defSize);
+            pm.Area.Selected = true;
+            pm.Area.RecalcAllBounds(Context);
 
             PageData.ClearSelection();
             PageData.Objects.Add(pm);
             MNNotificationCenter.BroadcastMessage(this, "ControlAdded", pm);
-            pm.Style = Document.GetDefaultStyle();
 
-            area.Selected = true;
-            area.RecalcAllBounds(Context);
-            area.TrackedSelection = SMControlSelection.All;
+            SelectionArea.RelativeArea = pm.Area.RelativeArea;
             Invalidate();
 
             MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", pm);
@@ -755,6 +975,7 @@ namespace SlideMaker.Views
 
         }
 
+        private bool b_key_movetag = false;
 
         private void PageEditView_KeyDown(object sender, KeyEventArgs e)
         {
@@ -763,47 +984,55 @@ namespace SlideMaker.Views
                 b_key_control = true;
             }
 
-            if (e.KeyCode == Keys.Delete)
+            if (pageActions.IsKeyActionMode)
             {
-                if (PageData != null && PageData.HasSelectedObjects())
+                if (pageActions != null)
                 {
-                    if (MessageBox.Show("Delete selected objects?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                    {
-                        PageData.DeleteSelectedObjects();
-                        Invalidate();
-                    }
+                    pageActions.KeyActionMode(e.KeyCode);
                 }
             }
-            else if (e.KeyCode == Keys.D)
+            else
             {
-                if (e.Control)
+                if (e.KeyCode == Keys.T)
                 {
-                    PageData.DuplicateSelectedObjects();
+                    b_key_movetag = true;
+                }
+                else if (e.KeyCode == Keys.Delete)
+                {
+                    if (PageData != null && PageData.HasSelectedObjects())
+                    {
+                        if (MessageBox.Show("Delete selected objects?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        {
+                            PageData.DeleteSelectedObjects();
+                            SelectionArea.Clear();
+                            Invalidate();
+                        }
+                    }
+                }
+                else if (e.Control && e.KeyCode == Keys.C)
+                {
+                    CopySelectedObjectsToClipboard();
+                }
+                else if (e.Control && e.KeyCode == Keys.V)
+                {
+                    PasteSelectedObjectsFromClipboard();
                     Invalidate();
                 }
-            }
-            else if (e.Control && e.KeyCode == Keys.P)
-            {
-                DialogNewPageName dialog = new DialogNewPageName();
-                dialog.PageName = "<page>";
-
-                if (dialog.ShowDialog() == DialogResult.OK)
+                else if (e.KeyCode == Keys.Space)
                 {
-                    if (PageData != null)
-                    {
-                        PageData.Document.InsertPage(PageData, dialog.PageName, dialog.InsertAfter);
-                    }
+                    pageActions.StartKeyActionMode();
+                }
+                else if (e.KeyCode == Keys.Escape)
+                {
+                    pageActions.StopKeyActionMode();
                 }
             }
-            else if (e.Control && e.KeyCode == Keys.C)
-            {
-                CopySelectedObjectsToClipboard();
-            }
-            else if (e.Control && e.KeyCode == Keys.V)
-            {
-                PasteSelectedObjectsFromClipboard();
-                Invalidate();
-            }
+        }
+
+
+        public void StopKeyActionMode()
+        {
+            MNNotificationCenter.BroadcastMessage(this, "stopKeyActionMode");
         }
 
         private void PasteSelectedObjectsFromClipboard()
@@ -842,8 +1071,16 @@ namespace SlideMaker.Views
                         PageData.SaveSelection(bw);
 
                         string text64 = Convert.ToBase64String(ms.GetBuffer());
-                        Clipboard.Clear();
-                        Clipboard.SetText(string.Format("<PAGEPIECE>{0}</PAGEPIECE>", text64));
+                        try
+                        {
+                            Clipboard.Clear();
+                            Clipboard.SetText(string.Format("<PAGEPIECE>{0}</PAGEPIECE>", text64));
+                        }
+                        catch (Exception ex)
+                        {
+                            Debugger.Log(0, "", ex.ToString() + "\n");
+                            Debugger.Log(0, "", ex.StackTrace + "\n");
+                        }
                     }
                 }
 
@@ -852,11 +1089,8 @@ namespace SlideMaker.Views
 
         private void PageEditView_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.ControlKey)
-            {
-                b_key_control = false;
-            }
-
+            b_key_control = false;
+            b_key_movetag = false;
         }
 
         private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
@@ -876,15 +1110,51 @@ namespace SlideMaker.Views
                     }
                 }
 
-                object obj = PageData.TagToObject(strType) ?? PageData.TagToObject("Label");
-                if (obj is SMControl)
+                SMControl fc = Page.FindObjectContainingPoint(Context, Context.PhysicalToLogical(LastUserPoint));
+                if (fc != null)
                 {
-                    SMControl pm = (SMControl)obj;
-                    pm.Id = Document.Data.GetNextId();
-                    pm.Text = text;
+                    if (fc is SMLabel)
+                    {
+                        SMLabel lab = (SMLabel)fc;
+                        lab.Text = text;
+                    }
+                    else if (fc is SMTextContainer)
+                    {
+                        SMTextContainer cnt = (SMTextContainer)fc;
+                        cnt.Text = text;
+                    }
+                    else if (fc is SMOrderedList)
+                    {
+                        SMOrderedList sm = (SMOrderedList)fc;
+                        sm.AddText(text);
+                    }
+                    else if (fc is SMImage)
+                    {
+                        SMImage si = (SMImage)fc;
+                        si.Text = text;
+                        if (si.ContentArangement == SMContentArangement.ImageOnly)
+                            si.ContentArangement = SMContentArangement.ImageAbove;
+                    }
+                    else if (fc is SMSelection)
+                    {
+                        SMSelection ss = (SMSelection)fc;
+                        ss.Text = text.Replace(" ", "|");
+                    }
+                    Invalidate();
+                }
+                else
+                {
+                    object obj = PageData.TagToObject(strType) ?? PageData.TagToObject("Label");
+                    if (obj is SMControl)
+                    {
+                        SMControl pm = (SMControl)obj;
+                        pm.Id = Document.Data.GetNextId();
+                        pm.Text = text;
+                        pm.Autosize = true;
 
-                    // creating coordinates
-                    PlaceObjectIntoPage(LastUserPoint, pm, Size.Empty);
+                        // creating coordinates
+                        PlaceObjectIntoPage(LastUserPoint, pm, Size.Empty);
+                    }
                 }
             }
             else if (Clipboard.ContainsImage())
@@ -892,68 +1162,58 @@ namespace SlideMaker.Views
                 MNReferencedImage ri = Document.CreateNewImage();
                 ri.ImageData = Clipboard.GetImage();
                 ri.Id = Document.Data.GetNextId();
-                ri.Name = "Image Pasted " + DateTime.Today.ToLongTimeString();
+                ri.Name = "Image Pasted " + DateTime.Now.ToLongTimeString();
 
-                SMImage pm = new SMImage(Page);
-                pm.Id = Document.Data.GetNextId();
-                pm.Img.Image = ri;
-                pm.ContentScaling = SMContentScaling.Fit;
+                SMImage pm;
+                SMControl fc = Page.FindObjectContainingPoint(Context, Context.PhysicalToLogical(LastUserPoint));
+                if (fc != null)
+                {
+                    if (fc is SMImage)
+                    {
+                        pm = (SMImage)fc;
+                        pm.Img.Image = ri;
+                    }
+                    else if (fc is SMOrderedList)
+                    {
+                        SMOrderedList smm = (SMOrderedList)fc;
+                        smm.AddImage(ri);
+                    }
+                    this.Invalidate();
+                }
+                else
+                {
+                    pm = new SMImage(Page);
+                    pm.Id = Document.Data.GetNextId();
+                    pm.Img.Image = ri;
+                    pm.ContentScaling = SMContentScaling.Fit;
+                    // creating coordinates
+                    PlaceObjectIntoPage(LastUserPoint, pm, new Size(256, 256));
+                }
 
-                // creating coordinates
-                PlaceObjectIntoPage(LastUserPoint, pm, new Size(256,256));
             }
         }
 
         public void AlignHorizontal()
         {
             int count = 0;
-            double value = 0;
-            double itemValue = 0;
-            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            int value = 0;
+            int itemValueA = 0;
+            int itemValueB = 0;
+            foreach (SMControl ra in PageData.SelectedObjects)
             {
-                if (ra.Selected)
-                {
-                    itemValue = (ra.TopRuler.GetRawValue(Context.DisplaySize) + ra.BottomRuler.GetRawValue(Context.DisplaySize)) / 2;
-                    if (AverageValueSelection == 0)
-                    {
-                        value += itemValue;
-                        count++;
-                    }
-                    else if (AverageValueSelection == 1)
-                    {
-                        value = Math.Max(value, itemValue);
-                        count = 1;
-                    }
-                    else if (AverageValueSelection == 2)
-                    {
-                        value = Math.Max(value, itemValue);
-                        count = 1;
-                    }
-                    else if (AverageValueSelection == 3)
-                    {
-                        value = itemValue;
-                        count = 1;
-                        break;
-                    }
-                }
+                itemValueA = ra.Area.Top;
+                itemValueB = ra.Area.Bottom;
+                count++;
             }
 
             if (count == 0)
                 return;
 
             value = value / count;
-            double A, B;
-            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            foreach (SMControl ra in PageData.SelectedObjects)
             {
-                if (ra.Selected)
-                {
-                    A = ra.TopRuler.GetRawValue(Context.DisplaySize);
-                    B = ra.BottomRuler.GetRawValue(Context.DisplaySize);
-                    itemValue = (A + B) / 2;
-                    ra.TopRuler.SetRawValue(Context.DisplaySize, A + (value - itemValue));
-                    ra.BottomRuler.SetRawValue(Context.DisplaySize, B + (value - itemValue));
-                    ra.RecalcAllBounds(Context);
-                }
+                ra.Area.Top = itemValueA / count;
+                ra.Area.Bottom = itemValueA / count;
             }
 
             this.Invalidate();
@@ -964,33 +1224,29 @@ namespace SlideMaker.Views
             int count = 0;
             double value = 0;
             double itemValue = 0;
-            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            foreach (SMControl ra in PageData.SelectedObjects)
             {
-                if (ra.Selected)
+                itemValue = ra.Area.CenterX;
+                if (AverageValueSelection == 0)
                 {
-                    itemValue = (ra.LeftRuler.GetRawValue(Context.DisplaySize)
-                        + ra.RightRuler.GetRawValue(Context.DisplaySize)) / 2;
-                    if (AverageValueSelection == 0)
-                    {
-                        value += itemValue;
-                        count++;
-                    }
-                    else if (AverageValueSelection == 1)
-                    {
-                        value = Math.Max(value, itemValue);
-                        count = 1;
-                    }
-                    else if (AverageValueSelection == 2)
-                    {
-                        value = Math.Max(value, itemValue);
-                        count = 1;
-                    }
-                    else if (AverageValueSelection == 3)
-                    {
-                        value = itemValue;
-                        count = 1;
-                        break;
-                    }
+                    value += itemValue;
+                    count++;
+                }
+                else if (AverageValueSelection == 1)
+                {
+                    value = Math.Max(value, itemValue);
+                    count = 1;
+                }
+                else if (AverageValueSelection == 2)
+                {
+                    value = Math.Max(value, itemValue);
+                    count = 1;
+                }
+                else if (AverageValueSelection == 3)
+                {
+                    value = itemValue;
+                    count = 1;
+                    break;
                 }
             }
 
@@ -998,18 +1254,9 @@ namespace SlideMaker.Views
                 return;
 
             value = value / count;
-            double A, B;
-            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            foreach (SMControl c in PageData.SelectedObjects)
             {
-                if (ra.Selected)
-                {
-                    A = ra.LeftRuler.GetRawValue(Context.DisplaySize);
-                    B = ra.RightRuler.GetRawValue(Context.DisplaySize);
-                    itemValue = (A + B) / 2;
-                    ra.LeftRuler.SetRawValue(Context.DisplaySize, A + (value - itemValue));
-                    ra.RightRuler.SetRawValue(Context.DisplaySize, B + (value - itemValue));
-                    ra.RecalcAllBounds(Context);
-                }
+                c.Area.CenterX = Convert.ToInt32(value);
             }
 
             this.Invalidate();
@@ -1018,13 +1265,13 @@ namespace SlideMaker.Views
         public void AlignHeight()
         {
             int count = 0;
-            double value = 0;
-            double itemValue = 0;
-            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            int value = 0;
+            int itemValue = 0;
+            foreach (SMControl ra in PageData.Objects)
             {
-                if (ra.Selected)
+                if (ra.Area.Selected)
                 {
-                    itemValue = Math.Abs(ra.TopRuler.GetRawValue(Context.DisplaySize) - ra.BottomRuler.GetRawValue(Context.DisplaySize));
+                    itemValue = ra.Area.Height;
                     if (AverageValueSelection == 0)
                     {
                         value += itemValue;
@@ -1053,17 +1300,11 @@ namespace SlideMaker.Views
                 return;
 
             value = value / count;
-            double A, B;
-            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            foreach (SMControl ra in PageData.Objects)
             {
-                if (ra.Selected)
+                if (ra.Area.Selected)
                 {
-                    A = ra.TopRuler.GetRawValue(Context.DisplaySize);
-                    B = ra.BottomRuler.GetRawValue(Context.DisplaySize);
-                    itemValue = (A + B) / 2;
-                    ra.TopRuler.SetRawValue(Context.DisplaySize, itemValue - value/2);
-                    ra.BottomRuler.SetRawValue(Context.DisplaySize, itemValue + value/2);
-                    ra.RecalcAllBounds(Context);
+                    ra.Area.Height = value;
                 }
             }
 
@@ -1075,33 +1316,29 @@ namespace SlideMaker.Views
             int count = 0;
             double value = 0;
             double itemValue = 0;
-            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            foreach (SMControl c in PageData.SelectedObjects)
             {
-                if (ra.Selected)
+                itemValue = c.Area.Width;
+                if (AverageValueSelection == 0)
                 {
-                    itemValue = Math.Abs(ra.LeftRuler.GetRawValue(Context.DisplaySize)
-                        - ra.RightRuler.GetRawValue(Context.DisplaySize));
-                    if (AverageValueSelection == 0)
-                    {
-                        value += itemValue;
-                        count++;
-                    }
-                    else if (AverageValueSelection == 1)
-                    {
-                        value = Math.Max(value, itemValue);
-                        count = 1;
-                    }
-                    else if (AverageValueSelection == 2)
-                    {
-                        value = Math.Max(value, itemValue);
-                        count = 1;
-                    }
-                    else if (AverageValueSelection == 3)
-                    {
-                        value = itemValue;
-                        count = 1;
-                        break;
-                    }
+                    value += itemValue;
+                    count++;
+                }
+                else if (AverageValueSelection == 1)
+                {
+                    value = Math.Max(value, itemValue);
+                    count = 1;
+                }
+                else if (AverageValueSelection == 2)
+                {
+                    value = Math.Max(value, itemValue);
+                    count = 1;
+                }
+                else if (AverageValueSelection == 3)
+                {
+                    value = itemValue;
+                    count = 1;
+                    break;
                 }
             }
 
@@ -1110,22 +1347,261 @@ namespace SlideMaker.Views
 
             value = value / count;
             double A, B;
-            foreach (SMRectangleArea ra in PageData.Areas.Values)
+            foreach (SMControl c in PageData.SelectedObjects)
             {
-                if (ra.Selected)
-                {
-                    A = ra.LeftRuler.GetRawValue(Context.DisplaySize);
-                    B = ra.RightRuler.GetRawValue(Context.DisplaySize);
-                    itemValue = (A + B) / 2;
-                    ra.LeftRuler.SetRawValue(Context.DisplaySize, itemValue - value/2);
-                    ra.RightRuler.SetRawValue(Context.DisplaySize, itemValue + value/2);
-                    ra.RecalcAllBounds(Context);
-                }
+                c.Area.Width = Convert.ToInt32(value);
             }
 
             this.Invalidate();
         }
 
+
+
+        public void BringSelectionToFront()
+        {
+            List<SMControl> unselected = new List<SMControl>();
+            List<SMControl> selected = new List<SMControl>();
+
+            foreach (SMControl ct in PageData.Objects)
+            {
+                if (ct.Area.Selected)
+                    selected.Add(ct);
+                else
+                    unselected.Add(ct);
+            }
+
+            PageData.Objects.Clear();
+            PageData.Objects.AddRange(unselected);
+            PageData.Objects.AddRange(selected);
+
+            this.Invalidate();
+        }
+
+        public void SendSelectionToBack()
+        {
+            List<SMControl> unselected = new List<SMControl>();
+            List<SMControl> selected = new List<SMControl>();
+
+            foreach (SMControl ct in PageData.Objects)
+            {
+                if (ct.Area.Selected)
+                    selected.Add(ct);
+                else
+                    unselected.Add(ct);
+            }
+
+            PageData.Objects.Clear();
+            PageData.Objects.AddRange(selected);
+            PageData.Objects.AddRange(unselected);
+
+            this.Invalidate();
+        }
+
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedObjectsToClipboard();
+        }
+
+        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (SMControl ct in PageData.Objects)
+            {
+                if (ct.Area != null)
+                {
+                    ct.Area.Selected = true;
+                }
+            }
+
+            SelectionArea.RelativeArea = PageData.GetTotalSelectionRect();
+            this.Invalidate();
+        }
+
+        public void DuplicateItems()
+        {
+            DialogDuplicating dlg = new DialogDuplicating();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                PageData.DuplicateSelectedObjects(dlg.Rows, dlg.Columns, dlg.HorizontalLines, dlg.VerticalLines, dlg.Spacing);
+                Invalidate();
+            }
+        }
+
+        public void SetSelectionProperty(string p)
+        {
+            List<SMControl> list = PageData.SelectedObjects;
+
+            foreach (SMControl c in list)
+            {
+                if (p == "clickable")
+                    c.Clickable = true;
+                else if (p == "draggable")
+                    c.Draggable = SMDragResponse.Line;
+                else if (p == "dropable")
+                    c.Cardinality = SMConnectionCardinality.One;
+                else if (p == "eval:inherited")
+                    c.Evaluation = MNEvaluationType.Inherited;
+                else if (p == "eval:none")
+                    c.Evaluation = MNEvaluationType.Inherited;
+            }
+
+        }
+
+        public void ClearSelection()
+        {
+            PageData.ClearSelection();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type">0 - toogleCheckZero, 1 - toogleCheckOne, 2 - toogleCheckMany</param>
+        public void MakeGroup(int type)
+        {
+            DialogNewName dlg = new DialogNewName();
+            dlg.NamePrompt = "New Group Name:";
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                foreach (SMControl ct in PageData.Objects)
+                {
+                    if (ct.Area.Selected)
+                    {
+                        ct.GroupName = dlg.ObjectName;
+                        switch(type)
+                        {
+                            case 0:
+                                ct.ScriptOnClick = "(control toogleCheckZero)";
+                                break;
+                            case 1:
+                                ct.ScriptOnClick = "(control toogleCheckOne)";
+                                break;
+                            case 2:
+                                ct.ScriptOnClick = "(control toogleCheckMany)";
+                                break;
+                        }
+                    }
+                }
+
+            }
+        }
+
+        public void SetExpectedChecked(int p)
+        {
+            foreach (SMControl ct in PageData.Objects)
+            {
+                if (ct.Area.Selected)
+                {
+                    if (p == 0)
+                        ct.ExpectedChecked = Bool3.False;
+                    else if (p == 1)
+                        ct.ExpectedChecked = Bool3.True;
+                    else
+                        ct.ExpectedChecked = Bool3.Undef;
+                }
+            }
+        }
+
+        public void SetSelectionProperty(string p, int p_2)
+        {
+            List<SMControl> list = Page.SelectedObjects;
+            if (p == "drag")
+            {
+                foreach (SMControl c in list)
+                {
+                    switch (p_2)
+                    {
+                        case 0: c.Draggable = SMDragResponse.None; break;
+                        case 1: c.Draggable = SMDragResponse.Line; break;
+                        case 2: c.Draggable = SMDragResponse.Drag; break;
+                        case 3: c.Draggable = SMDragResponse.Undef; break;
+                    }
+                }
+            }
+            else if (p == "cardinality")
+            {
+                foreach (SMControl c in list)
+                {
+                    switch (p_2)
+                    {
+                        case 0: c.Cardinality = SMConnectionCardinality.Undef; break;
+                        case 1: c.Cardinality = SMConnectionCardinality.None; break;
+                        case 2: c.Cardinality = SMConnectionCardinality.One; break;
+                        case 3: c.Cardinality = SMConnectionCardinality.Many; break;
+                    }
+                }
+            }
+            else if (p == "names")
+            {
+                DialogSetNamesControls d = new DialogSetNamesControls();
+                d.SetControls(list);
+                d.ShowDialog();
+                Invalidate();
+            }
+            else if (p == "tags")
+            {
+                DialogSetNamesControls d = new DialogSetNamesControls();
+                d.SetTags = true;
+                d.SetControls(list);
+                d.ShowDialog();
+                Invalidate();
+            }
+        }
+
+        /// <summary>
+        /// This copies all controls from template to current page, assigns new IDs and sets
+        /// template under it
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void electTemplateToPageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (PageData.Template != null)
+            {
+                PageData.Objects.Clear();
+                PageData.Connections.Clear();
+
+                MNPage t = PageData.Template;
+                byte[] buffer;
+                foreach (SMControl ctrl in t.Objects)
+                {
+                    long new_id = PageData.Document.Data.GetNextId();
+
+                    buffer = ctrl.GetBytes();
+                    SMControl new_control = SMControl.FromBytes(PageData, buffer);
+                    new_control.Id = new_id;
+                    PageData.Objects.Add(new_control);
+                }
+
+                PageData.MessageText = t.MessageText;
+                PageData.MessageTitle = t.MessageTitle;
+                PageData.TextB = t.TextB;
+                PageData.TextC = t.TextC;
+                PageData.Template = t.Template;
+
+                Invalidate();
+            }
+        }
+
+        private void contextMenuStrip2_Opening(object sender, CancelEventArgs e)
+        {
+            electTemplateToPageToolStripMenuItem.Enabled = (PageData != null && PageData.Template != null);
+        }
+
+        public void InsertPageLayout()
+        {
+            ToolWindowInsertPageLayout form = new ToolWindowInsertPageLayout();
+
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                if (form.SelectedTemplate != null)
+                {
+                    MNPage t = form.SelectedTemplate;
+                    MNPage.CopyControlsFrom(t, PageData);
+
+                    Invalidate();
+                    Focus();
+                }
+            }
+        }
 
     }
 

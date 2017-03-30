@@ -273,7 +273,7 @@ namespace SlideMaker.Views
                 else if (ho.Part == HitObjectPart.ActionButton)
                 {
                     if (SelectedNode == ho.Item)
-                        ShowActionsForObject(ho.Item, new Point(e.X, e.Y));
+                        ShowActionsForObject(ho.Item, new Point(e.X, e.Y - VerticalScroll.Value));
                     else
                     {
                         SelectedNode = ho.Item;

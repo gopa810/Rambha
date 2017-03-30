@@ -13,21 +13,25 @@ namespace Rambha.Document
 {
     public class SMCheckBox: SMControl
     {
-        [Browsable(true), Category("Content")]
-        public bool DefaultStatus { get; set; }
-
         [Browsable(false)]
-        public bool Status { get; set; }
+        public bool Status { get { return UIStateChecked; } set { UIStateChecked = value; } }
 
-        [Browsable(true), Category("Evaluation")]
-        public bool ExpectedStatus { get; set; }
+        [Browsable(true)]
+        public bool CheckBoxAtEnd { get; set; }
+
+        private SMRichText richText = null;
 
         public SMCheckBox(MNPage p)
             : base(p)
         {
             Text = "Check Box";
             Evaluation = MNEvaluationType.Inherited;
-            ExpectedStatus = false;
+            CheckBoxAtEnd = false;
+            richText = new SMRichText(this);
+        }
+
+        public override void TextDidChange()
+        {
         }
 
         public override System.Drawing.Size GetDefaultSize()
@@ -44,8 +48,11 @@ namespace Rambha.Document
                 {
                     switch (tag)
                     {
-                        case 10: DefaultStatus = br.ReadBool();
-                            ExpectedStatus = br.ReadBool();
+                        case 10: DefaultChecked = (Bool3)br.ReadByte();
+                            ExpectedChecked = (Bool3)br.ReadByte();
+                            break;
+                        case 11:
+                            CheckBoxAtEnd = br.ReadBool();
                             break;
                         default: 
                             return false;
@@ -63,63 +70,60 @@ namespace Rambha.Document
             base.Save(bw);
 
             bw.WriteByte(10);
-            bw.WriteBool(DefaultStatus);
-            bw.WriteBool(ExpectedStatus);
+            bw.WriteByte((byte)DefaultChecked);
+            bw.WriteByte((byte)ExpectedChecked);
+
+            bw.WriteByte(11);
+            bw.WriteBool(CheckBoxAtEnd);
 
             bw.WriteByte(0);
         }
 
-        public override SMControl Duplicate()
-        {
-            SMCheckBox label = new SMCheckBox(Page);
-
-            CopyContentTo(label);
-
-            // copy label
-            label.DefaultStatus = this.DefaultStatus;
-            label.ExpectedStatus = this.ExpectedStatus;
-
-
-
-            return label;
-        }
-
         public override void Paint(MNPageContext context)
         {
-            SMRectangleArea area = Page.GetArea(Id);
-            Rectangle bounds = area.GetBounds(context);
+            Rectangle bounds = Area.GetBounds(context);
 
             PrepareBrushesAndPens();
 
-            Rectangle textBounds = Style.ApplyPadding(bounds);
+            Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
 
-            SizeF sf = context.g.MeasureString(Text, Style.Font);
+            Font font = GetUsedFont();
+
+            SizeF cbSize = context.g.MeasureString("M", font);
+            int inpad = (int)(cbSize.Height / 8);
+            int inpad2 = inpad / 2;
+            int height = (int)(cbSize.Height * 3 / 4);
+
+
+            SizeF sf = richText.MeasureString(context, Text, textBounds.Width - height - 2*inpad);
             Size textSize = new Size((int)sf.Width + 5, (int)sf.Height);
-
-            StringFormat format = new StringFormat();
-            format.Alignment = StringAlignment.Center;
-            format.LineAlignment = StringAlignment.Near;
-
-            int inpad = textSize.Height / 8;
-            int height = textSize.Height * 3 / 4;
 
             Pen drawPen = (UIStateError == MNEvaluationResult.Incorrect ? Pens.Red : tempForePen);
 
-            context.g.DrawRectangle(drawPen, textBounds.X, textBounds.Y + inpad, height, height);
-            if (Status)
+            Rectangle rectCB = textBounds;
+            if (CheckBoxAtEnd)
             {
-                context.g.DrawLine(drawPen, textBounds.X + height / 5, textBounds.Y + 2 * height / 5 + inpad,
-                    textBounds.X + 2 * height / 5, textBounds.Y + 4 * height / 5 + inpad);
-                context.g.DrawLine(drawPen, textBounds.X + 4 * height / 5, textBounds.Y + height / 5 + inpad,
-                    textBounds.X + 2 * height / 5, textBounds.Y + 4 * height / 5 + inpad);
+                rectCB = new Rectangle(textBounds.X + textSize.Width + inpad, rectCB.Top + inpad, height, height);
+                textBounds.Size = textSize;
+            }
+            else
+            {
+                rectCB = new Rectangle(rectCB.Left + inpad, rectCB.Top + inpad, height, height);
+                textBounds.Size = textSize;
+                textBounds.X += height + 2 * inpad;
             }
 
-            textBounds.X += textSize.Height;
-            textBounds.Size = textSize;
-            context.g.DrawString(Text, Style.Font, tempForeBrush, textBounds, format);
+            context.g.DrawRectangle(drawPen, rectCB);
+            if (Status)
+            {
+                rectCB.Inflate(-inpad2, -inpad2);
+                context.g.FillRectangle(tempForeBrush, rectCB);
+            }
+
+            richText.DrawString(context, Text, textBounds);
 
             // draw selection marks
-            base.Paint(context);
+            base.Paint(context, false);
         }
 
 
@@ -127,23 +131,36 @@ namespace Rambha.Document
         {
             Status = !Status;
 
-            if (HasImmediateEvaluation) Evaluate();
+            if (HasImmediateEvaluation)
+            {
+                Evaluate();
+            }
 
             base.OnClick(dc);
         }
 
         public override MNEvaluationResult Evaluate()
         {
+            UIStateError = MNEvaluationResult.NotEvaluated;
+
             if (HasImmediateEvaluation || HasLazyEvaluation)
             {
-                UIStateError = (ExpectedStatus == Status) ? MNEvaluationResult.Correct : MNEvaluationResult.Incorrect;
+                if (ExpectedChecked == Bool3.Undef)
+                {
+                    return (UIStateError = MNEvaluationResult.NotEvaluated);
+                }
+                else
+                {
+                    bool expStatus = (ExpectedChecked == Bool3.True);
+                    UIStateError = (expStatus == Status) ? MNEvaluationResult.Correct : MNEvaluationResult.Incorrect;
+                }
             }
             return UIStateError;
         }
 
         public override void DisplayAnswers()
         {
-            Status = ExpectedStatus;
+            Status = (ExpectedChecked == Bool3.True);
         }
 
         public override void LoadStatus(RSFileReader br)

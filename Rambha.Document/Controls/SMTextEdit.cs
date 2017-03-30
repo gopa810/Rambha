@@ -76,9 +76,10 @@ namespace Rambha.Document
 
         public override void Paint(MNPageContext context)
         {
-            SMRectangleArea area = context.CurrentPage.GetArea(Id);
-            Rectangle bounds = area.GetBounds(context);
+            Rectangle bounds = Area.GetBounds(context);
 
+            PrepareBrushesAndPens();
+            /*
             if (tempBackBrush == null || tempBackBrush.Color != Style.BackColor)
             {
                 tempBackBrush = new SolidBrush(Style.BackColor);
@@ -91,17 +92,13 @@ namespace Rambha.Document
             {
                 tempForePen = new Pen(Style.ForeColor);
             }
-
-            Rectangle textBounds = bounds;
-            textBounds.X += Style.ContentPadding.Left;
-            textBounds.Y += Style.ContentPadding.Top;
-            textBounds.Width -= (Style.ContentPadding.Left + Style.ContentPadding.Right);
-            textBounds.Height -= (Style.ContentPadding.Top + Style.ContentPadding.Bottom);
+*/
+            Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
 
             // size of one cell
-            SizeF sizeChar = context.g.MeasureString("M", Style.Font);
-            int cellSize = (int)textBounds.Height / LinesCount;
-            Font drawFont = SMGraphics.GetFontVariation(Style.Font, cellSize);
+            SizeF sizeChar = context.g.MeasureString("M", Font.Font);
+            int cellSize = (int)(sizeChar.Height * 12 / 10);
+            Font drawFont = GetUsedFont();
 
             // prepare formating
             StringFormat format = new StringFormat();
@@ -121,21 +118,22 @@ namespace Rambha.Document
             Brush textB = (UIStateError == MNEvaluationResult.Incorrect ? Brushes.Red : tempForeBrush);
             Brush cursB = (UIStateError == MNEvaluationResult.Incorrect ? Brushes.Pink : Brushes.LightBlue);
 
+            Font usedFont = Font.Font;
             // drawing all positions
             for (int i = 0; i < LinesCount; i++)
             {
                 int y = cellSize * (i + 1) + textBounds.Y;
-                context.g.DrawLine(tempForePen, textBounds.Left, y, textBounds.Right, y);
+                context.g.DrawLine(Pens.Gray, textBounds.Left, y, textBounds.Right, y);
                 // draws cursor only if control is focused
                 if ((i == Lines.Count - 1) && (UIStateError == MNEvaluationResult.Focused))
                 {
-                    SizeF ll = context.g.MeasureString(Lines[i], Style.Font);
-                    context.g.DrawString(Lines[i], Style.Font, textB, 0, cellSize * i);
+                    SizeF ll = context.g.MeasureString(Lines[i], usedFont);
+                    context.g.DrawString(Lines[i], usedFont, textB, 0, cellSize * i);
                     context.g.FillRectangle(cursB, ll.Width + 2, cellSize * i, cellSize * 2 / 3, cellSize);
                 }
                 else if (i < Lines.Count)
                 {
-                    context.g.DrawString(Lines[i], Style.Font, textB, 0, cellSize * i);
+                    context.g.DrawString(Lines[i], usedFont, textB, 0, cellSize * i);
                 }
             }
 
@@ -188,7 +186,7 @@ namespace Rambha.Document
         public void RecalculateWords(MNPageContext context, float width)
         {
             string[] p = TextBuilder.ToString().Split(' ');
-            Font font = Style.Font;
+            Font font = Font.Font;
             Graphics g = context.g;
             StringBuilder currLine = new StringBuilder();
             float currWidth = 0;

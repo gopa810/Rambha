@@ -122,9 +122,9 @@ namespace Rambha.Document
             Random rnd = new Random();
             List<SMMemoryGameCard> temp = new List<SMMemoryGameCard>();
             int max = (Rows * Columns);
-            if (max % 2 > 0) max--;
+            max -= (max % 2);
             int start = rnd.Next(0, cards.Count);
-            if (start % 2 > 0) start++;
+            start += (start % 2);
             for (int k = 0; k < max; k++)
                 temp.Add(cards[(k + start)%cards.Count]);
 
@@ -212,7 +212,16 @@ namespace Rambha.Document
             }
             else if (token.Equals("clearChanged"))
             {
-                ClearChanged();
+                ClearChanged(args);
+            }
+            else if (token.Equals("restart"))
+            {
+                foreach (SMMemoryGameCard card in cards)
+                {
+                    card.CanChangeState = true;
+                    card.State = SMMemoryCardState.Hidden;
+                }
+                MixCards();
             }
             return base.ExecuteMessage(token, args);
         }
@@ -221,8 +230,7 @@ namespace Rambha.Document
         {
             base.Paint(context);
 
-            SMRectangleArea area = Page.GetArea(Id);
-            Rectangle bounds = area.GetBounds(context);
+            Rectangle bounds = Area.GetBounds(context);
             Size cell = new Size(bounds.Width / Columns, bounds.Height / Rows);
             lastCellSize = cell;
 
@@ -287,7 +295,7 @@ namespace Rambha.Document
         public Rectangle GetCellRect(MNPageContext ctx, int row, int column, Size cellSize)
         {
             Rectangle r = new Rectangle(column * cellSize.Width, row * cellSize.Height, cellSize.Width, cellSize.Height);
-            return Style.ApplyPadding(r);
+            return ContentPadding.ApplyPadding(r);
         }
 
         private int p_last_row = 0;
@@ -315,8 +323,7 @@ namespace Rambha.Document
 
         private bool GetTapPoint(PVDragContext dc, out int r, out int c)
         {
-            SMRectangleArea area = Page.GetArea(Id);
-            Rectangle bounds = area.GetBounds(dc.context);
+            Rectangle bounds = Area.GetBounds(dc.context);
             c = (dc.lastPoint.X - bounds.X) / lastCellSize.Width;
             r = (dc.lastPoint.Y - bounds.Y) / lastCellSize.Height;
             return (r >= 0 && r < Rows && c >= 0 && c < Columns);
@@ -333,8 +340,19 @@ namespace Rambha.Document
                 {
                     if (matrix[r, c] != null && matrix[r, c].CanChangeState)
                     {
-                        matrix[r, c].NextState();
                         SMMemoryGameEval ge = CheckStatus();
+                        if (ge == SMMemoryGameEval.Mismatched)
+                        {
+                            if (dc.context.ViewController != null)
+                            {
+                                dc.context.ViewController.ExecuteMessage("scheduleClear");
+                                ClearChanged(null);
+                            }
+                        }
+
+                        matrix[r, c].NextState();
+
+                        ge = CheckStatus();
                         if (ge == SMMemoryGameEval.Matched)
                         {
                             MakeUnchangeable();
@@ -363,16 +381,32 @@ namespace Rambha.Document
 
         }
 
-        private void ClearChanged()
+        private void ClearChanged(GSCoreCollection args)
         {
-            for (int r = 0; r < Rows; r++)
+            if (args != null && args.Count > 0)
             {
-                for (int c = 0; c < Columns; c++)
+                for (int i = 0; i < args.Count - 1; i += 2)
                 {
+                    int r = (int)args.getSafe(i).getIntegerValue();
+                    int c = (int)args.getSafe(i + 1).getIntegerValue();
                     if (matrix[r, c] != null && matrix[r, c].CanChangeState
                         && matrix[r, c].State == SMMemoryCardState.Visible)
                     {
                         matrix[r, c].State = SMMemoryCardState.Hidden;
+                    }
+                }
+            }
+            else
+            {
+                for (int r = 0; r < Rows; r++)
+                {
+                    for (int c = 0; c < Columns; c++)
+                    {
+                        if (matrix[r, c] != null && matrix[r, c].CanChangeState
+                            && matrix[r, c].State == SMMemoryCardState.Visible)
+                        {
+                            matrix[r, c].State = SMMemoryCardState.Hidden;
+                        }
                     }
                 }
             }

@@ -30,5 +30,6 @@ namespace Rambha.Document
         void OnEvent(string eventName, GSCore parent);
 
         void AddNextScript(string scriptText);
+        GSCore ResolveProperty(string property);
     }
 }

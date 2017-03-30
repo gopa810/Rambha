@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.IO;
 
 using Rambha.Document;
 
@@ -29,6 +30,9 @@ namespace SlideViewer
         public event GeneralArgsEvent OnDiscardChanges;
         public SVBookLibrary Library;
 
+        public List<string> FilesToDelete = new List<string>();
+        public List<string> FilesToDownload = new List<string>();
+
         public UpdaterSelectFiles()
         {
             InitializeComponent();
@@ -48,7 +52,8 @@ namespace SlideViewer
                 listBox2.Items.Clear();
                 foreach (RemoteFileRef rl in rf.Subs)
                 {
-                    listBox2.Items.Add(rl);
+                    if (!rl.Text.Equals("Default"))
+                        listBox2.Items.Add(rl);
                 }
                 listBox2.EndUpdate();
             }
@@ -95,11 +100,12 @@ namespace SlideViewer
                     e.Graphics.FillRectangle(Brushes.DarkGray, e.Bounds);
 
                     Rectangle textBounds = e.Bounds;
-                    textBounds.Location.Offset(PaddingLeft, PaddingTop);
-                    textBounds.Width = textBounds.Width - PaddingLeft - PaddingRight;
-                    textBounds.Height = textBounds.Height - PaddingTop - PaddingBottom;
+                    textBounds.X += PaddingLeft;
+                    textBounds.Y += PaddingTop;
+                    textBounds.Width -= PaddingLeft + PaddingRight;
+                    textBounds.Height -= PaddingTop + PaddingBottom;
 
-                    e.Graphics.DrawString((item as SMVItem).Text, HeaderFont, Brushes.White, textBounds, stringFormat);
+                    e.Graphics.DrawString((item as SMVItem).Text, HeaderFont, Brushes.White, e.Bounds.X + PaddingLeft, e.Bounds.Y + PaddingTop);
                 }
                 else
                 {
@@ -107,13 +113,14 @@ namespace SlideViewer
                     e.Graphics.FillRectangle(0 != (e.State & DrawItemState.Selected) ? Brushes.LightGreen : Brushes.White, e.Bounds);
 
                     Rectangle textBounds = e.Bounds;
-                    textBounds.Location.Offset(PaddingLeft + e.Bounds.Height, PaddingTop);
-                    textBounds.Width = textBounds.Width - PaddingLeft - PaddingRight - e.Bounds.Height;
-                    textBounds.Height = textBounds.Height - PaddingTop - PaddingBottom;
+                    textBounds.X += PaddingLeft + e.Bounds.Height;
+                    textBounds.Y += PaddingTop;
+                    textBounds.Width -= PaddingLeft + PaddingRight + e.Bounds.Height;
+                    textBounds.Height -= PaddingTop + PaddingBottom;
 
                     int dim = textBounds.Height;
 
-                    e.Graphics.DrawRectangle(Pens.Black, PaddingLeft, PaddingTop, dim, dim);
+                    e.Graphics.DrawRectangle(Pens.Black, PaddingLeft + e.Bounds.X, PaddingTop + e.Bounds.Y, dim, dim);
                     if ((item as SMVItem).Selected)
                     {
                         e.Graphics.DrawLine(Pens.Black, PaddingLeft + e.Bounds.X, PaddingTop + e.Bounds.Y, PaddingLeft + dim + e.Bounds.X, PaddingTop + dim + e.Bounds.Y);
@@ -137,11 +144,11 @@ namespace SlideViewer
 
                 int dim = textBounds.Height;
 
-                e.Graphics.DrawRectangle(Pens.Black, PaddingLeft, PaddingTop, dim, dim);
+                e.Graphics.DrawRectangle(Pens.Black, PaddingLeft + e.Bounds.X, PaddingTop + e.Bounds.Y, dim, dim);
                 if ((item as RemoteFileRef).Selected)
                 {
-                    e.Graphics.DrawLine(Pens.Black, PaddingLeft, PaddingTop, PaddingLeft + dim, PaddingTop + dim);
-                    e.Graphics.DrawLine(Pens.Black, PaddingLeft, PaddingTop + dim, PaddingLeft + dim, PaddingTop);
+                    e.Graphics.DrawLine(Pens.Black, PaddingLeft + e.Bounds.X, PaddingTop + e.Bounds.Y, PaddingLeft + dim + e.Bounds.X, PaddingTop + dim + e.Bounds.Y);
+                    e.Graphics.DrawLine(Pens.Black, PaddingLeft + e.Bounds.X, PaddingTop + e.Bounds.Y + dim, PaddingLeft + dim + e.Bounds.X, PaddingTop + e.Bounds.Y);
                 }
 
                 e.Graphics.DrawString((item as RemoteFileRef).Text, HeaderFont, Brushes.Black, textBounds, stringFormat);
@@ -171,6 +178,51 @@ namespace SlideViewer
 
         private void buttonApply_Click(object sender, EventArgs e)
         {
+            FilesToDelete.Clear();
+            FilesToDownload.Clear();
+
+            foreach (object obj in listBox1.Items)
+            {
+                if (obj is SMVItem)
+                {
+                    SMVItem item = obj as SMVItem;
+                    if (item.Selected)
+                    {
+                        RemoteFileRef rf = item.File;
+                        if (rf.NewVersionAvailable)
+                        {
+                            FilesToDownload.Add(rf.FileName);
+                            FilesToDownload.Add(Path.GetFileNameWithoutExtension(rf.FileName) + ".smd");
+                            FilesToDownload.Add(Path.GetFileNameWithoutExtension(rf.FileName) + ".sme");
+                        }
+                        foreach (RemoteFileRef rfa in rf.Subs)
+                        {
+                            if (rf.NewVersionAvailable)
+                                FilesToDownload.Add(rf.FileName);
+                        }
+                    }
+                }
+                else if (obj is RemoteFileRef)
+                {
+                    RemoteFileRef rf = obj as RemoteFileRef;
+                    if (rf.Selected == false && rf.Local == true)
+                        FilesToDelete.Add(rf.FileName);
+                    else if (rf.Local == false && rf.Selected == true)
+                    {
+                        FilesToDownload.Add(rf.FileName);
+                        FilesToDownload.Add(Path.GetFileNameWithoutExtension(rf.FileName) + ".smd");
+                        FilesToDownload.Add(Path.GetFileNameWithoutExtension(rf.FileName) + ".sme");
+                        foreach (RemoteFileRef subFile in rf.Subs)
+                        {
+                            if (subFile.Selected && !subFile.Local)
+                                FilesToDownload.Add(subFile.FileName);
+                            else if (subFile.Local && !subFile.Selected)
+                                FilesToDelete.Add(subFile.FileName);
+                        }
+                    }
+                }
+            }
+
             if (OnApplyChanges != null)
                 OnApplyChanges(this, e);
         }
@@ -178,40 +230,33 @@ namespace SlideViewer
         public void UpdateLists()
         {
             List<SMVItem> items = new List<SMVItem>();
-            /*
+            
             List<RemoteFileRef> news = Library.GetNewFiles();
+            List<object> upds = Library.GetUpdatedFiles();
 
             // copy files into listbox
             listBox1.Items.Clear();
 
             // new items
-            if (countOfNew > 0)
+            if (news.Count > 0)
             {
                 listBox1.Items.Add(SMVItem.MakeHeader("New Books"));
-                foreach (RemoteFileRef rf in localDB)
+                foreach (RemoteFileRef rf in news)
                 {
-                    if (rf.Local == false)
-                        listBox1.Items.Add(rf);
+                    listBox1.Items.Add(rf);
                 }
             }
 
-            if (countOfUpdates > 0)
+            if (upds.Count > 0)
             {
                 listBox1.Items.Add(SMVItem.MakeHeader("Updates"));
-                foreach (RemoteFileRef rf in localDB)
+                foreach (RemoteFileRef rf in upds)
                 {
-                    if (rf.HasUpdate())
-                    {
-                        SMVItem item = SMVItem.MakeEntry(rf.Text, rf);
-                        item.Selected = true;
-
-                        listBox1.Items.Add(item);
-                    }
+                    listBox1.Items.Add(rf);
                 }
-            }*/
+            }
             
             // all items
-            listBox1.Items.Clear();
             listBox1.Items.Add(SMVItem.MakeHeader("Installed Books"));
             foreach (RemoteFileRef rf in Library.DatabaseStatus)
             {

@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 using System.Windows.Forms;
 
 using Rambha.Document;
@@ -30,7 +31,18 @@ namespace SlideMaker.Views
             MNNotificationCenter.AddReceiver(this, null);
             MNNotificationCenter.AddReceiver(treeObjectView1, null);
 
-            propertyPanelsContainer1.EditView = pageScrollArea1.GetPageEditView();
+            containerA.EditView = pageScrollArea1.GetPageEditView();
+
+            actionCenter.pageScroll = pageScrollArea1;
+            actionCenter.editView = pageScrollArea1.GetPageEditView();
+            actionCenter.tabControl = tabControlDetails;
+            actionCenter.listView = listViewActions;
+            actionCenter.actionTabPage = tabActions;
+
+            pageScrollArea1.GetPageEditView().pageActions = actionCenter;
+
+            pageScrollArea1.NextPageRequested += new PageChangedEventHandler(pageScrollArea1_NextPageRequested);
+            pageScrollArea1.PrevPageRequested += new PageChangedEventHandler(pageScrollArea1_PrevPageRequested);
         }
 
         public void InitializeControlList(MNPage currentPage)
@@ -44,6 +56,8 @@ namespace SlideMaker.Views
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "TextEdit", Data = currentPage.ObjectTypeToTag(typeof(SMTextEdit)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Label", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Picture", Data = currentPage.ObjectTypeToTag(typeof(SMImage)) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Selection", Data = currentPage.ObjectTypeToTag(typeof(SMSelection)) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Image Button", Data = currentPage.ObjectTypeToTag(typeof(SMImageButton)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "CheckBox", Data = currentPage.ObjectTypeToTag(typeof(SMCheckBox)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Drawable", Data = currentPage.ObjectTypeToTag(typeof(SMDrawable)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Free Drawing", Data = currentPage.ObjectTypeToTag(typeof(SMFreeDrawing)) });
@@ -51,10 +65,12 @@ namespace SlideMaker.Views
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Text Puzzle", Data = currentPage.ObjectTypeToTag(typeof(SMTextPuzzle)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Keyboard", Data = currentPage.ObjectTypeToTag(typeof(SMKeyboard)) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Memory Game", Data = currentPage.ObjectTypeToTag(typeof(SMMemoryGame)) });
-                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Next Page", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=Next >;script=OnClick:(view showpage #next);style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
-                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Previous Page", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=< Back;script=OnClick:(view showpage #back);style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
-                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Goto Page <text>", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=<text>;script=OnClick:(view showpage PageName);style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
-                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Page Header", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=Page Header;style=PageHeader", DefaultSize = new Size(512, 48) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "OrderedList", Data = currentPage.ObjectTypeToTag(typeof(SMOrderedList)) });
+
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Label (ChildrenText)", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "style=ChildrenText" });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Next Page", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=Next >;onClick=(view showpage #next);style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Previous Page", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=< Back;onClick=(view showpage #back);style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
+                listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Button: Goto Page <text>", Data = currentPage.ObjectTypeToTag(typeof(SMLabel)), Args = "text=<text>;onClick=(view showpage \"PageName\");style=NavigationButton;clickable=true", DefaultSize = new Size(128, 48) });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Horizontal Line", Data = currentPage.ObjectTypeToTag(typeof(SMDrawable)), Args = "drawings=line 0 50 100 50" });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "Vertical Line", Data = currentPage.ObjectTypeToTag(typeof(SMDrawable)), Args = "drawings=line 50 0 50 100" });
                 listToolbox.Items.Add(new PageEditDraggableItem() { Text = "TextView (1 column + navig)", Data = currentPage.ObjectTypeToTag(typeof(SMTextView)), Args = "columns=1;navigbuttons=true" });
@@ -134,6 +150,7 @@ namespace SlideMaker.Views
                     MNReferencedStyle sm = doc.GetDefaultStyle().CreateCopy();
                     sm.Name = dlg.StyleName;
                     doc.DefaultLanguage.Styles.Add(sm);
+                    doc.DefaultLanguage.Modified = true;
                     listBoxStyles.Items.Add(sm);
                 }
             }
@@ -264,9 +281,14 @@ namespace SlideMaker.Views
             MNReferencedStyle ss = listBoxStyles.SelectedItem as MNReferencedStyle;
             if (!bStyle_OmitSetting)
             {
-                if (ss != null && CurrentSelectedControl != null && CurrentSelectedControl.Style != ss)
+                if (ss != null)
                 {
-                    CurrentSelectedControl.Style = ss;
+                    MNPage p = MNNotificationCenter.CurrentPage;
+                    foreach (SMControl c in p.Objects)
+                    {
+                        if (c.Area.Selected)
+                            c.ApplyStyle(ss);
+                    }
                     pageScrollArea1.InvalidateClient();
                 }
             }
@@ -274,6 +296,25 @@ namespace SlideMaker.Views
 
         public void RefreshListboxes(MNDocument document)
         {
+            propertyGrid2.SelectedObject = document.Book;
+            listBoxPages.Items.Clear();
+            int selid = -1;
+            int i = 0;
+            foreach (MNPage page in document.Data.Pages)
+            {
+                if (page == MNNotificationCenter.CurrentPage)
+                    selid = i;
+                listBoxPages.Items.Add(page);
+                i++;
+            }
+            if (selid >= 0)
+            {
+                b_omit_listbox_pages = true;
+                listBoxPages.SelectedIndex = selid;
+                b_omit_listbox_pages = false;
+            }
+
+
             listBoxStyles.Items.Clear();
             foreach (MNReferencedStyle style in document.DefaultLanguage.Styles)
             {
@@ -306,6 +347,8 @@ namespace SlideMaker.Views
 
                         if (doc.Data.Pages.Count > 0)
                             pageScrollArea1.SetPage(doc.Data.Pages[0]);
+
+                        numericUpDown1.Value = doc.Book.DefaultFontSize;
                     }
                     break;
                 case "PagesChanged":
@@ -321,6 +364,18 @@ namespace SlideMaker.Views
                 case "StyleListChanged":
                     RefreshListboxes(MNNotificationCenter.CurrentDocument);
                     break;
+                case "keyAction":
+                    if (args.Length > 0 && args[0] is Keys)
+                    {
+                        actionCenter.KeyActionMode((Keys)args[0]);
+                    }
+                    break;
+                case "startKeyActionMode":
+                    actionCenter.StartKeyActionMode();
+                    break;
+                case "stopKeyActionMode":
+                    actionCenter.StopKeyActionMode();
+                    break;
             }
         }
 
@@ -328,11 +383,11 @@ namespace SlideMaker.Views
         {
             propertyGrid1.SelectedObject = obj;
 
-            propertyPanelsContainer1.ClearPanels();
+            containerA.ClearPanels();
 
             // initialization of event scripts
+            string currStyle = null;
             SMRectangleArea area = null;
-            MNReferencedStyle currStyle = null;
             if (obj is SMRectangleArea)
             {
                 ShowTab(0);
@@ -342,29 +397,67 @@ namespace SlideMaker.Views
             {
                 ShowTab(0);
                 CurrentSelectedControl = obj as SMControl;
-                currStyle = CurrentSelectedControl.Style;
+                currStyle = CurrentSelectedControl.StyleName;
                 MNPage page = MNNotificationCenter.CurrentPage;
                 if (page != null)
                 {
-                    area = page.GetArea(CurrentSelectedControl.Id);
+                    area = CurrentSelectedControl.Area;
                 }
 
-                EVControlName se = (EVControlName)EVStorage.GetSafeControl(typeof(EVControlName));
-                se.SetObject(obj as SMControl);
-                propertyPanelsContainer1.AddPanel("General", se);
+                EVStorage.EvControlName.Instance.SetObject(obj as SMControl);
+                containerA.AddPanel("General", EVStorage.EvControlName.Instance);
+
+                if (obj is SMImage)
+                {
+                    EVStorage.EvReferencedImage.Instance.SetControl(obj as SMImage);
+                    EVStorage.EvReferencedImage.Instance.HeaderText = "Image";
+                    containerA.AddPanel("RefImage", EVStorage.EvReferencedImage.Instance);
+                }
+
+                if (obj is SMImageButton)
+                {
+                    SMImageButton smib = (SMImageButton)obj;
+                    EVReferencedImage eri = EVStorage.EvReferencedImage.Instance;
+                    eri.SetDocument(smib.Document);
+                    eri.SetImage(smib.ImgA);
+                    eri.HeaderText = "Normal State Image";
+                    containerA.AddPanel("", eri);
+                    eri = EVStorage.EvReferencedImageB.Instance;
+                    eri.SetDocument(smib.Document);
+                    eri.SetImage(smib.ImgB);
+                    eri.HeaderText = "Pressed State Image";
+                    containerA.AddPanel("", eri);
+                }
 
                 if (obj is SMMemoryGame)
                 {
-                    EVMemoryGame emg = (EVMemoryGame)EVStorage.GetSafeControl(typeof(EVMemoryGame));
-                    emg.SetControl(obj as SMMemoryGame);
-                    propertyPanelsContainer1.AddPanel("Memory Game", emg);
+                    EVStorage.EvMemoryGame.Instance.SetControl(obj as SMMemoryGame);
+                    containerA.AddPanel("Memory Game", EVStorage.EvMemoryGame.Instance);
                 }
+
+                if (obj is SMOrderedList)
+                {
+                    EVStorage.EvOrderedList.Instance.SetObject(obj as SMOrderedList);
+                    containerA.AddPanel("Ordered List", EVStorage.EvOrderedList.Instance);
+                }
+
+                EVStorage.EvControlStyle.Instance.SetObject(obj as SMControl);
+                containerA.AddPanel("Style", EVStorage.EvControlStyle.Instance);
+
+                EVStorage.EvControlScripts.Instance.SetControl(obj as SMControl);
+                containerA.AddPanel("Scripts", EVStorage.EvControlScripts.Instance);
             }
             else if (obj is MNPage)
             {
+                MNPage page = obj as MNPage;
                 ShowTab(0);
-                InitializeControlList(obj as MNPage);
-                area = (obj as MNPage).Area;
+                InitializeControlList(page);
+                area = page.Area;
+                page.ClearSelection();
+                pageScrollArea1.GetPageEditView().ClearSelection();
+
+                EVStorage.EvPageName.Instance.SetObject(page);
+                containerA.AddPanel("Page", EVStorage.EvPageName.Instance);
             }
             else if (obj is MNDocument)
             {
@@ -394,9 +487,11 @@ namespace SlideMaker.Views
             {
                 for (int i = 0; i < listBoxStyles.Items.Count; i++)
                 {
-                    if (listBoxStyles.Items[i] == currStyle)
+                    if ((listBoxStyles.Items[i] as MNReferencedStyle).Name == currStyle)
                     {
+                        bStyle_OmitSetting = true;
                         listBoxStyles.SelectedIndex = i;
+                        bStyle_OmitSetting = false;
                         break;
                     }
                 }
@@ -487,6 +582,698 @@ namespace SlideMaker.Views
                 }
             }
         }
+
+        private void tabControlDetails_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //Debugger.Log(0, "", "Selected Tab: " + tabControlDetails.SelectedIndex + "\n");
+            if (tabControlDetails.SelectedTab == tabActions)
+            {
+                actionCenter.IsKeyActionMode = true;
+            }
+            else
+            {
+                actionCenter.IsKeyActionMode = false;
+            }
+        }
+
+        public KeyPageActions actionCenter = new KeyPageActions();
+
+        private void toolStripButtonInsertPages_Click(object sender, EventArgs e)
+        {
+            MNPage Page = null;
+            if (listBoxPages.SelectedIndex >= 0 &&
+                listBoxPages.SelectedIndex < listBoxPages.Items.Count)
+            {
+                MNDocument document = MNNotificationCenter.CurrentDocument;
+                int pageNo = listBoxPages.SelectedIndex;
+                if (pageNo >= 0 && pageNo < document.Data.Pages.Count)
+                {
+                    Page = document.Data.Pages[pageNo];
+                }
+            }
+
+            if (Page != null)
+            {
+                DialogEnterPageNames dlg = new DialogEnterPageNames();
+                if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    string[] names = dlg.Names;
+                    if (names != null && names.Length > 0)
+                    {
+                        List<MNPage> pages = Page.Document.Data.Pages;
+                        int idx = pages.IndexOf(Page);
+                        if (idx >= 0 && idx < pages.Count)
+                        {
+                            foreach (string pageName in names)
+                            {
+                                idx++;
+                                MNPage p = new MNPage(Page.Document);
+                                p.Title = pageName;
+                                p.Id = Page.Document.Data.GetNextId();
+                                pages.Insert(idx, p);
+                            }
+                        }
+
+                        int seli = listBoxPages.SelectedIndex;
+                        RefreshListboxes(Page.Document);
+                        listBoxPages.SelectedIndex = seli;
+
+                        MNNotificationCenter.BroadcastMessage(Page, "PageInserted");
+                    }
+                }
+            }
+
+        }
+
+        private bool b_omit_listbox_pages = false;
+
+        private void listBoxPages_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+            if (b_omit_listbox_pages)
+                return;
+
+            if (listBoxPages.SelectedIndex >= 0 &&
+                listBoxPages.SelectedIndex < listBoxPages.Items.Count)
+            {
+                MNDocument document = MNNotificationCenter.CurrentDocument;
+                int pageNo = listBoxPages.SelectedIndex;
+                if (pageNo >= 0 && pageNo < document.Data.Pages.Count)
+                {
+                    MNPage currentPage = document.Data.Pages[pageNo];
+                    MNNotificationCenter.CurrentPage = currentPage;
+
+                    //pageScrollArea1.Dock = DockStyle.Fill;
+                    pageScrollArea1.Visible = true;
+                    pageScrollArea1.SetPage(currentPage);
+                    pageScrollArea1.Invalidate();
+
+                    MNNotificationCenter.BroadcastMessage(pageScrollArea1, "ObjectSelected", currentPage);
+                }
+            }
+        }
+
+        private void tsbClonePage_Click(object sender, EventArgs e)
+        {
+            if (listBoxPages.SelectedIndex >= 0 &&
+                listBoxPages.SelectedIndex < listBoxPages.Items.Count)
+            {
+                MNDocument document = MNNotificationCenter.CurrentDocument;
+                int pageNo = listBoxPages.SelectedIndex;
+                if (pageNo >= 0 && pageNo < document.Data.Pages.Count)
+                {
+                    MNPage currentPage = document.Data.Pages[pageNo];
+                    MNPage newPage = new MNPage(document);
+                    MNPage.CopyControlsFrom(currentPage, newPage);
+                    newPage.Title = currentPage.Title + (currentPage.Title.EndsWith("*") ? "" : " ") + "*";
+                    newPage.Description = currentPage.Description;
+                    newPage.MessageText = currentPage.MessageText;
+                    newPage.MessageTitle = currentPage.MessageTitle;
+                    newPage.TextB = currentPage.TextB;
+                    newPage.TextC = currentPage.TextC;
+                    newPage.ShowHelp = currentPage.ShowHelp;
+                    newPage.ShowHome = currentPage.ShowHome;
+                    newPage.ShowBackNavigation = currentPage.ShowBackNavigation;
+                    newPage.ShowTitle = currentPage.ShowTitle;
+                    newPage.ShowForwardNavigation = currentPage.ShowForwardNavigation;
+                    document.Data.Pages.Insert(pageNo + 1, newPage);
+                    listBoxPages.Items.Insert(pageNo + 1, newPage);
+                    listBoxPages.SelectedIndex = pageNo + 1;
+
+                    MNNotificationCenter.CurrentPage = newPage;
+
+                    //pageScrollArea1.Dock = DockStyle.Fill;
+                    pageScrollArea1.Visible = true;
+                    pageScrollArea1.SetPage(newPage);
+                    pageScrollArea1.Invalidate();
+
+                    MNNotificationCenter.BroadcastMessage(pageScrollArea1, "ObjectSelected", newPage);
+                }
+            }
+        }
+
+        private void tsbAddTemplate(object sender, EventArgs e)
+        {
+            MNPage p = new MNPage(MNSharedObjects.internalDocument);
+            MNSharedObjects.internalDocument.Data.Templates.Add(p);
+
+            DialogNewPageName d = new DialogNewPageName();
+            if (d.ShowDialog() == DialogResult.OK)
+            {
+                p.Title = d.PageName;
+            }
+
+            listBoxTemplates.Items.Add(p);
+        }
+
+
+        public void SetSharedDocument()
+        {
+            listBoxTemplates.BeginUpdate();
+            listBoxTemplates.Items.Clear();
+            foreach (MNPage p in MNSharedObjects.internalDocument.Data.Templates)
+            {
+                listBoxTemplates.Items.Add(p);
+            }
+            listBoxTemplates.EndUpdate();
+        }
+
+        public void RefreshTemplateList()
+        {
+            listBoxTemplates.BeginUpdate();
+            listBoxTemplates.Items.Clear();
+            foreach (MNPage p in MNSharedObjects.internalDocument.Data.Templates)
+            {
+                listBoxTemplates.Items.Add(p);
+            }
+            listBoxTemplates.EndUpdate();
+        }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            MNSharedObjects.Save();
+        }
+
+        private void listBoxTemplates_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listBoxTemplates.SelectedIndex >= 0 &&
+                listBoxTemplates.SelectedIndex < listBoxTemplates.Items.Count)
+            {
+                MNPage currentPage = listBoxTemplates.Items[listBoxTemplates.SelectedIndex] as MNPage;
+                if (currentPage != null)
+                {
+                    MNNotificationCenter.CurrentPage = currentPage;
+
+                    //pageScrollArea1.Dock = DockStyle.Fill;
+                    pageScrollArea1.Visible = true;
+                    pageScrollArea1.SetPage(currentPage);
+                    pageScrollArea1.Invalidate();
+
+                    MNNotificationCenter.BroadcastMessage(pageScrollArea1, "ObjectSelected", currentPage);
+                }
+            }
+        }
+
+        /// <summary>
+        /// REFRESH PAGE LIST
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void toolStripButton4_Click(object sender, EventArgs e)
+        {
+            RefreshListboxes(MNNotificationCenter.CurrentDocument);
+        }
+
+        /// <summary>
+        /// DELETE PAGE
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void toolStripButton5_Click(object sender, EventArgs e)
+        {
+            if (listBoxPages.SelectedIndex >= 0 && listBoxPages.SelectedIndex < listBoxPages.Items.Count)
+            {
+                MNPage page = (MNPage)listBoxPages.Items[listBoxPages.SelectedIndex];
+                if (MessageBox.Show("Delete selected page?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                {
+                    MNDocument doc = MNNotificationCenter.CurrentDocument;
+                    doc.Data.Pages.Remove(page);
+                    RefreshListboxes(MNNotificationCenter.CurrentDocument);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Child font set 32 pt
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void label9_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Font.Size = Convert.ToInt32(numericUpDown1.Value);
+                        c.Font.Name = MNFontName.GilSansMurari;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        private void tabPageStyles_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        /// <summary>
+        ///  align top left
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Top;
+                        c.Paragraph.Align = SMHorizontalAlign.Left;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// align top center
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Top;
+                        c.Paragraph.Align = SMHorizontalAlign.Center;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// align top right
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Top;
+                        c.Paragraph.Align = SMHorizontalAlign.Right;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// align left center
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button6_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Center;
+                        c.Paragraph.Align = SMHorizontalAlign.Left;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// align center
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button5_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Center;
+                        c.Paragraph.Align = SMHorizontalAlign.Center;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// align right center
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button4_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Center;
+                        c.Paragraph.Align = SMHorizontalAlign.Right;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// align bottom left
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button9_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Bottom;
+                        c.Paragraph.Align = SMHorizontalAlign.Left;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// align bottom center
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button8_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Bottom;
+                        c.Paragraph.Align = SMHorizontalAlign.Center;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// align bottom right
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button7_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Paragraph.VertAlign = SMVerticalAlign.Bottom;
+                        c.Paragraph.Align = SMHorizontalAlign.Right;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// set 11 pt
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void label7_Click(object sender, EventArgs e)
+        {
+            SetFontSizeForSelection(11);
+        }
+
+        /// <summary>
+        /// set 16 pt
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void label8_Click(object sender, EventArgs e)
+        {
+            SetFontSizeForSelection(16);
+        }
+
+        private void SetFontSizeForSelection(int fontSize)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Font.Size = fontSize;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        /// <summary>
+        /// set 50 pt
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void label10_Click(object sender, EventArgs e)
+        {
+            SetFontSizeForSelection(40);
+        }
+
+        /// <summary>
+        /// set times
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button10_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Font.Name = MNFontName.Times;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        /// <summary>
+        /// set vag rounded
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button11_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Font.Name = MNFontName.VagRounded;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        /// <summary>
+        /// set berlin
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button12_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Font.Name = MNFontName.BerlinSansFB;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        /// <summary>
+        /// set gill sans
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button13_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Font.Name = MNFontName.GilSansMurari;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        /// <summary>
+        /// set garamond
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button14_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Font.Name = MNFontName.AdobeGaramondPro;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            if (MNNotificationCenter.CurrentDocument != null)
+            {
+                MNNotificationCenter.CurrentDocument.Book.DefaultFontSize = Convert.ToInt32(numericUpDown1.Value);
+            }
+        }
+
+        void pageScrollArea1_PrevPageRequested(object sender, PageEditViewArguments e)
+        {
+            ListBox lb = listBoxPages;
+            int si = lb.SelectedIndex;
+            if (si >= 0 && si < lb.Items.Count)
+            {
+                si--;
+                if (si >= 0 && si < lb.Items.Count)
+                {
+                    lb.SelectedIndex = si;
+                }
+            }
+        }
+
+        void pageScrollArea1_NextPageRequested(object sender, PageEditViewArguments e)
+        {
+            ListBox lb = listBoxPages;
+            int si = lb.SelectedIndex;
+            if (si >= 0 && si < lb.Items.Count)
+            {
+                si++;
+                if (si >= 0 && si < lb.Items.Count)
+                {
+                    lb.SelectedIndex = si;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Delete template
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void toolStripButton6_Click(object sender, EventArgs e)
+        {
+            ListBox lb = listBoxTemplates;
+            if (lb.SelectedIndex >= 0 && lb.SelectedIndex < lb.Items.Count)
+            {
+                MNPage p = lb.Items[lb.SelectedIndex] as MNPage;
+                if (MessageBox.Show("Delete template " + p.Title + "?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    MNSharedObjects.internalDocument.Data.Templates.Remove(p);
+                    RefreshTemplateList();
+                }
+            }
+        }
+
+        /// <summary>
+        ///  refresh list
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void toolStripButton7_Click(object sender, EventArgs e)
+        {
+            RefreshTemplateList();
+        }
+
+        private void label13_Click(object sender, EventArgs e)
+        {
+            SetFontSizeForSelection(20);
+        }
+
+        private void label12_Click(object sender, EventArgs e)
+        {
+            SetFontSizeForSelection(12);
+        }
+
 
     }
 }

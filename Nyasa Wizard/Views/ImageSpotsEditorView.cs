@@ -20,6 +20,10 @@ namespace SlideMaker.Views
 
         private MNReferencedSpot CurrentSpot = null;
 
+
+        private Pen blackThickPen = null;
+        private Pen whiteThinPen = Pens.White;
+
         public MNReferencedImage Image 
         {
             get
@@ -36,6 +40,8 @@ namespace SlideMaker.Views
         public ImageSpotsEditorView()
         {
             InitializeComponent();
+            blackThickPen = new Pen(Color.Black, 3);
+
         }
 
         private void ImageSpotsEditorView_Paint(object sender, PaintEventArgs e)
@@ -62,7 +68,7 @@ namespace SlideMaker.Views
             {
                 foreach (MNReferencedSpot spot in p_image.SafeSpots)
                 {
-                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot));
+                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot), blackThickPen, whiteThinPen);
                 }
             }
 
@@ -79,6 +85,7 @@ namespace SlideMaker.Views
             spot.AnchorB = new Point(0, 10);
 
             p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
             Invalidate();
         }
 
@@ -93,6 +100,7 @@ namespace SlideMaker.Views
             spot.AnchorB = new Point(0, 10);
 
             p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
             Invalidate();
         }
 
@@ -210,6 +218,7 @@ namespace SlideMaker.Views
 
                 if (MessageBox.Show("Do you want to delete selected spot area?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
+                    p_image.Modified = true;
                     p_image.SafeSpots.Remove(CurrentSpot);
                     Invalidate();
                 }

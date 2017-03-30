@@ -33,5 +33,22 @@ namespace FilesGenerator
         {
             AllFileGenerator.Generate(WorkDir);
         }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            label1.Text = "";
+            AllFileGenerator.ListFiles(WorkDir, listBox1);
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            if (listBox1.SelectedIndex >= 0 && listBox1.SelectedIndex < listBox1.Items.Count)
+            {
+                label1.Text = "";
+                string file = listBox1.Items[listBox1.SelectedIndex].ToString();
+                AllFileGenerator.ProcessFileComplete(file);
+                label1.Text = "File Processed: " + file;
+            }
+        }
     }
 }

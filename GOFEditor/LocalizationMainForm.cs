@@ -318,10 +318,12 @@ namespace SlideMaker
                 if (data.Texts[i].Name.Equals(oldValue))
                 {
                     data.Texts.RemoveAt(i);
+                    data.Modified = true;
                     break;
                 }
             }
             data.AudioTexts.Add(newValue);
+            data.Modified = true;
             CloseCurrentPresentation();
             PresentData(newValue, key);
             UpdateDataWithUI();
@@ -386,6 +388,7 @@ namespace SlideMaker
                     foreach (MNReferencedImage im in imgs)
                     {
                         data.Images.Remove(im);
+                        data.Modified = true;
                     }
                 }
             }
@@ -467,6 +470,7 @@ namespace SlideMaker
                                 img.ImageData = Image.FromFile(fd.FileName);
                                 img.Name = d.ObjectName.Trim().Length > 0 ? d.ObjectName.Trim() : fd.FileName;
                                 data.Images.Add(img);
+                                data.Modified = true;
                                 UpdateDataWithUI();
                             }
                         }
@@ -476,6 +480,7 @@ namespace SlideMaker
                             MNReferencedAudioText ra = new MNReferencedAudioText();
                             ra.Name = d.ObjectName;
                             data.AudioTexts.Add(ra);
+                            data.Modified = true;
                             UpdateDataWithUI();
                         }
                         break;
@@ -489,6 +494,7 @@ namespace SlideMaker
                                 img.InitializeWithFile(fd.FileName);
                                 img.Name = d.ObjectName.Trim().Length > 0 ? d.ObjectName.Trim() : fd.FileName;
                                 data.Sounds.Add(img);
+                                data.Modified = true;
                                 UpdateDataWithUI();
                             }
                         }
@@ -498,6 +504,7 @@ namespace SlideMaker
                             MNReferencedText rt = new MNReferencedText();
                             rt.Name = d.ObjectName;
                             data.Texts.Add(rt);
+                            data.Modified = true;
                             UpdateDataWithUI();
                         }
                         break;
@@ -538,6 +545,7 @@ namespace SlideMaker
                     MNReferencedStyle sm = data.Styles[0].CreateCopy();
                     sm.Name = dlg.StyleName;
                     data.Styles.Add(sm);
+                    data.Modified = true;
                     listBoxStyles.Items.Add(sm);
                     listBoxStyles.SelectedIndex = listBoxStyles.Items.Count - 1;
                 }

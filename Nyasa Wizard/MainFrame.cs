@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Drawing.Printing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 using System.Xml;
 using System.IO;
 
@@ -22,15 +25,35 @@ namespace SlideMaker
         private int printedPageCurrent = 0;
         private MNPageContext printContext = null;
         private LocalizationMainForm localeForm = null;
+        private bool bOmitFinalSave;
+
+        public Timer autoSave = null;
 
         public MainFrame()
         {
             InitializeComponent();
 
+            MNSharedObjects.Load();
+
             pageDetailPanel1.Dock = DockStyle.Fill;
             pageDetailPanel1.Visible = true;
+            pageDetailPanel1.SetSharedDocument();
 
             MNNotificationCenter.CreateNewDocument();
+            autoSave = new Timer();
+            autoSave.Interval = 900000;
+            autoSave.Tick += new EventHandler(autoSave_Tick);
+            autoSave.Start();
+        }
+
+        void autoSave_Tick(object sender, EventArgs e)
+        {
+            if (File.Exists(MNNotificationCenter.CurrentFileName))
+            {
+                TimeSpan ts = DateTime.Now - lastSaved;
+                if (ts.TotalMinutes > 15.0)
+                    SaveDocument(null);
+            }
         }
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
@@ -62,11 +85,25 @@ namespace SlideMaker
                     fileName = fileName.Replace(".smd", ".sme");
                     LoadBookLang(fileName);
 
+                    ApplyUpdatesAndChanges();
+
                     MNNotificationCenter.BroadcastMessage(this, "DocumentChanged", MNNotificationCenter.CurrentDocument); 
                 }
+
+                lastSaved = DateTime.Now;
             }
 
             pageDetailPanel1.RefreshView();
+        }
+
+        private void ApplyUpdatesAndChanges()
+        {
+            //MNSharedObjects.CopyToDocument(MNNotificationCenter.CurrentDocument);
+
+            /*if (MNNotificationCenter.CurrentDocument.Book.Version < 2)
+            {
+                MNNotificationCenter.CurrentDocument.ReapplyStyles();
+            }*/
         }
 
         private static bool LoadBookHeader(string fileName)
@@ -131,6 +168,11 @@ namespace SlideMaker
                 }
             }
 
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+            if (doc.Data.Pages.Count == 0)
+            {
+                doc.CreateNewPage();
+            }
         }
 
         private static void LoadBookLang(string fileName)
@@ -162,6 +204,19 @@ namespace SlideMaker
                     }
                 }
             }
+
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+            if (doc.DefaultLanguage.Styles.Count == 0)
+            {
+                doc.InitialiseDefaultStyles();
+            }
+
+            foreach (MNReferencedImage ri in doc.DefaultLanguage.Images)
+            {
+                if (ri.Id < 1)
+                    ri.Id = doc.Data.GetNextId();
+            }
+
 
         }
 
@@ -196,7 +251,9 @@ namespace SlideMaker
             }
         }
 
-        private static void SaveDocument(string filePath)
+        private DateTime lastSaved = DateTime.Now;
+
+        private void SaveDocument(string filePath)
         {
             if (filePath != null)
                 MNNotificationCenter.CurrentFileName = filePath;
@@ -205,42 +262,48 @@ namespace SlideMaker
 
             RSFileWriter fw;
             string fileName = filePath;
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
 
             using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_book.txt"))
             {
-                using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(fileName)))
+                using (BinaryWriter bw = new BinaryWriter(File.Create(fileName)))
                 {
                     fw = new RSFileWriter(bw);
                     fw.logStream = sw;
-                    MNNotificationCenter.CurrentDocument.Book.Save(fw);
+                    doc.Book.Save(fw);
                 }
             }
 
             fileName = fileName.Replace(".smb", ".smd");
             using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_data.txt"))
             {
-                using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(fileName)))
+                using (BinaryWriter bw = new BinaryWriter(File.Create(fileName)))
                 {
                     fw = new RSFileWriter(bw);
                     fw.logStream = sw;
-                    MNNotificationCenter.CurrentDocument.Data.Save(fw);
+                    doc.Data.Save(fw);
                 }
             }
 
-            fileName = fileName.Replace(".smd", ".sme");
-            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_lang.txt"))
+            if (doc.DefaultLanguage.IsModified())
             {
-                using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(fileName)))
+                fileName = fileName.Replace(".smd", ".sme");
+                using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_lang.txt"))
                 {
-                    fw = new RSFileWriter(bw);
-                    fw.logStream = sw;
-                    MNDocument doc = MNNotificationCenter.CurrentDocument;
-                    MNLocalisation loc = doc.DefaultLanguage;
-                    loc.SetProperty("BookCode", doc.Book.BookCode);
-                    loc.SetProperty("LanguageName", "Default");
-                    loc.Save(fw);
+                    using (BinaryWriter bw = new BinaryWriter(File.Create(fileName)))
+                    {
+                        fw = new RSFileWriter(bw);
+                        fw.logStream = sw;
+                        MNLocalisation loc = doc.DefaultLanguage;
+                        loc.SetProperty("BookCode", doc.Book.BookCode);
+                        loc.SetProperty("LanguageName", "Default");
+                        loc.Save(fw);
+                        loc.Modified = false;
+                    }
                 }
             }
+
+            lastSaved = DateTime.Now;
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -277,33 +340,11 @@ namespace SlideMaker
         /// <param name="e"></param>
         private void toolStripMenuItem4_DropDownOpening(object sender, EventArgs e)
         {
-            MNPage current = MNNotificationCenter.CurrentPage;
-            int labels = 0;
-            int images = 0;
-            int ceb = 0;
-            int total = 0;
-            if (current != null)
-            {
-                foreach (SMControl c in current.SelectedObjects)
-                {
-                    if (c is SMLabel) labels++;
-                    if (c is SMImage) images++;
-                    if (c is SMCheckBox) ceb++;
-                    total++;
-                }
-            }
         }
-
-
-
-
 
         private void playSlideshowToolStripMenuItem_Click(object sender, EventArgs e)
         {
         }
-
-
-
 
         private void testAction1ToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -318,7 +359,7 @@ namespace SlideMaker
                 if (c is SMTextContainer)
                 {
                     SMTextContainer tc = c as SMTextContainer;
-                    tc.SetText("Here is text for dropping <drop text=\"______\" tag=\"word1\">. Be sure to place here correct word");
+                    tc.Text = "Here is text for dropping <drop text=\"______\" tag=\"word1\">. Be sure to place here correct word";
                 }
             }
             
@@ -364,7 +405,10 @@ namespace SlideMaker
 
         private void MainFrame_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (bOmitFinalSave) return;
+            autoSave.Stop();
             saveToolStripMenuItem_Click(sender, EventArgs.Empty);
+            MNSharedObjects.Save();
         }
 
         private void showDefaultLanguageDataToolStripMenuItem_Click(object sender, EventArgs e)
@@ -412,10 +456,167 @@ namespace SlideMaker
                         sound.InitializeWithFile(objectFileName);
                         sound.Name = Path.GetFileNameWithoutExtension(objectFileName);
                         file.Sounds.Add(sound);
+                        file.Modified = true;
                     }
                 }
 
                 file.Save(outFile);
+            }
+        }
+
+        private void showRTFConvertorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FormRtfConvertor form = new FormRtfConvertor();
+            form.Show();
+        }
+
+        /// <summary>
+        /// Resize the image to the specified width and height.
+        /// </summary>
+        /// <param name="image">The image to resize.</param>
+        /// <param name="width">The width to resize to.</param>
+        /// <param name="height">The height to resize to.</param>
+        /// <returns>The resized image.</returns>
+        public static void ResizeImage(Image image, int width, int height, string fileName)
+        {
+            var destRect = new Rectangle(0, 0, width, height);
+            using (var destImage = new Bitmap(width, height))
+            {
+
+                destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+                using (var graphics = Graphics.FromImage(destImage))
+                {
+                    graphics.CompositingMode = CompositingMode.SourceCopy;
+                    graphics.CompositingQuality = CompositingQuality.HighQuality;
+                    graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    graphics.SmoothingMode = SmoothingMode.HighQuality;
+                    graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+                    using (var wrapMode = new ImageAttributes())
+                    {
+                        wrapMode.SetWrapMode(WrapMode.TileFlipXY);
+                        graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+                    }
+                }
+
+                destImage.Save(fileName, ImageFormat.Png);
+            }
+        }
+
+        private void shrinkImagesToTheirCanvasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+            if (doc == null)
+                return;
+
+            Dictionary<long, Size> dsz = new Dictionary<long, Size>();
+            Dictionary<long, MNReferencedImage> dri = new Dictionary<long, MNReferencedImage>();
+
+            foreach (MNPage p in doc.Data.Pages)
+            {
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c is SMImage)
+                    {
+                        MNReferencedImage img = (c as SMImage).Img.Image;
+                        if (img != null && img.ImageData != null)
+                        {
+                            SMRectangleArea area = c.Area;
+                            Rectangle bounds = area.GetBounds(PageEditDisplaySize.LandscapeBig);
+                            Size imageSize = img.ImageData.Size;
+                            Size imageDrawSize = SMImage.GetImageDrawSize(bounds, img.ImageData);
+                            if (imageSize.Width > imageDrawSize.Width || imageSize.Height > imageDrawSize.Height)
+                            {
+                                if (!dsz.ContainsKey(img.Id))
+                                {
+                                    Debugger.Log(0, "", "Image " + img.Id + " shrinked from " + imageSize.ToString() + " to " + imageDrawSize.ToString() + "\n");
+                                    dsz[img.Id] = imageDrawSize;
+                                    dri[img.Id] = img;
+                                }
+                                else
+                                {
+                                    Size storedSize = dsz[img.Id];
+                                    if (storedSize.Width < imageDrawSize.Width ||
+                                        storedSize.Height < imageDrawSize.Height)
+                                    {
+                                        dsz[img.Id] = imageDrawSize;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (long imageId in dsz.Keys)
+            {
+                string tempFileName = Path.GetTempFileName();
+                if (dri.ContainsKey(imageId))
+                {
+                    Size newSize = dsz[imageId];
+                    MNReferencedImage img = dri[imageId];
+
+                    //Debugger.Log(0, "", "  Size before shrink: " + GetImageSize(img.ImageData) + "\n");
+                    ResizeImage(img.ImageData, newSize.Width, newSize.Height, tempFileName);
+
+                    Image newImage = Image.FromFile(tempFileName);
+                    img.ImageData = newImage;
+                    //Debugger.Log(0, "", "  Size after shrink: " + GetImageSize(img.ImageData) + "\n");
+                    doc.DefaultLanguage.Modified = true;
+
+                    Debugger.Log(0, "", "Used file " + tempFileName + "\n");
+                }
+            }
+
+        }
+
+        public int GetImageSize(Image image)
+        {
+            int size = 0;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                size = (int)ms.Length;
+            }
+            return size;
+        }
+
+        private void exitWithoutSaveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            bOmitFinalSave = true;
+            Close();
+        }
+
+        private void saveOnlyHeaderFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string fileName = MNNotificationCenter.CurrentFileName;
+
+            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_book.txt"))
+            {
+                using (BinaryWriter bw = new BinaryWriter(File.Create(fileName)))
+                {
+                    RSFileWriter fw = new RSFileWriter(bw);
+                    fw.logStream = sw;
+                    MNNotificationCenter.CurrentDocument.Book.Save(fw);
+                }
+            }
+
+        }
+
+        private void saveOnlyDataFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string fileName = MNNotificationCenter.CurrentFileName;
+            fileName = fileName.Replace(".smb", ".smd");
+
+            using (StreamWriter sw = new StreamWriter(@"d:\LearnToRead\save_data.txt"))
+            {
+                using (BinaryWriter bw = new BinaryWriter(File.Create(fileName)))
+                {
+                    RSFileWriter fw = new RSFileWriter(bw);
+                    fw.logStream = sw;
+                     MNNotificationCenter.CurrentDocument.Data.Save(fw);
+                }
             }
         }
 

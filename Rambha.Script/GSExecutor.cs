@@ -64,6 +64,8 @@ namespace Rambha.Script
                 result = new GSReturn(GSReturn.TYPE_CONTINUE);
             else if (token.Equals("set") && args.Count > 1)
                 result = execSet(args[0], args[1]);
+            else if (token.Equals("random"))
+                result = execRandom(args);
             else
             {
                 if (token.IndexOf('.') >= 0)
@@ -80,7 +82,7 @@ namespace Rambha.Script
                         return obj.ExecuteMessage(tp[tp.Length - 1], args);
                     }
                 }
-                
+
                 Debugger.Log(0, "", "UNKNOWN MESSAGE: " + token + " ");
             }
 
@@ -539,6 +541,13 @@ namespace Rambha.Script
             return cond;
         }
 
+        private GSCore execRandom(GSCoreCollection args)
+        {
+            int count = args.Count;
+            Random rnd = new Random(DateTime.Now.Millisecond);
+            return args.getSafe(rnd.Next(count));
+        }
+
         private GSCore execPrint(GSCoreCollection arg, bool newLine)
         {
             foreach (GSCore argument in arg)
@@ -700,47 +709,24 @@ namespace Rambha.Script
                 }
                 else
                 {
-                    /*if (L.Parts.IsFirstToken())
+                    GSCore result = null;
+                    GSCore target = ExecuteElement(L.Parts[0]);
+                    string message = (L.Parts[1] is GSToken ? (L.Parts[1] as GSToken).Token : L.Parts[1].getStringValue());
+                    if (target != null)
                     {
-                        GSCore res = null;
-                        try
-                        {
-                            res = ExecuteMessage(L.Parts.getFirstToken(),
-                                L.Parts.getSublist(1));
-                        }
-                        catch
-                        {
-                            res = new GSString();
-                        }
-                        finally
-                        {
-                        }
-                        return res;
+                        result = target.ExecuteMessage(message, L.Parts.getEvaluatedSublist(this, 2));
                     }
-                    else*/
-                    {
-                        GSCore result = null;
-                        GSCore target = ExecuteElement(L.Parts[0]);
-                        string message = (L.Parts[1] is GSToken ? (L.Parts[1] as GSToken).Token : L.Parts[1].getStringValue());
-                        if (target != null)
-                        {
-                            result = target.ExecuteMessage(message, L.Parts.getSublist(2));
-                        }
 
-                        /*foreach (GSCore item in L.Parts)
-                        {
-                            result = ExecuteElement(item);
-                            if (result is GSReturn)
-                                break;
-                        }*/
-                        if (result == null)
-                            return new GSString();
-                        return result;
-                    }
+                    if (result == null)
+                        return new GSString();
+                    return result;
                 }
             }
             else if (E is GSToken)
             {
+                GSToken t = E as GSToken;
+                if (t.Token.StartsWith("#"))
+                    return new GSString(t.Token);
                 return EvaluateProperty(((GSToken)E).Token);
             }
             else

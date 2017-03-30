@@ -30,8 +30,7 @@ namespace Rambha.Document
 
         public override void Paint(MNPageContext context)
         {
-            SMRectangleArea area = context.CurrentPage.GetArea(Id);
-            Rectangle bounds = area.GetBounds(context);
+            Rectangle bounds = Area.GetBounds(context);
 
             Rectangle textBounds = bounds;
 

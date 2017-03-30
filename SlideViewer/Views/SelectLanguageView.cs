@@ -16,21 +16,26 @@ namespace SlideViewer
         public SelectLanguageView()
         {
             InitializeComponent();
+            ChooseFont = new Font(FontFamily.GenericSansSerif, 12);
         }
 
-        public MNBookHeader CurrentBook = null;
+        public RemoteFileRef CurrentBook;
 
         public IMainFrameDelegate ParentFrame = null;
 
-        public bool SetBook(MNBookHeader bh)
+        public Font ChooseFont = null;
+
+        public bool SetBook(RemoteFileRef mainFile)
         {
-            CurrentBook = bh;
+            CurrentBook = mainFile;
             listBox1.Items.Clear();
-            if (bh.Languages != null && bh.Languages.Count > 0)
+            if (mainFile == null)
+                return false;
+            if (mainFile.Subs != null && mainFile.Subs.Count > 0)
             {
-                foreach (MNBookLanguage lang in bh.Languages)
+                foreach (RemoteFileRef lang in mainFile.Subs)
                 {
-                    listBox1.Items.Add(lang.LanguageName);
+                    listBox1.Items.Add(lang);
                 }
                 listBox1.SelectedIndex = 0;
                 return true;
@@ -52,10 +57,10 @@ namespace SlideViewer
         {
             if (ParentFrame != null)
             {
-                MNBookLanguage lang = null;
-                if (listBox1.SelectedIndex >= 0 && listBox1.SelectedIndex < CurrentBook.Languages.Count)
-                    lang = CurrentBook.Languages[listBox1.SelectedIndex];
-                ParentFrame.dialogDidSelectLanguage(lang);
+                RemoteFileRef lang = null;
+                if (listBox1.SelectedIndex >= 0 && listBox1.SelectedIndex < listBox1.Items.Count)
+                    lang = listBox1.Items[listBox1.SelectedIndex] as RemoteFileRef;
+                ParentFrame.dialogDidSelectLanguage(CurrentBook, lang);
             }
         }
 
@@ -63,7 +68,40 @@ namespace SlideViewer
         {
             if (ParentFrame != null)
             {
-                ParentFrame.dialogDidSelectLanguage(null);
+                ParentFrame.dialogDidSelectLanguage(null, null);
+            }
+        }
+
+        private void listBox1_MeasureItem(object sender, MeasureItemEventArgs e)
+        {
+            e.ItemHeight = (int)(e.Graphics.MeasureString("M", ChooseFont).Height) * 2;
+        }
+
+        private void listBox1_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            Font font = ChooseFont;
+            int off = (int)font.SizeInPoints / 2;
+
+            if ((e.State & DrawItemState.Selected) != 0)
+            {
+                e.Graphics.FillRectangle(Brushes.LightBlue, e.Bounds);
+            }
+            else
+            {
+                e.Graphics.FillRectangle(SystemBrushes.Window, e.Bounds);
+            }
+
+            if (e.Index >= 0 && e.Index < listBox1.Items.Count)
+            {
+                RemoteFileRef rf = listBox1.Items[e.Index] as RemoteFileRef;
+                if (rf.Local == false)
+                {
+                    e.Graphics.DrawString(string.Format("{0} (Internet)", rf.Text), font, Brushes.Black, off, off + e.Bounds.Top);
+                }
+                else
+                {
+                    e.Graphics.DrawString(rf.Text, font, Brushes.Black, off, off + e.Bounds.Top);
+                }
             }
         }
     }
@@ -71,7 +109,8 @@ namespace SlideViewer
     public interface IMainFrameDelegate
     {
         void showSelectLanguageDialog(MNBookHeader book);
-        void dialogDidSelectLanguage(MNBookLanguage lang);
+        void dialogDidSelectLanguage(RemoteFileRef book, RemoteFileRef lang);
         void SetShowPanel(string panel);
+        void RefreshList();
     }
 }

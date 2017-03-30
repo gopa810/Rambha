@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -32,6 +33,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NAudio">
@@ -52,10 +54,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioPlayer.cs" />
+    <Compile Include="ErrorCatcher.cs" />
     <Compile Include="MNDocumentExecutor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SVBookLibrary.cs" />
+    <Compile Include="Views\UpdaterDownloader.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\UpdaterDownloader.Designer.cs">
+      <DependentUpon>UpdaterDownloader.cs</DependentUpon>
+    </Compile>
     <Compile Include="Views\UpdaterGetStatus.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -102,6 +111,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="Views\UpdaterDownloader.resx">
+      <DependentUpon>UpdaterDownloader.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Views\UpdaterGetStatus.resx">
       <DependentUpon>UpdaterGetStatus.cs</DependentUpon>
     </EmbeddedResource>
@@ -147,6 +159,30 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Languages.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconBack.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconFwd.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconHelp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconHome.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigArrowLeft.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigArrowRight.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SpeakerOff.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SpeakerOn.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

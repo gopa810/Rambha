@@ -14,31 +14,30 @@ namespace Rambha.Document
     public class SMRectangleArea: GSCore
     {
         /// <summary>
-        /// This is relative point (as if page or image has 1000 x 1000 pt)
+        /// Relative area means that coordinates of rectangle are as if from 
+        /// screen of size 1024x768 points
         /// </summary>
-        [Browsable(true)]
-        public SMRuler LeftRuler;
-        [Browsable(true)]
-        public SMRuler TopRuler;
-        [Browsable(true)]
-        public SMRuler RightRuler;
-        [Browsable(true)]
-        public SMRuler BottomRuler;
+        public Rectangle RelativeArea = Rectangle.Empty;
 
         [Browsable(false)]
         public bool Selected { get; set; }
 
+        public void Clear()
+        {
+            RelativeArea = Rectangle.Empty;
+        }
 
         public void Save(RSFileWriter bw)
         {
-            bw.WriteByte(10);
-            LeftRuler.Save(bw);
-            TopRuler.Save(bw);
-            RightRuler.Save(bw);
-            BottomRuler.Save(bw);
-
+            bw.Log("* * * AREA * * *\n");
             bw.WriteByte(11);
             bw.WriteBool(Selected);
+
+            bw.WriteByte(12);
+            bw.WriteInt32(RelativeArea.X);
+            bw.WriteInt32(RelativeArea.Y);
+            bw.WriteInt32(RelativeArea.Width);
+            bw.WriteInt32(RelativeArea.Height);
 
             // end of object
             bw.WriteByte(0);
@@ -46,6 +45,7 @@ namespace Rambha.Document
 
         public bool Load(RSFileReader br)
         {
+            br.Log("* * * AREA * * *\n");
             byte tag;
 
             while ((tag = br.ReadByte()) != 0)
@@ -53,13 +53,22 @@ namespace Rambha.Document
                 switch (tag)
                 {
                     case 10:
-                        LeftRuler.Load(br);
-                        TopRuler.Load(br);
-                        RightRuler.Load(br);
-                        BottomRuler.Load(br);
+                        {
+                            int left = LoadRuler(br, 1024);
+                            int top = LoadRuler(br, 768);
+                            int right = LoadRuler(br, 1024);
+                            int bottom = LoadRuler(br, 768);
+                            RelativeArea = new Rectangle(left, top, right - left, bottom - top);
+                        }
                         break;
                     case 11:
                         Selected = br.ReadBool();
+                        break;
+                    case 12:
+                        RelativeArea.X = br.ReadInt32();
+                        RelativeArea.Y = br.ReadInt32();
+                        RelativeArea.Width = br.ReadInt32();
+                        RelativeArea.Height = br.ReadInt32();
                         break;
                 }
             }
@@ -67,64 +76,48 @@ namespace Rambha.Document
             return true;
         }
 
-
-        public Rectangle[] LastBounds = new Rectangle[9];
-
-        [Browsable(false)]
-        public SMControlSelection TrackedSelection
+        public int LoadRuler(RSFileReader br, int dim)
         {
-            get
+            double d = 0;
+            byte tag;
+            while ((tag = br.ReadByte()) != 0)
             {
-                SMControlSelection sm = SMControlSelection.None;
-                if (LeftRuler.SelectedForTracking) sm |= SMControlSelection.Left;
-                if (TopRuler.SelectedForTracking) sm |= SMControlSelection.Top;
-                if (BottomRuler.SelectedForTracking) sm |= SMControlSelection.Bottom;
-                if (RightRuler.SelectedForTracking) sm |= SMControlSelection.Right;
-                return sm;
+                switch (tag)
+                {
+                    case 10:
+                        br.ReadBool();
+                        br.ReadBool();
+                        br.ReadBool();
+                        br.ReadBool();
+                        d = br.ReadDouble();
+                        br.ReadDouble();
+                        br.ReadDouble();
+                        br.ReadDouble();
+                        break;
+                    case 11: br.ReadInt32(); break;
+                    case 12: br.ReadBool(); break;
+                    case 13: br.ReadBool(); break;
+                }
             }
-            set
-            {
-                LeftRuler.SelectedForTracking = ((value & SMControlSelection.Left) == SMControlSelection.Left);
-                TopRuler.SelectedForTracking = ((value & SMControlSelection.Top) == SMControlSelection.Top);
-                RightRuler.SelectedForTracking = ((value & SMControlSelection.Right) == SMControlSelection.Right);
-                BottomRuler.SelectedForTracking = ((value & SMControlSelection.Bottom) == SMControlSelection.Bottom);
-            }
+
+            return Convert.ToInt32(d * dim);
         }
 
 
+        public Rectangle[] LastBounds = new Rectangle[9];
+
         public SMRectangleArea()
         {
-            TopRuler = new SMRuler(SMAxis.Y);
-            BottomRuler = new SMRuler(SMAxis.Y);
-            RightRuler = new SMRuler(SMAxis.X);
-            LeftRuler = new SMRuler(SMAxis.X);
-
-            TopRuler.SetRawValue(PageEditDisplaySize.LandscapeBig, 0.0);
-            BottomRuler.SetRawValue(PageEditDisplaySize.LandscapeBig, 1.0);
-            LeftRuler.SetRawValue(PageEditDisplaySize.LandscapeBig, 0.0);
-            RightRuler.SetRawValue(PageEditDisplaySize.LandscapeBig, 1.0);
-
             Selected = false;
-            TrackedSelection = SMControlSelection.None;
-
+            RelativeArea = Rectangle.Empty;
         }
 
         public SMRectangleArea(SMRectangleArea source)
         {
             if (source == null)
             {
-                TopRuler = new SMRuler(SMAxis.Y);
-                BottomRuler = new SMRuler(SMAxis.Y);
-                RightRuler = new SMRuler(SMAxis.X);
-                LeftRuler = new SMRuler(SMAxis.X);
-
-                TopRuler.SetRawValue(PageEditDisplaySize.LandscapeBig, 0.0);
-                BottomRuler.SetRawValue(PageEditDisplaySize.LandscapeBig, 1.0);
-                LeftRuler.SetRawValue(PageEditDisplaySize.LandscapeBig, 0.0);
-                RightRuler.SetRawValue(PageEditDisplaySize.LandscapeBig, 1.0);
-
+                RelativeArea = Rectangle.Empty;
                 Selected = false;
-                TrackedSelection = SMControlSelection.None;
             }
             else
             {
@@ -132,80 +125,80 @@ namespace Rambha.Document
             }
         }
 
-        public bool Changed
-        {
-            get
-            {
-                return TopRuler.Changed | BottomRuler.Changed | LeftRuler.Changed | RightRuler.Changed;
-            }
-            set
-            {
-                TopRuler.Changed = value;
-                BottomRuler.Changed = value;
-                RightRuler.Changed = value;
-                LeftRuler.Changed = value;
-            }
-        }
-
         public static void Copy(SMRectangleArea source, SMRectangleArea target)
         {
-            target.LeftRuler = new SMRuler(source.LeftRuler);
-            target.RightRuler = new SMRuler(source.RightRuler);
-            target.TopRuler = new SMRuler(source.TopRuler);
-            target.BottomRuler = new SMRuler(source.BottomRuler);
+            target.RelativeArea = source.RelativeArea;
             target.Selected = source.Selected;
-            target.TrackedSelection = source.TrackedSelection;
         }
 
-        /// <summary>
-        /// Move object by specified offset defined in logical coordinate system
-        /// </summary>
-        /// <param name="offset">Logical offset (in logical coordinate system)</param>
-        public virtual void Move(MNPageContext context, System.Drawing.Point offset)
+        public virtual void MoveRaw(int rx, int ry)
         {
-            if (TopRuler.SelectedForTracking)
-                TopRuler.AddValue(context, offset);
-            if (BottomRuler.SelectedForTracking)
-                BottomRuler.AddValue(context, offset);
-            if (LeftRuler.SelectedForTracking)
-                LeftRuler.AddValue(context, offset);
-            if (RightRuler.SelectedForTracking)
-                RightRuler.AddValue(context, offset);
+            RelativeArea.X += rx;
+            RelativeArea.Y += ry;
         }
 
-        public virtual void MoveRaw(double rx, double ry)
+        public void SetCenterSize(Point center, Size defSize)
         {
-            TopRuler.AddRawValue(ry);
-            BottomRuler.AddRawValue(ry);
-            LeftRuler.AddRawValue(rx);
-            RightRuler.AddRawValue(rx);
-        }
-        public void SetCenterSize(Point center, Size defSize, PageEditDisplaySize dispSize)
-        {
-            LeftRuler.SetValue(dispSize, center.X - defSize.Width / 2);
-            TopRuler.SetValue(dispSize, center.Y - defSize.Height / 2);
-            RightRuler.SetValue(dispSize, center.X + defSize.Width / 2);
-            BottomRuler.SetValue(dispSize, center.Y + defSize.Height / 2);
+            RelativeArea = new Rectangle(center.X - defSize.Width / 2, center.Y - defSize.Height / 2,
+                defSize.Width, defSize.Height);
         }
 
-        public virtual SMControlSelection TestHitLogical(MNPageContext context, Point logicalPoint)
+        public int Left
         {
-            if (Selected)
-            {
-                if (LastBounds[1].Contains(logicalPoint)) return SMControlSelection.Top | SMControlSelection.Left;
-                if (LastBounds[2].Contains(logicalPoint)) return SMControlSelection.Top;
-                if (LastBounds[3].Contains(logicalPoint)) return SMControlSelection.Top | SMControlSelection.Right;
-                if (LastBounds[4].Contains(logicalPoint)) return SMControlSelection.Left;
-                if (LastBounds[5].Contains(logicalPoint)) return SMControlSelection.Right;
-                if (LastBounds[6].Contains(logicalPoint)) return SMControlSelection.Bottom | SMControlSelection.Left;
-                if (LastBounds[7].Contains(logicalPoint)) return SMControlSelection.Bottom;
-                if (LastBounds[8].Contains(logicalPoint)) return SMControlSelection.Bottom | SMControlSelection.Right;
-                /*if (LastBounds[9].Contains(logicalPoint)) return SMControlSelection.LeftBoundary;
-                if (LastBounds[10].Contains(logicalPoint)) return SMControlSelection.TopBoundary;
-                if (LastBounds[11].Contains(logicalPoint)) return SMControlSelection.RightBoundary;
-                if (LastBounds[12].Contains(logicalPoint)) return SMControlSelection.BottomBoundary;*/
-            }
-            return LastBounds[0].Contains(logicalPoint) ? SMControlSelection.All : SMControlSelection.None;
+            get { return RelativeArea.Left; }
+            set { RelativeArea.Width -= (value - RelativeArea.X); RelativeArea.X = value; }
+        }
+
+        public int Right
+        {
+            get { return RelativeArea.Right; }
+            set { RelativeArea.Width = value - RelativeArea.X; }
+        }
+
+        public int Top
+        {
+            get { return RelativeArea.Top; }
+            set { RelativeArea.Height -= (value - RelativeArea.Y); RelativeArea.Y = value; }
+        }
+
+        public int Bottom
+        {
+            get { return RelativeArea.Bottom; }
+            set { RelativeArea.Height = value - RelativeArea.Y; }
+        }
+
+        public int Width
+        {
+            get { return RelativeArea.Width; }
+            set { RelativeArea.Width = value; }
+        }
+
+        public int Height
+        {
+            get { return RelativeArea.Height;  }
+            set { RelativeArea.Height = value; }
+        }
+
+        public int CenterX
+        {
+            get { return RelativeArea.X + RelativeArea.Width / 2; }
+            set { RelativeArea.X = value - RelativeArea.Width / 2; }
+        }
+
+        public int CenterY
+        {
+            get { return RelativeArea.Y + RelativeArea.Height / 2; }
+            set { RelativeArea.Y = value - RelativeArea.Height / 2; }
+        }
+
+        public virtual bool TestHitLogical(MNPageContext context, Point logicalPoint)
+        {
+            return RelativeArea.Contains(logicalPoint);
+        }
+
+        public virtual SMControlSelection TestHitLogical(MNPageContext context, Rectangle logRect)
+        {
+            return RelativeArea.IntersectsWith(logRect) ? SMControlSelection.All : SMControlSelection.None;
         }
 
         /// <summary>
@@ -216,95 +209,86 @@ namespace Rambha.Document
         /// <returns></returns>
         public Rectangle GetBounds(MNPageContext ctx)
         {
-            if (Selected && ctx.isTracking)
-                RecalcAllBounds(ctx);
-            return GetBoundsRecalc(ctx);
+            return RelativeArea;
         }
 
         public Rectangle GetBounds(PageEditDisplaySize dsp)
         {
-            int x = LeftRuler.GetValue(dsp);
-            int y = TopRuler.GetValue(dsp);
-            int r = RightRuler.GetValue(dsp);
-            int b = BottomRuler.GetValue(dsp);
-
-            return new Rectangle(x, y, r - x, b - y);
+            return RelativeArea;
         }
 
         public Rectangle GetBoundsRecalc(MNPageContext ctx)
         {
-            int x = LeftRuler.GetValue(ctx.DisplaySize);
-            int y = TopRuler.GetValue(ctx.DisplaySize);
-            int r = RightRuler.GetValue(ctx.DisplaySize);
-            int b = BottomRuler.GetValue(ctx.DisplaySize);
-
-            if (TopRuler.SelectedForTracking)
-                y += ctx.TrackedDrawOffset.Y;
-            if (BottomRuler.SelectedForTracking)
-                b += ctx.TrackedDrawOffset.Y;
-            if (LeftRuler.SelectedForTracking)
-                x += ctx.TrackedDrawOffset.X;
-            if (RightRuler.SelectedForTracking)
-                r += ctx.TrackedDrawOffset.X;
-
-            LastBounds[0] = new Rectangle(x, y, r - x, b - y);
-            return LastBounds[0];
+            return RelativeArea;
         }
 
         public void RecalcAllBounds(MNPageContext ctx)
         {
-            int x = LeftRuler.GetValue(ctx.DisplaySize);
-            int y = TopRuler.GetValue(ctx.DisplaySize);
-            int r = RightRuler.GetValue(ctx.DisplaySize);
-            int b = BottomRuler.GetValue(ctx.DisplaySize);
-
-            if (TopRuler.SelectedForTracking)
-                y += ctx.TrackedDrawOffset.Y;
-            if (BottomRuler.SelectedForTracking)
-                b += ctx.TrackedDrawOffset.Y;
-            if (LeftRuler.SelectedForTracking)
-                x += ctx.TrackedDrawOffset.X;
-            if (RightRuler.SelectedForTracking)
-                r += ctx.TrackedDrawOffset.X;
-
-            int markWidth = ctx.PhysicalToLogical(3);
-            LastBounds[0] = new Rectangle(x, y, r - x, b - y);
-            LastBounds[1] = new Rectangle(x - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
-            LastBounds[2] = new Rectangle((x + r) / 2 - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
-            LastBounds[3] = new Rectangle(r - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
-            LastBounds[4] = new Rectangle(x - markWidth, (y + b) / 2 - markWidth, 2 * markWidth, 2 * markWidth);
-            LastBounds[5] = new Rectangle(r - markWidth, (y + b) / 2 - markWidth, 2 * markWidth, 2 * markWidth);
-            LastBounds[6] = new Rectangle(x - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
-            LastBounds[7] = new Rectangle((x + r) / 2 - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
-            LastBounds[8] = new Rectangle(r - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
-        }
-
-        public SMRuler GetBoundaryRuler(SMControlSelection testResult)
-        {
-            if ((testResult & SMControlSelection.LeftBoundary) == SMControlSelection.LeftBoundary)
-                return LeftRuler;
-            if ((testResult & SMControlSelection.RightBoundary) == SMControlSelection.RightBoundary)
-                return RightRuler;
-            if ((testResult & SMControlSelection.TopBoundary) == SMControlSelection.TopBoundary)
-                return TopRuler;
-            if ((testResult & SMControlSelection.BottomBoundary) == SMControlSelection.BottomBoundary)
-                return BottomRuler;
-            return null;
         }
 
         public Rectangle GetRawRectangle(PageEditDisplaySize ds)
         {
-            int x = Convert.ToInt32(LeftRuler.GetRawValue(ds) * 1000);
-            int y = Convert.ToInt32(TopRuler.GetRawValue(ds) * 1000);
-            int w = Convert.ToInt32(RightRuler.GetRawValue(ds) * 1000) - x;
-            int h = Convert.ToInt32(BottomRuler.GetRawValue(ds) * 1000) - y;
-            return new Rectangle(x, y, w, h);
+            return RelativeArea;
         }
 
-        public void Set(SMRectangleArea area, int x, int y)
+        public void SetRawRectangle(PageEditDisplaySize ds, Rectangle r)
+        {
+            RelativeArea = r;
+        }
+
+        public void Set(SMRectangleArea area)
         {
             Copy(area, this);
-            this.MoveRaw(x / 1024.0, y / 768.0);
+        }
+
+        public byte[] GetBytes()
+        {
+            byte[] buffer = null;
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(ms))
+                {
+                    RSFileWriter fw = new RSFileWriter(bw);
+                    Save(fw);
+                    buffer = ms.GetBuffer();
+                }
+            }
+
+            return buffer;
+        }
+
+        public static SMRectangleArea FromBytes(byte[] buffer)
+        {
+            SMRectangleArea area = null;
+            using (MemoryStream ms = new MemoryStream(buffer))
+            {
+                using (BinaryReader br = new BinaryReader(ms))
+                {
+                    RSFileReader fr = new RSFileReader(br);
+                    area = new SMRectangleArea();
+                    area.Load(fr);
+                }
+            }
+            return area;
+        }
+
+        public virtual void PaintSelectionMarks(MNPageContext context)
+        {
+            int x = RelativeArea.X;
+            int y = RelativeArea.Y;
+            int r = RelativeArea.Right;
+            int b = RelativeArea.Bottom;
+
+            int markWidth = context.PhysicalToLogical(3);
+            context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
+            context.g.FillRectangle(Brushes.DarkBlue, (x + r) / 2 - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
+            context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
+            context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, (y + b) / 2 - markWidth, 2 * markWidth, 2 * markWidth);
+            context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, (y + b) / 2 - markWidth, 2 * markWidth, 2 * markWidth);
+            context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
+            context.g.FillRectangle(Brushes.DarkBlue, (x + r) / 2 - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
+            context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
         }
     }
 }

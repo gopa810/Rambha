@@ -27,7 +27,6 @@ namespace SlideMaker.Views
                 "onPageAppearance",
                 "onPageDisappearance",
                 "onDrop",
-                "onClick",
                 "onDoubleClick",
                 "onLongClick"
             };

@@ -18,6 +18,7 @@ namespace Rambha.Document
             ClickDown,
             Dragging,
             LongClicked,
+            RefusingDrop,
             None
         }
 
@@ -32,8 +33,7 @@ namespace Rambha.Document
 
         public SMRectangleArea getStartArea(MNPage p)
         {
-            if (startControl == null) return null;
-            return p.GetArea(startControl.Id);
+            return (startControl == null) ? null : startControl.Area;
         }
 
         public long getStartAreaId()
@@ -44,8 +44,7 @@ namespace Rambha.Document
 
         public SMRectangleArea getTrackedArea(MNPage p)
         {
-            if (trackedControl == null) return null;
-            return p.GetArea(trackedControl.Id);
+            return (trackedControl == null) ? null : trackedControl.Area;
         }
 
         public long getTrackedAreaId()
@@ -85,7 +84,7 @@ namespace Rambha.Document
             }
             set
             {
-                if (endControl != null && startControl.Droppable != SMDropResponse.None)
+                if (endControl != null && startControl.Cardinality != SMConnectionCardinality.None)
                 {
                     startControl.UIStateHover = value;
                 }

@@ -28,7 +28,7 @@ namespace Rambha.Document
         public List<SMWordLine> drawLines = null;
         public bool drawWordsModified = false;
 
-        private SMRunningLine p_runline = SMRunningLine.SingleWord;
+        private SMRunningLine p_runline = SMRunningLine.Natural;
 
         private string p_prevText = "";
 
@@ -37,7 +37,7 @@ namespace Rambha.Document
 
         private bool prevBtnPressed = false;
         private bool nextBtnPressed = false;
-        private int navigButtonsHeight = 48;
+        private int navigButtonsHeight = 32;
         private Rectangle prevBtnRect;
         private Rectangle nextBtnRect;
 
@@ -70,8 +70,6 @@ namespace Rambha.Document
         {
             if (base.Load(br))
             {
-                SetText(Text);
-
                 byte b;
                 while ((b = br.ReadByte()) != 0)
                 {
@@ -88,6 +86,9 @@ namespace Rambha.Document
                             break;
                         case 13:
                             ShowNavigationButtons = br.ReadBool();
+                            break;
+                        case 14:
+                            RunningLine = (SMRunningLine)br.ReadInt32();
                             break;
                     }
                 }
@@ -113,6 +114,9 @@ namespace Rambha.Document
             bw.WriteByte(13);
             bw.WriteBool(ShowNavigationButtons);
 
+            bw.WriteByte(14);
+            bw.WriteInt32((int)RunningLine);
+
             bw.WriteByte(0);
         }
 
@@ -123,10 +127,9 @@ namespace Rambha.Document
 
         public override void Paint(MNPageContext context)
         {
-            SMRectangleArea area = context.CurrentPage.GetArea(Id);
-            Rectangle bounds = area.GetBounds(context);
+            Rectangle bounds = Area.GetBounds(context);
 
-            Rectangle textBounds = Style.ApplyPadding(bounds);
+            Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
 
             if (ShowNavigationButtons)
                 textBounds.Height -= navigButtonsHeight;
@@ -147,22 +150,24 @@ namespace Rambha.Document
 
             if (!p_prevText.Equals(stext))
             {
-                SetText(stext);
+                Text = stext;
                 p_prevText = stext;
             }
 
-            if (drawWordsModified || area.Changed)
+            if (drawWordsModified)
             {
                 Rectangle layoutBounds = textBounds;
                 if (ShowNavigationButtons)
                     layoutBounds.Height -= navigButtonsHeight;
-                drawLines = RecalculateWordsLayout(context, layoutBounds, drawWords, this, RunningLine, Columns, ColumnSeparatorWidth, out PageCount);
+                SMRichLayout lay = null;
+                lay = RecalculateWordsLayout(context, layoutBounds, drawWords, this, RunningLine, Columns);
+                drawLines = lay.Lines;
+                PageCount = lay.Pages;
 
                 drawWordsModified = false;
-                area.Changed = false;
             }
 
-            PaintPageNo(context, CurrentPage);
+            PaintPageNo(context, CurrentPage, textBounds.X, textBounds.Y);
 
             if (ShowNavigationButtons)
             {
@@ -180,7 +185,7 @@ namespace Rambha.Document
 
         private Rectangle DrawNavigationButtons(MNPageContext context, Rectangle textBounds)
         {
-            context.g.DrawLine(SMGraphics.GetPen(Style.ForeColor, 1), textBounds.Left, textBounds.Bottom - navigButtonsHeight,
+            context.g.DrawLine(SMGraphics.GetPen(NormalState.ForeColor, 1), textBounds.Left, textBounds.Bottom - navigButtonsHeight,
                 textBounds.Right, textBounds.Bottom - navigButtonsHeight);
             if (HasPrevPage())
             {
@@ -205,7 +210,7 @@ namespace Rambha.Document
 
         private Rectangle DrawColumnSeparators(MNPageContext context, Rectangle textBounds)
         {
-            Pen pen = SMGraphics.GetPen(Style.ForeColor, 1);
+            Pen pen = SMGraphics.GetPen(NormalState.ForeColor, 1);
             for (int i = 1; i < Columns; i++)
             {
                 int x = textBounds.Left + i * textBounds.Width / Columns;
@@ -248,7 +253,7 @@ namespace Rambha.Document
             return textBounds;
         }
 
-        public void PaintPageNo(MNPageContext context, int pageNo)
+        public void PaintPageNo(MNPageContext context, int pageNo, int X, int Y)
         {
             if (pageNo >= PageCount)
                 pageNo = PageCount - 1;
@@ -260,7 +265,7 @@ namespace Rambha.Document
                 foreach (SMWordBase wt in wline)
                 {
                     if (wt.PageNo == pageNo)
-                        wt.Paint(context);
+                        wt.Paint(context, X, Y);
                 }
             }
 
@@ -280,37 +285,69 @@ namespace Rambha.Document
             return null;
         }
 
-        public static List<SMWordLine> RecalculateWordsLayout(MNPageContext context, Rectangle textBounds, List<SMWordBase> drawWords, SMControl control, SMRunningLine RunningLine,
-            int Columns, float ColumnSeparatorWidth, out int PageCount)
+        public override void StyleDidChange()
         {
+            p_prevText = "";
+            base.StyleDidChange();
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="textBounds"></param>
+        /// <param name="drawWords"></param>
+        /// <param name="control"></param>
+        /// <param name="RunningLine"></param>
+        /// <param name="Columns">Value -1 means, that no paging is done, normaly columns are 1,2,3...</param>
+        /// <param name="ColumnSeparatorWidth"></param>
+        /// <param name="PageCount"></param>
+        /// <returns></returns>
+        public static SMRichLayout RecalculateWordsLayout(MNPageContext context, Rectangle textBounds, List<SMWordBase> drawWords, SMControl control, SMRunningLine RunningLine,
+            int Columns)
+        {
+            textBounds.X = 0;
+            textBounds.Y = 0;
             float lineY = textBounds.Y;
             float lineX = textBounds.X;
-            float lineEnd = 0;
+            float lineEnd = textBounds.Right;
             float lineHeight = 0f;
             float lineWidth = textBounds.Width;
+            float columnWidth = textBounds.Width;
             int lineNo = 0;
             int columnNo = 0;
             int pageNo = 0;
+            int rightX = textBounds.X;
             bool writeLineNo = false;
             bool isNewLine = false;
-            List<SMWordLine> lines = new List<SMWordLine>();
+            bool isNewColumn = false;
             SMWordLine currLine = new SMWordLine();
-            lines.Add(currLine);
+            SMRichLayout richLayout = new SMRichLayout();
+            richLayout.Lines = new List<SMWordLine>();
+            richLayout.Lines.Add(currLine);
+            //context.g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
             if (Columns > 1)
             {
-                lineWidth = lineWidth - (Columns - 1) * ColumnSeparatorWidth;
-                lineWidth = lineWidth / Columns;
+                columnWidth = textBounds.Width / Columns;
+                lineWidth = textBounds.Width / Columns - control.ContentPadding.Left - control.ContentPadding.Right;
+                lineX = textBounds.X + columnNo * columnWidth + control.ContentPadding.Left;
                 lineEnd = lineX + lineWidth;
             }
 
-            float bottom = textBounds.Bottom - 32;
+            float bottom = textBounds.Bottom;
+            bool isSpaceText = false;
+            int startsWithParentheses = 0;
+            bool isNewPage = false;
 
             // first placement of word tokens
             foreach (SMWordBase wt in drawWords)
             {
+                isSpaceText = false;
                 writeLineNo = true;
                 isNewLine = false;
+                isNewColumn = false;
+                isNewPage = false;
+                startsWithParentheses = 0;
                 if (wt is SMWordSpecial)
                 {
                     SMWordSpecial spwt = (SMWordSpecial)wt;
@@ -319,19 +356,44 @@ namespace Rambha.Document
                         isNewLine = true;
                         writeLineNo = false;
                     }
+                    else if (spwt.Type == SMWordSpecialType.NewColumn)
+                    {
+                        isNewLine = false;
+                        writeLineNo = false;
+                        isNewColumn = true;
+                    }
+                    else if (spwt.Type == SMWordSpecialType.HorizontalLine)
+                    {
+                        wt.rect.Width = lineEnd - lineX - 1;
+                        wt.rect.Height = 20;
+                    }
+                    else if (spwt.Type == SMWordSpecialType.NewPage)
+                    {
+                        isNewPage = true;
+                        writeLineNo = false;
+                    }
                 }
                 else if (wt is SMWordToken)
                 {
                     SMWordToken wtk = (SMWordToken)wt;
-                    if (wtk.droppedItem != null)
-                        wt.rect.Size = context.g.MeasureString(wtk.droppedItem.Text, wtk.Font);
-                    else
-                        wt.rect.Size = context.g.MeasureString(wtk.text, wtk.Font);
+                    string s = wtk.GetCurrentText();
+                    wt.rect.Size = context.g.MeasureString(s, wtk.Font.Font, textBounds.Width, StringFormat.GenericTypographic);
                 }
                 else if (wt is SMWordText)
                 {
                     SMWordText wtt = wt as SMWordText;
-                    wtt.rect.Size = context.g.MeasureString(wtt.text, wtt.Font);
+                    if (wtt.text.StartsWith("\"") || wtt.text.StartsWith("\u201c"))
+                    {
+                        SizeF sf = context.g.MeasureString("\u201c", wtt.Font.Font, textBounds.Width, StringFormat.GenericTypographic);
+                        startsWithParentheses = (int)sf.Width;
+                    }
+                    if (wtt.text.Equals(" "))
+                    {
+                        wtt.rect.Size = context.g.MeasureString(wtt.text, wtt.Font.Font);
+                        isSpaceText = true;
+                    }
+                    else
+                        wtt.rect.Size = context.g.MeasureString(wtt.text, wtt.Font.Font, textBounds.Width, StringFormat.GenericTypographic);
                 }
                 else if (wt is SMWordImage)
                 {
@@ -339,73 +401,146 @@ namespace Rambha.Document
                     wti.rect.Size = wti.imageSize;
                 }
 
-                if (writeLineNo)
+                if (writeLineNo && !control.Autosize)
                 {
                     if ((lineX + wt.rect.Width > lineEnd) || RunningLine == SMRunningLine.SingleWord)
-                        isNewLine = true;
+                    {
+                        if (currLine.Count > 0)
+                            isNewLine = true;
+                    }
                 }
 
                 if (isNewLine)
                 {
-                    isNewLine = false;
                     currLine = new SMWordLine();
-                    lines.Add(currLine);
+                    richLayout.Lines.Add(currLine);
 
-                    lineY += lineHeight;
+                    lineY += lineHeight * control.Paragraph.LineSpacing;
                     lineHeight = context.g.MeasureString("M", control.GetUsedFont()).Height;
                     lineNo++;
 
-                    if (lineY + lineHeight > textBounds.Bottom)
+                    if (Columns != -1 && !control.Autosize)
                     {
-                        columnNo++;
-                        lineNo = 0;
-
-                        if (columnNo >= Columns)
+                        if (lineY + lineHeight > textBounds.Bottom)
                         {
-                            pageNo++;
-                            columnNo = 0;
+                            isNewColumn = true;
                         }
+                    }
+                }
 
-                        lineY = textBounds.Top;
+                if (isNewPage)
+                {
+                    lineNo = 0;
+                    columnNo = 0;
+                    pageNo++;
+                    lineY = textBounds.Top;
+                }
+
+
+                if (isNewColumn)
+                {
+                    columnNo++;
+                    lineNo = 0;
+
+                    if (columnNo >= Columns)
+                    {
+                        pageNo++;
+                        columnNo = 0;
                     }
 
-                    lineX = textBounds.Left + columnNo * (lineWidth + ColumnSeparatorWidth);
+                    lineY = textBounds.Top;
+                }
+
+                if (isNewLine || isNewColumn || isNewPage)
+                {
+                    lineX = textBounds.X + columnNo * columnWidth + control.ContentPadding.Left;
                     lineEnd = lineX + lineWidth;
                 }
 
                 if (writeLineNo)
                 {
-                    currLine.Add(wt);
+                    if (currLine.Count == 0 && startsWithParentheses > 0)
+                    {
+                        wt.rect.X -= startsWithParentheses;
+                        lineX -= startsWithParentheses;
+                    }
+                    if (currLine.Count > 0 || !isSpaceText)
+                    {
+                        currLine.Add(wt);
 
-                    wt.LineNo = lineNo;
-                    wt.ColumnNo = columnNo;
-                    wt.PageNo = pageNo;
-                    wt.rect.Location = new PointF(lineX, lineY);
-                    lineX += wt.rect.Width;
+                        wt.LineNo = lineNo;
+                        wt.ColumnNo = columnNo;
+                        wt.PageNo = pageNo;
+                        wt.rect.Location = new PointF(lineX, lineY);
+                        lineX += wt.rect.Width;
+                        rightX = Math.Max(rightX, (int)lineX);
+                    }
+
                     lineHeight = Math.Max(lineHeight, wt.rect.Height);
                     writeLineNo = false;
                 }
             }
 
-            lineY += lineHeight;
-            PageCount = pageNo + 1;
+            lineY += lineHeight * control.Paragraph.LineSpacing;
 
             // vertical alignment
-            AdjustVerticaly(textBounds, lines, control.GetVerticalAlign(), lineY);
+            AdjustVerticaly(textBounds, richLayout.Lines, control.GetVerticalAlign());
 
             // horizontal aligment
-            AdjustLinesHorizontaly(textBounds.Width, control.GetHorizontalAlign(), lines);
+            AdjustLinesHorizontaly((int)lineWidth, control.GetHorizontalAlign(), richLayout.Lines);
 
-            return lines;
+            richLayout.Pages = pageNo + 1;
+            richLayout.bottomY = (int)lineY + 1;
+            richLayout.rightX = rightX + 1;
+
+            return richLayout;
         }
 
-        private static void AdjustVerticaly(Rectangle textBounds, List<SMWordLine> drawWords, SMVerticalAlign valign, float lineY)
+        private static void AdjustVerticaly(Rectangle textBounds, List<SMWordLine> drawWords, SMVerticalAlign valign)
+        {
+            int col = -1;
+            int pg = -1;
+
+            List<SMWordLine> lines = new List<SMWordLine>();
+            foreach (SMWordLine wl in drawWords)
+            {
+                if (wl.Count > 0)
+                {
+                    if (col < 0) col = wl[0].ColumnNo;
+                    if (pg < 0) pg = wl[0].PageNo;
+                    if (wl[0].ColumnNo != col || wl[0].PageNo != pg)
+                    {
+                        AdjustLinesVerticaly(textBounds, lines, valign);
+                        col = wl[0].ColumnNo;
+                        pg = wl[0].PageNo;
+                        lines.Clear();
+                    }
+                    lines.Add(wl);
+                }
+            }
+            if (lines.Count > 0)
+            {
+                AdjustLinesVerticaly(textBounds, lines, valign);
+            }
+        }
+
+        private static void AdjustLinesVerticaly(Rectangle textBounds, List<SMWordLine> drawWords, SMVerticalAlign valign)
         {
             float diff = 0f;
+            float lineY = 0;
+            float lineTop = 10000;
+            foreach (SMWordLine wl in drawWords)
+            {
+                foreach (SMWordBase wb in wl)
+                {
+                    lineTop = Math.Min(wb.rect.Top, lineTop);
+                    lineY = Math.Max(wb.rect.Bottom, lineY);
+                }
+            }
             switch (valign)
             {
                 case SMVerticalAlign.Center:
-                    diff = (textBounds.Bottom - lineY) / 2;
+                    diff = (textBounds.Bottom + textBounds.Top ) / 2 - (lineY + lineTop) / 2;
                     break;
                 case SMVerticalAlign.Bottom:
                     diff = (textBounds.Bottom - lineY);
@@ -495,14 +630,14 @@ namespace Rambha.Document
                 }
             }
 
-            if (this.Droppable == SMDropResponse.One && dc.draggedItem != null)
+            if (this.Cardinality == SMConnectionCardinality.One && dc.draggedItem != null)
             {
                 drawWords.Clear();
                 DroppedItems.Clear();
                 drawWordsModified = true;
                 needUpdateDrawWords = true;
             }
-            else if (this.Droppable == SMDropResponse.Many)
+            else if (this.Cardinality == SMConnectionCardinality.Many)
             {
                 needUpdateDrawWords = true;
             }
@@ -512,16 +647,27 @@ namespace Rambha.Document
                 {
                     foreach (SMWordBase wt in drawWords)
                     {
-                        if (wt is SMWordToken)
+                        if (wt.rect.Contains(dc.lastPoint))
                         {
-                            SMWordToken wtk = (SMWordToken)wt;
-                            if (wtk.Droppable == SMDropResponse.One || wtk.Droppable == SMDropResponse.Many)
+                            if (wt is SMWordToken)
                             {
-                                wtk.UIStateHover = false;
-                                if (wtk.rect.Contains(dc.lastPoint))
+                                SMWordToken wtk = (SMWordToken)wt;
+                                if (wtk.Editable)
                                 {
+                                    wtk.AcceptString(dc.draggedItem.Tag);
+                                    wtk.UIStateHover = false;
+                                    drawWordsModified = true;
+                                    return true;
+                                }
+                                else if (wtk.Cardinality == SMConnectionCardinality.One || wtk.Cardinality == SMConnectionCardinality.Many)
+                                {
+                                    wtk.UIStateHover = false;
+                                    if (HasImmediateEvaluation && !wtk.tag.Equals(dc.draggedItem.Tag))
+                                        return false;
+
                                     wtk.droppedItem = dc.draggedItem;
                                     drawWordsModified = true;
+                                    return true;
                                 }
                             }
                         }
@@ -534,11 +680,11 @@ namespace Rambha.Document
                 SMWordBase wr = null;
                 if (dc.draggedItem.Image != null)
                 {
-                    wr = new SMWordImage(this, dc.draggedItem);
+                    wr = new SMWordImage(this.NormalState, this.HighlightState, this.Font, dc.draggedItem);
                 }
                 else
                 {
-                    wr = new SMWordText(this, dc.draggedItem);
+                    wr = new SMWordText(this.NormalState, this.HighlightState, this.Font, dc.draggedItem);
                 }
                 wr.Evaluation = this.HasImmediateEvaluation ? MNEvaluationType.Immediate : MNEvaluationType.Lazy;
                 drawWords.Add(wr);
@@ -576,10 +722,9 @@ namespace Rambha.Document
             base.OnDropMove(context);
         }
 
-        public void SetText(string text)
+        public override void TextDidChange()
         {
-            Text = text;
-            drawWords = SMWordToken.WordListFromString(text, this);
+            drawWords = SMWordToken.WordListFromString(Text, this);
             drawWordsModified = true;
         }
 
@@ -588,6 +733,15 @@ namespace Rambha.Document
             string[] s =  Tag.ToLower().Split(',');
             List<string> et = new List<string>();
             et.AddRange(s);
+            foreach (SMWordBase wd in drawWords)
+            {
+                if (wd is SMWordToken)
+                {
+                    SMWordToken wt = (SMWordToken)wd;
+                    if (wt.Cardinality == SMConnectionCardinality.One && wd.tag != null && wd.tag.Length > 0)
+                        et.Add(wd.tag);
+                }
+            }
             return et;
         }
 
@@ -634,11 +788,11 @@ namespace Rambha.Document
             drawWords.Clear();
             foreach (string w in ExpectedTags())
             {
-                SMWordToken item = new SMWordToken(this);
+                SMWordToken item = new SMWordToken(this.NormalState, this.HighlightState, this.Font);
                 item.text = w;
                 item.tag = w.ToLower();
                 item.Draggable = SMDragResponse.Drag;
-                item.Droppable = SMDropResponse.None;
+                item.Cardinality = SMConnectionCardinality.None;
                 drawWords.Add(item);
             }
             base.DisplayAnswers();
@@ -688,8 +842,44 @@ namespace Rambha.Document
                 if (HasPrevPage()) CurrentPage--;
                 PostExecuteEvent("OnCurrentPageChanged");
             }
+            else if (token.Equals("gotoNextEdit"))
+            {
+                SetNextEditableField();
+            }
+            else if (token.Equals("acceptString"))
+            {
+                SMWordToken edit = GetFocusedEditField();
+                if (edit != null) edit.AcceptString(args.getSafe(0).getStringValue());
+                drawWordsModified = true;
+            }
+            else if (token.Equals("acceptEnter"))
+            {
+                SetNextEditableField();
+            }
+            else if (token.Equals("acceptBack"))
+            {
+                SMWordToken edit = GetFocusedEditField();
+                if (edit != null) edit.AcceptBack();
+                drawWordsModified = true;
+            }
 
             return base.ExecuteMessage(token, args);
+        }
+
+        public SMWordToken GetFocusedEditField()
+        {
+            foreach (SMWordBase wb in this.drawWords)
+            {
+                if (!(wb is SMWordToken))
+                    continue;
+
+                SMWordToken wt = (SMWordToken)wb;
+                if (wt.Editable && wt.Focused)
+                    return wt;
+            }
+
+            return null;
+
         }
 
 
@@ -746,6 +936,46 @@ namespace Rambha.Document
             prevBtnPressed = false;
             nextBtnPressed = false;
             base.OnTapCancel(dc);
+        }
+
+        public void SetNextEditableField()
+        {
+            SMWordToken firstEdit = null;
+            bool catchEdit = false;
+            SMWordToken nextEdit = null;
+            foreach (SMWordBase wb in this.drawWords)
+            {
+                if (!(wb is SMWordToken))
+                    continue;
+
+                SMWordToken wt = (SMWordToken)wb;
+                if (!wt.Editable) continue;
+
+
+                if (firstEdit == null)
+                    firstEdit = wt;
+                
+                if (catchEdit)
+                {
+                    catchEdit = false;
+                    nextEdit = wt;
+                    break;
+                }
+
+                if (wt.Focused)
+                {
+                    wt.Focused = false;
+                    catchEdit = true;
+                    continue;
+                }
+            }
+
+            if (catchEdit)
+                nextEdit = firstEdit;
+
+            if (nextEdit != null)
+                nextEdit.Focused = true;
+
         }
 
     }

@@ -25,9 +25,33 @@ namespace SlideViewer
 
             updaterGetStatus1.Dock = DockStyle.Fill;
             updaterSelectFiles1.Dock = DockStyle.Fill;
+            updaterDownloader1.Dock = DockStyle.Fill;
             updaterSelectFiles1.Visible = false;
             updaterGetStatus1.Visible = false;
+            updaterDownloader1.Visible = false;
 
+        }
+
+        public void SelectTab(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    updaterSelectFiles1.Visible = false;
+                    updaterGetStatus1.Visible = true;
+                    updaterDownloader1.Visible = false;
+                    break;
+                case 1:
+                    updaterSelectFiles1.Visible = true;
+                    updaterGetStatus1.Visible = false;
+                    updaterDownloader1.Visible = false;
+                    break;
+                case 2:
+                    updaterSelectFiles1.Visible = false;
+                    updaterGetStatus1.Visible = false;
+                    updaterDownloader1.Visible = true;
+                    break;
+            }
         }
 
         public void Start(SVBookLibrary lib)
@@ -40,8 +64,7 @@ namespace SlideViewer
                 || lib.Status == SVBookLibrary.DBStatus.Stopped)
             {
                 lib.FetchRemote(new SVBookLibrary.OnStringCompletedDelegate(OnStepCompletedAsync));
-                updaterSelectFiles1.Visible = false;
-                updaterGetStatus1.Visible = true;
+                SelectTab(0);
             }
             else if (lib.Status == SVBookLibrary.DBStatus.Fetching) 
             {
@@ -49,13 +72,11 @@ namespace SlideViewer
                 {
                     Library.Callback = new SVBookLibrary.OnStringCompletedDelegate(OnStepCompletedAsync);
                 }
-                updaterSelectFiles1.Visible = false;
-                updaterGetStatus1.Visible = true;
+                SelectTab(0);
             }
             else if (lib.Status == SVBookLibrary.DBStatus.Updated)
             {
-                updaterSelectFiles1.Visible = true;
-                updaterGetStatus1.Visible = false;
+                SelectTab(1);
                 updaterSelectFiles1.UpdateLists();
             }
 
@@ -118,6 +139,12 @@ namespace SlideViewer
                     updaterGetStatus1.SetStatus(SVBookLibrary.DBStatus.Stopped, "Cancelled");
                 }
             }
+            else if (s.Equals("StartDown"))
+            {
+            }
+            else if (s.Equals("DeleteFiles"))
+            {
+            }
         }
 
         private void updaterSelectFiles1_OnDiscardChanges(object sender, EventArgs e)
@@ -127,14 +154,43 @@ namespace SlideViewer
 
         private void updaterSelectFiles1_OnApplyChanges(object sender, EventArgs e)
         {
-            // downloading and 
-            // updating files
+            // create list of files to remove
+            List<string> files = updaterSelectFiles1.FilesToDelete;
+            if (files != null && files.Count > 0)
+            {
+                foreach (string s in files)
+                {
+                    string fullPath = Path.Combine(Library.LastDirectory,s);
+                    if (File.Exists(fullPath))
+                        File.Delete(fullPath);
+                }
+            }
+            Library.GetCurrentBookDatabase(null);
 
+            if (updaterSelectFiles1.FilesToDownload != null && updaterSelectFiles1.FilesToDownload.Count > 0)
+            {
+                // create list of files to download
+                updaterDownloader1.FilesToDownload = updaterSelectFiles1.FilesToDownload;
+                SelectTab(2);
+                updaterDownloader1.Start(Library);
+            }
+            else
+            {
+                ParentFrame.SetShowPanel("files");
+                ParentFrame.RefreshList();
+            }
         }
 
         private void updaterGetStatus1_OnRetryFetchRemote(object sender, EventArgs e)
         {
             Start(Library);
+        }
+
+        private void updaterDownloader1_OnDownloadComplete(object sender, EventArgs e)
+        {
+            Library.GetCurrentBookDatabase(null);
+            ParentFrame.RefreshList();
+            ParentFrame.SetShowPanel("files");
         }
 
     }

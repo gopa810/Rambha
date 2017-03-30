@@ -23,10 +23,6 @@ namespace Rambha.Document
         [Browsable(true)]
         public SMAxis Axis { get; set; }
 
-        [Browsable(false)]
-        public bool SelectedForTracking { get; set; }
-
-
         public void Load(RSFileReader br)
         {
             byte tag;
@@ -45,7 +41,7 @@ namespace Rambha.Document
                         p_value[3] = br.ReadDouble();
                         break;
                     case 11: Axis = (SMAxis)br.ReadInt32(); break;
-                    case 12: SelectedForTracking = br.ReadBool(); break;
+                    case 12: br.ReadBool(); break;
                     case 13: Changed = br.ReadBool(); break;
                 }
             }
@@ -63,7 +59,6 @@ namespace Rambha.Document
             bw.WriteDouble(p_value[2]);
             bw.WriteDouble(p_value[3]);
             bw.WriteByte(11); bw.WriteInt32((int)Axis);
-            bw.WriteByte(12); bw.WriteBool(SelectedForTracking);
             bw.WriteByte(13); bw.WriteBool(Changed);
             bw.WriteByte(0);
         }
@@ -205,14 +200,12 @@ namespace Rambha.Document
         {
             Axis = axis;
             SetValue(PageEditDisplaySize.LandscapeBig, 0);
-            SelectedForTracking = false;
         }
 
         public SMRuler(SMRuler p)
         {
             Axis = p.Axis;
             SetValue(PageEditDisplaySize.LandscapeBig, p.GetValue(PageEditDisplaySize.LandscapeBig));
-            SelectedForTracking = false;
         }
 
         public void Paint(MNPageContext context)

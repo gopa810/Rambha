@@ -58,5 +58,17 @@ namespace SlideMaker.Properties {
                 this["LastDirLang"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Th is")]
+        public string Pairs {
+            get {
+                return ((string)(this["Pairs"]));
+            }
+            set {
+                this["Pairs"] = value;
+            }
+        }
     }
 }

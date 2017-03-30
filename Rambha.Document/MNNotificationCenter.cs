@@ -83,6 +83,8 @@ namespace Rambha.Document
             CurrentPage = null;
         }
 
+
+        public static bool AudioOn { get; set; }
     }
 
     public interface INotificationTarget

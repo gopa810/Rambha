@@ -33,7 +33,11 @@ namespace SlideMaker.Views
         {
             return new NABase[]
             {
-                new TADocAddText(View, "New Script") { Page = this.Page }
+                new TVAction(View, "New Script", Page, "addScript"),
+                new TVAction(View, "Insert Pages", Page, "insertPage"),
+                new TVAction(View, "Delete Page", Page, "deletePage"),
+                new TVAction(View, "Add Page to Shared", Page, "addToShared")
+
             };
         }
 

@@ -22,6 +22,8 @@ namespace SlideViewer
 
         public List<MNBookHeader> Books = new List<MNBookHeader>();
         public string LastDirectory = null;
+        public string LastTempFile = null;
+        public string LastTargetFile = null;
 
         public List<RemoteFileRef> RemoteDatabase = null;
         public List<RemoteFileRef> DatabaseStatus = null;
@@ -29,26 +31,107 @@ namespace SlideViewer
         public DBStatus Status = DBStatus.Idle;
         public string StatusMessage = "";
 
-        public string RootFileLink = "https://dl.dropboxusercontent.com/s/ahm2h2g9dl5vtvq/root.txt?dl=0";
+        public static string AppKey = "09lhcpxp85pbvd2";
+        public static string AccessToken = "xqAbsv0JnawAAAAAAAAC7RkIxQ5PZW-uYIgaZ0LjD-BtZmcsiLLvKd9-NNC6cyZA";
+
+        //public string RootFileLink = "https://dl.dropboxusercontent.com/s/ahm2h2g9dl5vtvq/{0}?dl=0";
+        public string RootFileLink = "http://gopal.home.sk/ltr/{0}";
 
         private WebClient webClient = new WebClient();
 
         public SVBookLibrary()
         {
+            /*var task = Task.Run(SVBookLibrary.Run);
+            task.Wait();
+            Run();*/
             webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(webClient_DownloadStringCompleted);
+            webClient.DownloadFileCompleted += new System.ComponentModel.AsyncCompletedEventHandler(webClient_DownloadFileCompleted);
         }
 
         public OnStringCompletedDelegate Callback = null;
 
+        public string GetFileLink(string fileName)
+        {
+            return string.Format(RootFileLink, fileName);
+        }
+
         public void FetchRemote(OnStringCompletedDelegate clbk)
+        {
+
+            if (!webClient.IsBusy)
+            {
+                Status = DBStatus.Fetching;
+                Callback = clbk;
+                Uri link = new Uri(GetFileLink("root.txt"));
+                webClient.DownloadStringAsync(link);
+                StatusMessage = "";
+            }
+        }
+
+        /*async static Task Run()
+        {
+            using (var dbx = new DropboxClient(AccessToken))
+            {
+                var full = await dbx.Users.GetCurrentAccountAsync();
+                Log("{0} - {1}", full.Name.DisplayName, full.Email);
+            }
+        }*/
+
+        public void FetchRemoteFile(string file, OnStringCompletedDelegate clbk)
         {
             if (!webClient.IsBusy)
             {
                 Status = DBStatus.Fetching;
                 Callback = clbk;
-                Uri link = new Uri(RootFileLink);
-                webClient.DownloadStringAsync(link);
+                Uri link = new Uri(GetFileLink(file));
+                LastTempFile = Path.GetTempFileName();
+                LastTargetFile = Path.Combine(LastDirectory, file);
+                webClient.DownloadFileAsync(link, LastTempFile);
                 StatusMessage = "";
+            }
+        }
+
+        void webClient_DownloadFileCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        {
+            Log("Download File {0} Completed", Path.GetFileName(LastTargetFile));
+
+            if (Callback == null)
+                return;
+
+            if (!e.Cancelled)
+            {
+                if (e.Error != null)
+                {
+                    Log("- error");
+                    Dictionary<string, object> dm = new Dictionary<string, object>();
+                    dm.Add("message", "FileDownloaded");
+                    dm.Add("result", "Error");
+                    dm.Add("error", e.Error.Message);
+                    dm.Add("file", LastTargetFile);
+                    if (File.Exists(LastTempFile))
+                        File.Delete(LastTempFile);
+                    Callback(dm);
+                }
+                else
+                {
+                    Log("- accepted");
+                    Dictionary<string, object> dm = new Dictionary<string, object>();
+                    dm.Add("message", "FileDownloaded");
+                    dm.Add("result", "OK");
+                    dm.Add("temp", LastTempFile);
+                    dm.Add("file", LastTargetFile);
+                    Callback(dm);
+                }
+            }
+            else
+            {
+                Log("- cancelled");
+                Dictionary<string, object> dm = new Dictionary<string, object>();
+                dm.Add("message", "FileDownloaded");
+                dm.Add("result", "Cancel");
+                dm.Add("error", "Connection was cancelled.");
+                dm.Add("file", LastTargetFile);
+                Callback(dm);
             }
         }
 
@@ -63,6 +146,8 @@ namespace SlideViewer
                 {
                     Log("- error");
                     StatusMessage = e.Error.Message;
+                    Status = DBStatus.Stopped;
+
                     Dictionary<string, object> dm = new Dictionary<string, object>();
                     dm.Add("message", "RootFileDownloaded");
                     dm.Add("result", "Error");
@@ -71,7 +156,7 @@ namespace SlideViewer
                 }
                 else
                 {
-                    Log("- not cancelled");
+                    Log("- accepted");
                     SetRemoteDatabase(e.Result);
                     CalculateDatabaseStatus();
                     Status = DBStatus.Updated;
@@ -109,12 +194,13 @@ namespace SlideViewer
 
         public void GetCurrentBookDatabase(string directory)
         {
-            LastDirectory = directory;
+            if (directory != null)
+                LastDirectory = directory;
 
             List<string> bookFileNames = new List<string>();
             List<string> langFileNames = new List<string>();
 
-            foreach (string s in Directory.EnumerateFiles(directory))
+            foreach (string s in Directory.EnumerateFiles(LastDirectory))
             {
                 if (s.EndsWith(".smb"))
                 {
@@ -129,10 +215,14 @@ namespace SlideViewer
             Books.Clear();
             foreach (string file in bookFileNames)
             {
+                if (!File.Exists(file.Replace(".smb", ".smd")))
+                    continue;
+                if (!File.Exists(file.Replace(".smb", ".sme")))
+                    continue;
                 MNBookHeader bh = new MNBookHeader();
                 if (bh.LoadHeader(file))
                 {
-                    Books.Add(bh);
+                    InsertOrderedBook(Books, bh);
                 }
             }
 
@@ -146,6 +236,22 @@ namespace SlideViewer
             }
         }
 
+        public void InsertOrderedBook(List<MNBookHeader> bookList, MNBookHeader bh)
+        {
+            bool added = false;
+            for (int i = 0; i < bookList.Count; i++)
+            {
+                if (bookList[i].BookPriority > bh.BookPriority)
+                {
+                    bookList.Insert(i, bh);
+                    added = true;
+                    break;
+                }
+            }
+
+            if (!added)
+                bookList.Add(bh);
+        }
 
         public void PreviewLanguage(MNBookLanguage bl, string fileName)
         {
@@ -306,7 +412,10 @@ namespace SlideViewer
         public bool CalculateDatabaseStatus()
         {
             if (RemoteDatabase == null)
+            {
+                DatabaseStatus = GetLocalFileDatabase();
                 return false;
+            }
 
 
             List<RemoteFileRef> remoteDB = RemoteDatabase;
@@ -368,6 +477,57 @@ namespace SlideViewer
         {
             if (webClient.IsBusy)
                 webClient.CancelAsync();
+        }
+
+        public List<object> GetUpdatedFiles()
+        {
+            List<object> list = new List<object>();
+            foreach (RemoteFileRef rf in DatabaseStatus)
+            {
+                if (rf.HasUpdate())
+                {
+                    SMVItem item = SMVItem.MakeEntry(rf.Text, rf);
+                    item.Selected = true;
+
+                    list.Add(item);
+                }
+            }
+            return list;
+        }
+
+        public List<RemoteFileRef> GetNewFiles()
+        {
+            List<RemoteFileRef> list = new List<RemoteFileRef>();
+
+            foreach (RemoteFileRef rf in DatabaseStatus)
+            {
+                if (!rf.Local)
+                    list.Add(rf);
+            }
+
+            return list;
+        }
+
+        public RemoteFileRef FindBook(string p)
+        {
+            if (DatabaseStatus == null)
+                return null;
+            return FindRef(DatabaseStatus, p);
+        }
+
+        public MNBookHeader FindBookHeader(string bookName)
+        {
+            foreach (MNBookHeader bh in Books)
+            {
+                if (bh.BookTitle.Equals(bookName))
+                    return bh;
+            }
+            return null;
+        }
+
+        public string GetLocalFile(string p)
+        {
+            return Path.Combine(LastDirectory, p);
         }
     }
 }

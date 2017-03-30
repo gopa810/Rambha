@@ -29,8 +29,7 @@ namespace Rambha.Document
         {
             if (context.drawSelectionMarks)
             {
-                SMRectangleArea area = context.CurrentPage.GetArea(Id);
-                Rectangle bounds = area.GetBounds(context);
+                Rectangle bounds = Area.GetBounds(context);
 
                 string title = string.Format("[{0}] {1}", GroupType.ToString(), Text);
 
@@ -45,8 +44,8 @@ namespace Rambha.Document
 
         public bool ContainsControl(SMControl control)
         {
-            SMRectangleArea cga = Page.GetArea(Id);
-            SMRectangleArea ca = Page.GetArea(control.Id);
+            SMRectangleArea cga = Area;
+            SMRectangleArea ca = control.Area;
 
             bool pr = cga.GetRawRectangle(PageEditDisplaySize.LandscapeBig).Contains(ca.GetRawRectangle(PageEditDisplaySize.LandscapeBig));
             return pr ? ControlIsCompatible(control) : false;

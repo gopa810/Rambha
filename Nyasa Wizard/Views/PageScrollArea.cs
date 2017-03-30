@@ -18,6 +18,8 @@ namespace SlideMaker.Views
         public event PageChangedEventHandler PageObjectSelected;
 
         public event PageChangedEventHandler NewPageRequested;
+        public event PageChangedEventHandler NextPageRequested;
+        public event PageChangedEventHandler PrevPageRequested;
 
         public event NormalEventHandler BackToParentView;
 
@@ -34,6 +36,7 @@ namespace SlideMaker.Views
         public void SetPage(MNPage page)
         {
             pageEditView1.Page = page;
+            //MNNotificationCenter.CurrentDocument = page.Document;
             MNNotificationCenter.CurrentPage = page;
         }
 
@@ -238,7 +241,7 @@ namespace SlideMaker.Views
                     pageEditView1.Context.DisplaySize = value;
                     foreach (SMControl sm in pageEditView1.Page.Objects)
                     {
-                        SMRectangleArea area = pageEditView1.Page.GetArea(sm.Id);
+                        SMRectangleArea area = sm.Area;
                         if (area.Selected)
                         {
                             area.RecalcAllBounds(pageEditView1.Context);
@@ -317,6 +320,64 @@ namespace SlideMaker.Views
         internal PageEditView GetPageEditView()
         {
             return pageEditView1;
+        }
+
+        private void bringToFrontToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.BringSelectionToFront();
+        }
+
+        private void sendToBackToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.SendSelectionToBack();
+        }
+
+        private void setCLICKABLEToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.SetSelectionProperty("clickable");
+        }
+
+        private void setDraggableLineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.SetSelectionProperty("draggable");
+        }
+
+        private void setDropableOneToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.SetSelectionProperty("dropable");
+        }
+
+        private void setEvaluationInheritedToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.SetSelectionProperty("eval:inherited");
+        }
+
+        private void setEvaluationNoneToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.SetSelectionProperty("eval:none");
+        }
+
+        /// <summary>
+        /// prev page
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void toolStripButton1_Click_1(object sender, EventArgs e)
+        {
+            if (PrevPageRequested != null)
+                PrevPageRequested(this, new PageEditViewArguments());
+        }
+
+
+        /// <summary>
+        /// next page
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            if (NextPageRequested != null)
+                NextPageRequested(this, new PageEditViewArguments());
         }
     }
 

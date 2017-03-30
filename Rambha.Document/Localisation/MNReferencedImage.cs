@@ -113,10 +113,10 @@ namespace Rambha.Document
         /// <param name="showRect"></param>
         /// <param name="clientPoint"></param>
         /// <returns></returns>
-        public MNReferencedSpot FindSpot(Rectangle showRect, Point clientPoint)
+        public MNReferencedSpot FindSpot(Rectangle showRect, Rectangle sourceRect, Point clientPoint)
         {
             if (Spots == null) return null;
-            Point rel = AbsToRel(showRect, clientPoint);
+            Point rel = AbsToRel(showRect, clientPoint, sourceRect);
             foreach (MNReferencedSpot spot in Spots)
             {
                 if (spot.Contains(rel))
@@ -124,6 +124,16 @@ namespace Rambha.Document
             }
             return null;
         }
+
+        public Point AbsToRel(Rectangle showRect, Point p, Rectangle srcRect)
+        {
+            double xa = Convert.ToDouble(p.X - showRect.X) / showRect.Width;
+            double ya = Convert.ToDouble(p.Y - showRect.Y) / showRect.Height;
+            int xb = srcRect.X + Convert.ToInt32(xa*srcRect.Width);
+            int yb = srcRect.Y + Convert.ToInt32(ya*srcRect.Height);
+            return new Point(xb*100/ImageData.Width, yb*100/ImageData.Height);
+        }
+
 
         public Point AbsToRel(Rectangle showRect, Point p)
         {

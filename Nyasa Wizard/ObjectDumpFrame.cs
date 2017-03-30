@@ -69,13 +69,6 @@ namespace SlideMaker
             {
                 WriteControl(sb, ctrl, level + 1);
             }
-
-            foreach (KeyValuePair<long, SMRectangleArea> A in p.Areas)
-            {
-                WriteLS(sb, level + 1);
-                sb.AppendFormat("AREA {0} =>\n", A.Key);
-                WriteArea(sb, A.Value, level + 2);
-            }
         }
 
         public void WriteControl(StringBuilder S, SMControl C, int L)
@@ -86,23 +79,13 @@ namespace SlideMaker
 
         public void WriteArea(StringBuilder S, SMRectangleArea A, int L)
         {
-            WriteRuler(S, A.LeftRuler, L + 1, "Left  ");
-            WriteRuler(S, A.RightRuler, L + 1, "Right ");
-            WriteRuler(S, A.TopRuler, L + 1, "Top   ");
-            WriteRuler(S, A.BottomRuler, L + 1, "Bottom");
         }
 
-        public void WriteRuler(StringBuilder S, SMRuler R, int L, string label)
+        public void WriteRuler(StringBuilder S, int val, int L, string label)
         {
             WriteLS(S, L);
             S.Append(label);
             S.AppendLine(":");
-            for (int i = 0; i < 4; i++)
-            {
-                WriteLS(S, L + 1);
-                S.AppendFormat("{0}: {1} {2}", i, R.IsValid(i).ToString().PadRight(6), R[i]);
-                S.AppendLine();
-            }
         }
 
         private void button2_Click(object sender, EventArgs e)

@@ -92,8 +92,7 @@ namespace Rambha.Document
 
         public override void Paint(MNPageContext context)
         {
-            SMRectangleArea area = context.CurrentPage.GetArea(Id);
-            Rectangle bounds = area.GetBounds(context);
+            Rectangle bounds = Area.GetBounds(context);
 
             PrepareBrushesAndPens();
 
@@ -112,15 +111,11 @@ namespace Rambha.Document
                     return;
             }
 
-            Rectangle textBounds = bounds;
-            textBounds.X += Style.ContentPadding.Left;
-            textBounds.Y += Style.ContentPadding.Top;
-            textBounds.Width -= (Style.ContentPadding.Left + Style.ContentPadding.Right);
-            textBounds.Height -= (Style.ContentPadding.Top + Style.ContentPadding.Bottom);
+            Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
 
             // size of one cell
             p_cellx = Math.Min(textBounds.Height / p_ymax, textBounds.Width / p_xmax);
-            Font usedFont = SMGraphics.GetFontVariation(Style.Font, p_cellx * 0.7f);
+            Font usedFont = SMGraphics.GetFontVariation(Font.Font, p_cellx * 0.7f);
 
 
             // prepare rectangle for letter
@@ -162,11 +157,10 @@ namespace Rambha.Document
 
         public override void OnClick(PVDragContext dc)
         {
-            SMRectangleArea area = Page.GetArea(Id);
-            Rectangle bounds = area.GetBounds(dc.context);
+            Rectangle bounds = Area.GetBounds(dc.context);
 
-            int x = dc.lastPoint.X - Style.ContentPadding.Left - bounds.X;
-            int y = dc.lastPoint.Y - Style.ContentPadding.Top - bounds.Y;
+            int x = dc.lastPoint.X - ContentPadding.Left - bounds.X;
+            int y = dc.lastPoint.Y - ContentPadding.Top - bounds.Y;
 
             if (x < 0) x = 0;
             if (y < 0) y = 0;

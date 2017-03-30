@@ -94,10 +94,9 @@ namespace Rambha.Document
 
         public override void Paint(MNPageContext context)
         {
-            SMRectangleArea area = context.CurrentPage.GetArea(Id);
-            Rectangle bounds = area.GetBounds(context);
+            Rectangle bounds = Area.GetBounds(context);
 
-            Rectangle textBounds = Style.ApplyPadding(bounds);
+            Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
 
             if (p_prevHighColor != HighlightColor)
             {
@@ -122,7 +121,7 @@ namespace Rambha.Document
                     }
                 }
             }
-            SizeF sizeChar = context.g.MeasureString("M", Style.Font);
+            SizeF sizeChar = context.g.MeasureString("M", Font.Font);
             float cellSize = Math.Max(sizeChar.Height, sizeChar.Width);
             float targetCellSize = Math.Min((textBounds.Width - (Columns + 1)*Spacing) / Columns,
                 (textBounds.Height - (Rows + 1)*Spacing) / Rows);
@@ -132,18 +131,15 @@ namespace Rambha.Document
             textBounds.Width = (int)(targetCellSize * Columns + Spacing * Columns + Spacing);
 
             // recalculate border
-            bounds.X = textBounds.X - Style.ContentPadding.Left;
-            bounds.Y = textBounds.Y - Style.ContentPadding.Top;
-            bounds.Width = textBounds.Width + Style.ContentPadding.Left + Style.ContentPadding.Right;
-            bounds.Height = textBounds.Height + Style.ContentPadding.Top + Style.ContentPadding.Bottom;
+            bounds = ContentPadding.ApplyPadding(textBounds);
 
             context.g.DrawRectangle(Pens.Black, bounds);
 
             // recalculate size of font
-            Font usedFont = Style.Font;
+            Font usedFont = Font.Font;
             if (targetCellSize > 0.1f)
             {
-                usedFont = SMGraphics.GetFontVariation(Style.Font, Style.Font.Size * targetCellSize / cellSize);
+                usedFont = SMGraphics.GetFontVariation(Font.Name, Font.Size * targetCellSize / cellSize);
             }
             int index = 0;
 
@@ -271,11 +267,10 @@ namespace Rambha.Document
         {
             if (HasImmediateEvaluation)
             {
-                SMRectangleArea area = Page.GetArea(Id);
-                Rectangle bounds = area.GetBounds(dc.context);
+                Rectangle bounds = Area.GetBounds(dc.context);
 
-                int x = dc.lastPoint.X - Style.ContentPadding.Left - bounds.X;
-                int y = dc.lastPoint.Y - Style.ContentPadding.Top - bounds.Y;
+                int x = dc.lastPoint.X - ContentPadding.Left - bounds.X;
+                int y = dc.lastPoint.Y - ContentPadding.Top - bounds.Y;
 
                 if (x < 0) x = 0;
                 if (y < 0) y = 0;
@@ -297,11 +292,10 @@ namespace Rambha.Document
         /// <param name="dc"></param>
         public override void OnTapBegin(PVDragContext dc)
         {
-            SMRectangleArea area = Page.GetArea(Id);
-            Rectangle bounds = area.GetBounds(dc.context);
+            Rectangle bounds = Area.GetBounds(dc.context);
 
-            int x = dc.lastPoint.X - Style.ContentPadding.Left - bounds.X;
-            int y = dc.lastPoint.Y - Style.ContentPadding.Top - bounds.Y;
+            int x = dc.lastPoint.X - ContentPadding.Left - bounds.X;
+            int y = dc.lastPoint.Y - ContentPadding.Top - bounds.Y;
 
             if (x < 0) x = 0;
             if (y < 0) y = 0;

@@ -15,7 +15,7 @@ namespace Rambha.Document
     /// </summary>
     public class MNLocalisation
     {
-        private bool Modified { get; set; }
+        public bool Modified { get; set; }
 
         /// <summary>
         /// Properties of the file
@@ -83,6 +83,7 @@ namespace Rambha.Document
             {
                 RSFileWriter fw = new RSFileWriter(bw);
                 Save(fw);
+                Modified = false;
             }
         }
 
@@ -224,6 +225,7 @@ namespace Rambha.Document
                 }
             }
 
+            Modified = false;
             return true;
         }
 
@@ -280,8 +282,11 @@ namespace Rambha.Document
         public MNReferencedSound FindSound(string p)
         {
             foreach (MNReferencedSound at in Sounds)
+            {
+                Debugger.Log(0,"", "--Looking in sound: " + at.Name + "\n");
                 if (at.Name.Equals(p))
                     return at;
+            }
             return null;
         }
 

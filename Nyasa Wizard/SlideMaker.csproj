@@ -34,8 +34,57 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Dropbox.Api, Version=0.1.6263.32141, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dropbox.Api.4.2.0\lib\portable-net40+sl5+wp80+win8+wpa81\Dropbox.Api.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Threading.Tasks, Version=1.0.12.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.Async.1.0.168\lib\net40\Microsoft.Threading.Tasks.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Threading.Tasks.Extensions, Version=1.0.12.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.Async.1.0.168\lib\net40\Microsoft.Threading.Tasks.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Threading.Tasks.Extensions.Desktop, Version=1.0.168.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.Async.1.0.168\lib\net40\Microsoft.Threading.Tasks.Extensions.Desktop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO, Version=2.6.10.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.1.1.10\lib\net40\System.IO.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net" />
+    <Reference Include="System.Net.Http, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net40\System.Net.Http.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.Extensions, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net40\System.Net.Http.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.Primitives, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net40\System.Net.Http.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net40\System.Net.Http.WebRequest.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime, Version=2.6.10.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.1.1.10\lib\net40\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Threading.Tasks, Version=2.6.10.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.1.1.10\lib\net40\System.Threading.Tasks.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -45,12 +94,68 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\EVOrderedList.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVOrderedList.Designer.cs">
+      <DependentUpon>EVOrderedList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\EVPageName.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVPageName.Designer.cs">
+      <DependentUpon>EVPageName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\EVControlStyle.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVControlStyle.Designer.cs">
+      <DependentUpon>EVControlStyle.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\EVControlScripts.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVControlScripts.Designer.cs">
+      <DependentUpon>EVControlScripts.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\EVSeparator.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Controls\EVSeparator.Designer.cs">
       <DependentUpon>EVSeparator.cs</DependentUpon>
     </Compile>
+    <Compile Include="DialogDuplicating.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogDuplicating.Designer.cs">
+      <DependentUpon>DialogDuplicating.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\DialogEditOrderedListTexts.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Controls\DialogEditOrderedListTexts.Designer.cs">
+      <DependentUpon>DialogEditOrderedListTexts.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogNewName.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogNewName.Designer.cs">
+      <DependentUpon>DialogNewName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogSetNamesControls.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogSetNamesControls.Designer.cs">
+      <DependentUpon>DialogSetNamesControls.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogSpotName.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogSpotName.Designer.cs">
+      <DependentUpon>DialogSpotName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MNSharedObjects.cs" />
+    <Compile Include="Rtf2TagsConvertor.cs" />
     <Compile Include="DialogGenerateLangFile.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -74,6 +179,12 @@
     </Compile>
     <Compile Include="Controls\EVReferencedImage.Designer.cs">
       <DependentUpon>EVReferencedImage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormRtfConvertor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormRtfConvertor.Designer.cs">
+      <DependentUpon>FormRtfConvertor.cs</DependentUpon>
     </Compile>
     <Compile Include="LocalizationFrame\DialogSelectLanguage.cs">
       <SubType>Form</SubType>
@@ -149,6 +260,18 @@
     <Compile Include="Controls\EVControlName.Designer.cs">
       <DependentUpon>EVControlName.cs</DependentUpon>
     </Compile>
+    <Compile Include="ToolWindowInsertPageLayout.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ToolWindowInsertPageLayout.Designer.cs">
+      <DependentUpon>ToolWindowInsertPageLayout.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DialogEnterPageNames.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Views\DialogEnterPageNames.Designer.cs">
+      <DependentUpon>DialogEnterPageNames.cs</DependentUpon>
+    </Compile>
     <Compile Include="Views\DocMenuEditView.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -182,6 +305,7 @@
     <Compile Include="Views\ImageSpotsEditorView.Designer.cs">
       <DependentUpon>ImageSpotsEditorView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Views\KeyPageActions.cs" />
     <Compile Include="Views\PageDetailPanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -234,14 +358,35 @@
     <Compile Include="TreeObjectView\TreeObjectView.Designer.cs">
       <DependentUpon>TreeObjectView.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Controls\EVOrderedList.resx">
+      <DependentUpon>EVOrderedList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\EVPageName.resx">
+      <DependentUpon>EVPageName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\EVControlStyle.resx">
+      <DependentUpon>EVControlStyle.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\EVControlScripts.resx">
+      <DependentUpon>EVControlScripts.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\EVSeparator.resx">
       <DependentUpon>EVSeparator.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\EVContainer.resx">
       <DependentUpon>EVContainer.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="DialogDuplicating.resx">
+      <DependentUpon>DialogDuplicating.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\DialogEditOrderedListTexts.resx">
+      <DependentUpon>DialogEditOrderedListTexts.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DialogGenerateLangFile.resx">
       <DependentUpon>DialogGenerateLangFile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogNewName.resx">
+      <DependentUpon>DialogNewName.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DialogNewPageName.resx">
       <DependentUpon>DialogNewPageName.cs</DependentUpon>
@@ -251,6 +396,15 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\EVReferencedImage.resx">
       <DependentUpon>EVReferencedImage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogSetNamesControls.resx">
+      <DependentUpon>DialogSetNamesControls.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogSpotName.resx">
+      <DependentUpon>DialogSpotName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormRtfConvertor.resx">
+      <DependentUpon>FormRtfConvertor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="LocalizationFrame\DialogSelectLanguage.resx">
       <DependentUpon>DialogSelectLanguage.cs</DependentUpon>
@@ -287,6 +441,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\EVControlName.resx">
       <DependentUpon>EVControlName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ToolWindowInsertPageLayout.resx">
+      <DependentUpon>ToolWindowInsertPageLayout.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\DialogEnterPageNames.resx">
+      <DependentUpon>DialogEnterPageNames.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Views\DocMenuEditView.resx">
       <DependentUpon>DocMenuEditView.cs</DependentUpon>
@@ -332,6 +492,7 @@
       <DependentUpon>TreeObjectView.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -398,8 +559,36 @@
   <ItemGroup>
     <None Include="Resources\IconActions.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Resources\navigIconBack.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconFwd.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconHelp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconHome.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigArrowLeft.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigArrowRight.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SpeakerOff.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SpeakerOn.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" />
+  <Target Name="EnsureBclBuildImported" BeforeTargets="BeforeBuild" Condition="'$(BclBuildImported)' == ''">
+    <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" Text="This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=317567." HelpKeyword="BCLBUILD2001" />
+    <Error Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" Text="The build restored NuGet packages. Build the project again to include these packages in the build. For more information, see http://go.microsoft.com/fwlink/?LinkID=317568." HelpKeyword="BCLBUILD2002" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

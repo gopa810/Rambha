@@ -21,6 +21,9 @@ namespace SlideMaker.Views
 
         private MNReferencedSpot CurrentSpot = null;
 
+        private Pen blackThickPen = null;
+        private Pen whiteThinPen = Pens.White;
+
         public MNReferencedImage Image 
         {
             get
@@ -37,6 +40,7 @@ namespace SlideMaker.Views
         public EditSpotsEditorView()
         {
             InitializeComponent();
+            blackThickPen = new Pen(Color.Black, 3);
         }
 
         private void ImageSpotsEditorView_Paint(object sender, PaintEventArgs e)
@@ -63,7 +67,7 @@ namespace SlideMaker.Views
             {
                 foreach (MNReferencedSpot spot in p_image.SafeSpots)
                 {
-                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot));
+                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot), blackThickPen, whiteThinPen);
                 }
             }
 
@@ -79,6 +83,13 @@ namespace SlideMaker.Views
             spot.AnchorA = new Point(10, 0);
             spot.AnchorB = new Point(0, 10);
 
+            DialogSpotName d = new DialogSpotName();
+            d.ShowDialog();
+            spot.Name = d.SpotText;
+            spot.ContentId = d.SpotText;
+            spot.ContentType = SMContentType.Audio;
+
+            p_image.Modified = true;
             p_image.SafeSpots.Add(spot);
             Invalidate();
         }
@@ -93,7 +104,15 @@ namespace SlideMaker.Views
             spot.AnchorA = new Point(10, 0);
             spot.AnchorB = new Point(0, 10);
 
+            DialogSpotName d = new DialogSpotName();
+            d.ShowDialog();
+            spot.Name = d.SpotText;
+            spot.ContentId = d.SpotText;
+            spot.ContentType = SMContentType.Audio;
+
             p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
+
             Invalidate();
         }
 
@@ -117,13 +136,13 @@ namespace SlideMaker.Views
                 {
                     foreach (MNReferencedSpot spot in p_image.SafeSpots)
                     {
-                        if (lastSpot != null && spot == lastSpot)
+                        //if (lastSpot != null && spot == lastSpot)
                         {
                             for (int anchorIndex = 0; anchorIndex < 2; anchorIndex++)
                             {
                                 Point A = spot.AbsoluteAnchor(showRect, anchorIndex);
                                 Debugger.Log(0, "", "Anchor " + anchorIndex + ": " + A.X + ", " + A.Y + ";   e:" + e.X + ", " + e.Y + "\n");
-                                if (Math.Abs(A.X - e.X) <= 3 && Math.Abs(A.Y - e.Y) <= 3)
+                                if (Math.Abs(A.X - e.X) <= 6 && Math.Abs(A.Y - e.Y) <= 6)
                                 {
                                     CurrentSpot = spot;
                                     p_resizedSpot = spot;
@@ -211,6 +230,7 @@ namespace SlideMaker.Views
 
                 if (MessageBox.Show("Do you want to delete selected spot area?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
+                    p_image.Modified = true;
                     p_image.SafeSpots.Remove(CurrentSpot);
                     Invalidate();
                 }

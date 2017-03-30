@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 using SlideMaker.Views;
 
@@ -15,10 +16,12 @@ namespace SlideMaker
     {
         public static EVContainer Shared = null;
 
+        public int counter = 0;
+
         public EVContainer()
         {
             InitializeComponent();
-            tm.Interval = 1000;
+            tm.Interval = 500;
             tm.Tick += new EventHandler(tm_Tick);
             Shared = this;
         }
@@ -30,7 +33,7 @@ namespace SlideMaker
 
         private Timer tm = new Timer();
 
-        public List<ControlSeparator> Panels = new List<ControlSeparator>();
+        public List<Control> Panels = new List<Control>();
 
         public PageEditView EditView = null;
 
@@ -42,21 +45,39 @@ namespace SlideMaker
         void tm_Tick(object sender, EventArgs e)
         {
             if (EditView != null)
-                EditView.Invalidate();
+            {
+                if (counter > 0)
+                {
+                    counter--;
+                }
+                else
+                {
+                    EditView.Invalidate();
+                    tm.Stop();
+                }
+            }
         }
 
         public void OnValueUpdated()
         {
             if (EditView != null && !tm.Enabled)
                 tm.Start();
+            counter = 5;
+        }
+
+        public void OnValueUpdatedImmediate()
+        {
+            if (EditView != null)
+                EditView.Invalidate();
         }
 
         public void RecalculatePositions()
         {
             int x = 0;
-            foreach (Control uc in panel1.Controls)
+            foreach (Control uc in Panels)
             {
-                if (uc.Visible)
+//                Debugger.Log(0, "", string.Format("CONTROL {0} \nBounds {1}\n\n", uc.GetType().Name, uc.Bounds));
+                //if (uc.Visible)
                 {
                     uc.Location = new Point(0, x);
                     uc.Width = panel1.ClientSize.Width;
@@ -70,24 +91,20 @@ namespace SlideMaker
 
         public void ClearPanels()
         {
-            foreach (ControlSeparator cs in Panels)
-            {
-                EVStorage.ReleaseUserControl(cs.AssociatedControl);
-                cs.AssociatedControl.Parent = null;
-                cs.Parent = null;
-            }
+            Panels.Clear();
             panel1.Controls.Clear();
         }
 
         public void AddPanel(string name, UserControl uc)
         {
-            ControlSeparator cs = new ControlSeparator(this, uc);
+            /*ControlSeparator cs = new ControlSeparator(this, uc);
             cs.Title = name;
             cs.Visible = true;
             cs.Parent = panel1;
             uc.Visible = true;
-            panel1.Controls.Add(cs);
-            panel1.Controls.Add(cs.AssociatedControl);
+            panel1.Controls.Add(cs);*/
+            panel1.Controls.Add(uc);
+            Panels.Add(uc);
 
             RecalculatePositions();
         }

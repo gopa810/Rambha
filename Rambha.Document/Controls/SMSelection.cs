@@ -1,0 +1,315 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Drawing;
+using System.Diagnostics;
+
+using Rambha.Serializer;
+
+namespace Rambha.Document
+{
+    public class SMSelection: SMControl
+    {
+        private string p_prevtext = "";
+
+        private bool bHorizontal = false;
+
+        private int p_expectedSelection = -1;
+
+        private int p_currSelection = -1;
+
+        private List<SelText> texts = new List<SelText>();
+
+        private class SelText
+        {
+            public string text = "";
+            public Size size = Size.Empty;
+            public Rectangle drawRect = Rectangle.Empty;
+
+            public SelText()
+            {
+            }
+
+            public SelText(string s)
+            {
+                text = s;
+            }
+        }
+
+        public SMSelection(MNPage p)
+            : base(p)
+        {
+
+        }
+
+        public int ExpectedValue
+        {
+            get { return p_expectedSelection; }
+            set { p_expectedSelection = value; }
+        }
+
+        public override void Paint(MNPageContext context)
+        {
+            //Debugger.Log(0, "", "-- paint selection control -- Horizontal:" + bHorizontal + "\n");
+            PrepareBrushesAndPens();
+
+            PrepareContent(context);
+
+            Rectangle r = Area.GetBounds(context);
+
+            Font font = GetUsedFont();
+            Brush backBrush = null;
+            Brush foreBrush = null;
+            int radius = 15;
+
+            if (bHorizontal)
+            {
+                int width = 1;
+                foreach (SelText st in texts)
+                {
+                    width += st.size.Width;
+                }
+
+                int index = 0;
+                int currPos = r.Left;
+                foreach (SelText st in texts)
+                {
+                    int thisWidth = r.Width * st.size.Width / width;
+                    SMStatusLayout layout = (p_currSelection == index ? HighlightState : NormalState);
+                    backBrush = SMGraphics.GetBrush(layout.BackColor);
+                    foreBrush = SMGraphics.GetBrush(layout.ForeColor);
+                    
+                    if (index == 0)
+                    {
+                        context.g.FillEllipse(backBrush, r.Left, r.Top, radius * 2, radius * 2);
+                        context.g.FillEllipse(backBrush, r.Left, r.Bottom - radius * 2, radius * 2, radius * 2);
+                        context.g.FillRectangle(backBrush, r.Left, r.Top + radius, radius, r.Height - 2 * radius);
+                    }
+                    else
+                    {
+                        context.g.FillRectangle(backBrush, currPos, r.Top, radius, r.Height);
+                    }
+
+                    if (index == texts.Count - 1)
+                    {
+                        context.g.FillEllipse(backBrush, r.Right - radius*2, r.Top, radius * 2, radius * 2);
+                        context.g.FillEllipse(backBrush, r.Right - radius*2, r.Bottom - radius * 2, radius * 2, radius * 2);
+                        context.g.FillRectangle(backBrush, r.Right - radius, r.Top + radius, radius, r.Height - 2 * radius);
+                    }
+                    else
+                    {
+                        context.g.FillRectangle(backBrush, currPos + thisWidth - radius, r.Top, radius, r.Height);
+                    }
+
+                    context.g.FillRectangle(backBrush, currPos + radius, r.Top, thisWidth - 2 * radius, r.Height);
+
+                    if (index > 0)
+                        context.g.DrawLine(tempForePen, currPos, r.Top, currPos, r.Bottom); 
+
+                    Rectangle rt = new Rectangle();
+                    rt.X = currPos;
+                    rt.Y = r.Top;
+                    rt.Width = thisWidth;
+                    rt.Height = r.Height;
+                    context.g.DrawString(st.text, font, tempForeBrush, rt, SMGraphics.StrFormatCenter);
+                    st.drawRect = rt;
+
+                    currPos += thisWidth;
+                    index++;
+                }
+            }
+            else
+            {
+                int height = 1;
+                foreach (SelText st in texts)
+                {
+                    height += st.size.Height;
+                }
+
+                int index = 0;
+                int currPos = r.Top;
+                //Debugger.Log(0, "", "--- selection control ---\n");
+                foreach (SelText st in texts)
+                {
+                    int thisHeight = r.Height * st.size.Height / height;
+                    SMStatusLayout layout = (p_currSelection == index ? HighlightState : NormalState);
+                    backBrush = SMGraphics.GetBrush(layout.BackColor);
+                    foreBrush = SMGraphics.GetBrush(layout.ForeColor);
+
+                    if (index == 0)
+                    {
+                        context.g.FillEllipse(backBrush, r.Left, r.Top, radius * 2, radius * 2);
+                        context.g.FillEllipse(backBrush, r.Right - radius * 2, r.Top, radius * 2, radius * 2);
+                        context.g.FillRectangle(backBrush, r.Left + radius, r.Top, r.Width - 2 * radius, radius);
+                    }
+                    else
+                    {
+                        context.g.FillRectangle(backBrush, r.Left, currPos, r.Width, radius);
+                    }
+
+                    if (index == texts.Count - 1)
+                    {
+                        context.g.FillEllipse(backBrush, r.Left, r.Bottom - radius * 2, radius * 2, radius * 2);
+                        context.g.FillEllipse(backBrush, r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2);
+                        context.g.FillRectangle(backBrush, r.Left + radius, r.Bottom - radius, r.Width - 2 * radius, radius);
+                    }
+                    else
+                    {
+                        context.g.FillRectangle(backBrush, r.Left, currPos + thisHeight - radius, r.Width, radius);
+                    }
+
+                    context.g.FillRectangle(backBrush, r.Left, currPos + radius, r.Width, thisHeight - 2 * radius);
+
+                    if (index > 0)
+                        context.g.DrawLine(tempForePen, r.Left, currPos, r.Right, currPos); 
+
+                    Rectangle rt = new Rectangle();
+                    rt.X = r.Left;
+                    rt.Y = currPos;
+                    rt.Width = r.Width;
+                    rt.Height = thisHeight;
+                    context.g.DrawString(st.text, font, tempForeBrush, rt, SMGraphics.StrFormatCenter);
+                    st.drawRect = rt;
+
+                    currPos += thisHeight;
+                    index++;
+                }
+            }
+
+            context.g.DrawRoundedRectangle(tempForePen, r, radius);
+
+
+            base.Paint(context);
+        }
+
+        private string[] p_strSep = { "\n\n" };
+
+        private int p_prevSel = -1;
+
+        public override bool Load(RSFileReader br)
+        {
+            if (base.Load(br))
+            {
+                byte tag;
+                while ((tag = br.ReadByte()) != 0)
+                {
+                    switch (tag)
+                    {
+                        case 10:
+                            ExpectedValue = br.ReadInt32();
+                            break;
+                        default:
+                            return false;
+                    }
+                }
+
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public override void Save(RSFileWriter bw)
+        {
+            base.Save(bw);
+
+            bw.WriteByte(10);
+            bw.WriteInt32(ExpectedValue);
+
+            bw.WriteByte(0);
+        }
+
+        public override void OnTapBegin(PVDragContext dc)
+        {
+            p_prevSel = p_currSelection;
+            int index = 0;
+            foreach (SelText st in texts)
+            {
+                if (st.drawRect.Contains(dc.startPoint))
+                {
+                    p_currSelection = index;
+                    break;
+                }
+                index++;
+            }
+
+            base.OnTapBegin(dc);
+        }
+
+        public override void OnTapCancel(PVDragContext dc)
+        {
+            p_currSelection = p_prevSel;
+            base.OnTapCancel(dc);
+        }
+
+        public override void OnTapEnd(PVDragContext dc)
+        {
+            int index = 0;
+            foreach (SelText st in texts)
+            {
+                if (st.drawRect.Contains(dc.startPoint))
+                {
+                    if (p_currSelection != index)
+                    {
+                        p_currSelection = p_prevSel;
+                    }
+                    break;
+                }
+                index++;
+            }
+
+            base.OnTapEnd(dc);
+        }
+
+        public void PrepareContent(MNPageContext context)
+        {
+            if (p_prevtext.Equals(Text))
+                return;
+
+            p_prevtext = Text;
+            texts.Clear();
+            string[] p = null;
+            int index = 0;
+            string s = Text.Replace("\r\n", "\n");
+            //Debugger.Log(0, "", "PrepareSelectionContents: " + Text + "<< end cont<<\n");
+            if (s.IndexOf("\n\n") >= 0)
+            {
+                bHorizontal = false;
+                p = s.Split(p_strSep, StringSplitOptions.RemoveEmptyEntries);
+            }
+            else
+            {
+                bHorizontal = true;
+                p = s.Split('|');
+            }
+
+            if (p != null)
+            {
+                foreach (string line in p)
+                {
+                    if (line.StartsWith("*"))
+                    {
+                        p_expectedSelection = index;
+                        texts.Add(new SelText(line.Substring(1)));
+                    }
+                    else
+                    {
+                        texts.Add(new SelText(line));
+                    }
+                    index++;
+                }
+
+                Font font = GetUsedFont();
+
+                foreach (SelText st in texts)
+                {
+                    SizeF sf = context.g.MeasureString(st.text, font);
+                    st.size.Width = (int)sf.Width;
+                    st.size.Height = (int)sf.Height;
+                }
+            }
+        }
+    }
+}

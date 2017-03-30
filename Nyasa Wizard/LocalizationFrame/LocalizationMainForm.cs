@@ -156,6 +156,7 @@ namespace SlideMaker
             listBoxSounds.Items.Clear();
             foreach (MNReferencedSound rs in data.Sounds)
                 listBoxSounds.Items.Add(rs);
+            Console.Write("Sounds: " + data.Sounds.Count + "\n");
             listBoxAudioTexts.Items.Clear();
             foreach (MNReferencedAudioText rat in data.AudioTexts)
                 listBoxAudioTexts.Items.Add(rat);
@@ -299,10 +300,12 @@ namespace SlideMaker
                 if (data.Texts[i].Name.Equals(oldValue))
                 {
                     data.Texts.RemoveAt(i);
+                    data.Modified = true;
                     break;
                 }
             }
             data.AudioTexts.Add(newValue);
+            data.Modified = true;
             CloseCurrentPresentation();
             PresentData(newValue, key);
             UpdateDataWithUI();
@@ -406,6 +409,7 @@ namespace SlideMaker
                     foreach (MNReferencedImage im in imgs)
                     {
                         data.Images.Remove(im);
+                        data.Modified = true;
                     }
                 }
             }
@@ -487,6 +491,7 @@ namespace SlideMaker
                                 img.ImageData = Image.FromFile(fd.FileName);
                                 img.Name = d.ObjectName.Trim().Length > 0 ? d.ObjectName.Trim() : fd.FileName;
                                 data.Images.Add(img);
+                                data.Modified = true;
                                 UpdateDataWithUI();
                             }
                         }
@@ -496,6 +501,7 @@ namespace SlideMaker
                             MNReferencedAudioText ra = new MNReferencedAudioText();
                             ra.Name = d.ObjectName;
                             data.AudioTexts.Add(ra);
+                            data.Modified = true;
                             UpdateDataWithUI();
                         }
                         break;
@@ -509,6 +515,7 @@ namespace SlideMaker
                                 img.InitializeWithFile(fd.FileName);
                                 img.Name = d.ObjectName.Trim().Length > 0 ? d.ObjectName.Trim() : fd.FileName;
                                 data.Sounds.Add(img);
+                                data.Modified = true;
                                 UpdateDataWithUI();
                             }
                         }
@@ -518,6 +525,7 @@ namespace SlideMaker
                             MNReferencedText rt = new MNReferencedText();
                             rt.Name = d.ObjectName;
                             data.Texts.Add(rt);
+                            data.Modified = true;
                             UpdateDataWithUI();
                         }
                         break;
@@ -541,11 +549,22 @@ namespace SlideMaker
         private void tsbStylesAdd_Click(object sender, EventArgs e)
         {
             string styleName = "";
-            for (int i = 0; i < 99; i++)
+            MNReferencedStyle selectedStyle = null;
+            ListBox lb = listBoxStyles;
+            if (lb.SelectedIndex >= 0 && lb.SelectedIndex < lb.Items.Count)
             {
-                styleName = string.Format("String{0}", i);
-                if (data.FindStyle(styleName) == null)
-                    break;
+                selectedStyle = lb.Items[lb.SelectedIndex] as MNReferencedStyle;
+                styleName = selectedStyle.Name + " (copy)";
+            }
+            else
+            {
+                selectedStyle = data.Styles[0];
+                for (int i = 0; i < 99; i++)
+                {
+                    styleName = string.Format("String{0}", i);
+                    if (data.FindStyle(styleName) == null)
+                        break;
+                }
             }
 
             if (styleName.Length > 0)
@@ -555,13 +574,23 @@ namespace SlideMaker
                 dlg.StyleName = styleName;
                 if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-                    MNReferencedStyle sm = data.Styles[0].CreateCopy();
-                    sm.Name = dlg.StyleName;
-                    data.Styles.Add(sm);
-                    listBoxStyles.Items.Add(sm);
-                    listBoxStyles.SelectedIndex = listBoxStyles.Items.Count - 1;
-                    MNNotificationCenter.BroadcastMessage(this, "StyleListChanged"); 
+                    styleName = dlg.StyleName;
                 }
+                else
+                {
+                    styleName = "";
+                }
+            }
+
+            if (styleName.Length > 0)
+            {
+                MNReferencedStyle sm = selectedStyle.CreateCopy();
+                sm.Name = styleName;
+                data.Styles.Add(sm);
+                data.Modified = true;
+                listBoxStyles.Items.Add(sm);
+                listBoxStyles.SelectedIndex = listBoxStyles.Items.Count - 1;
+                MNNotificationCenter.BroadcastMessage(this, "StyleListChanged");
             }
         }
 
@@ -591,6 +620,33 @@ namespace SlideMaker
             if (index >= 0 && index < listBoxImages.Items.Count)
             {
                 DragDropEffects de = listBoxImages.DoDragDrop(listBoxImages.Items[index], DragDropEffects.Copy);
+            }
+        }
+
+        private void tsbAddImageToLibrary(object sender, EventArgs e)
+        {
+            if (listBoxImages.SelectedIndex >= 0 && listBoxImages.SelectedIndex < listBoxImages.Items.Count)
+            {
+                MNReferencedImage ri = (MNReferencedImage)listBoxImages.Items[listBoxImages.SelectedIndex];
+                if (ri != null)
+                {
+                    MNSharedObjects.AddImage(ri);
+                    MNSharedObjects.Save();
+                }
+            }
+        }
+
+        private void tsbAddStyleToLibrary(object sender, EventArgs e)
+        {
+            ListBox lb = listBoxStyles;
+            if (lb.SelectedIndex >= 0 && lb.SelectedIndex < lb.Items.Count)
+            {
+                MNReferencedStyle selectedStyle = lb.Items[lb.SelectedIndex] as MNReferencedStyle;
+                if (selectedStyle != null)
+                {
+                    MNSharedObjects.AddStyle(selectedStyle);
+                    MNSharedObjects.Save();
+                }
             }
         }
 

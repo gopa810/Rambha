@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Drawing;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 using Rambha.Document;
 using Rambha.Script;
@@ -24,6 +25,57 @@ namespace FilesGenerator
 
         public static MNLocalisation Localisation = null;
 
+        public static void ListFiles(string WorkDir, ListBox lb)
+        {
+            lb.Items.Clear();
+            foreach (string bookDir in Directory.GetDirectories(WorkDir))
+            {
+                Debugger.Log(0, "", "Starting file " + Path.GetFileName(bookDir) + "\n");
+                string cmdFile = Path.Combine(bookDir, "Root.txt");
+                if (File.Exists(cmdFile))
+                {
+                    lb.Items.Add(cmdFile);
+                }
+            }
+        }
+
+        public static void ProcessFileComplete(string cmdFile)
+        {
+            OutputDir = Path.GetDirectoryName(cmdFile);
+            ProcessFile(cmdFile);
+            if (Book != null)
+            {
+                string fn = Path.Combine(OutputDir, Book.BookCode + ".smb");
+                if (File.Exists(fn))
+                    File.Delete(fn);
+                using (Stream s = File.Create(fn))
+                {
+                    using (BinaryWriter bw = new BinaryWriter(s))
+                    {
+                        RSFileWriter fw = new RSFileWriter(bw);
+                        Book.Save(fw);
+                    }
+                }
+            }
+            if (Data != null)
+            {
+                string fn = Path.Combine(OutputDir, Book.BookCode + ".smd");
+                if (File.Exists(fn))
+                    File.Delete(fn);
+                using (Stream s = File.Create(fn))
+                {
+                    using (BinaryWriter bw = new BinaryWriter(s))
+                    {
+                        RSFileWriter fw = new RSFileWriter(bw);
+                        Data.Save(fw);
+                    }
+                }
+            }
+            Book = null;
+            Data = null;
+            Localisation = null;
+        }
+
         public static void Generate(string WorkDir)
         {
             foreach (string bookDir in Directory.GetDirectories(WorkDir))
@@ -32,39 +84,7 @@ namespace FilesGenerator
                 string cmdFile = Path.Combine(bookDir, "Root.txt");
                 if (File.Exists(cmdFile))
                 {
-                    OutputDir = bookDir;
-                    ProcessFile(cmdFile);
-                    if (Book != null)
-                    {
-                        string fn = Path.Combine(OutputDir, Book.BookCode + ".smb");
-                        if (File.Exists(fn))
-                            File.Delete(fn);
-                        using (Stream s = File.OpenWrite(fn))
-                        {
-                            using (BinaryWriter bw = new BinaryWriter(s))
-                            {
-                                RSFileWriter fw = new RSFileWriter(bw);
-                                Book.Save(fw);
-                            }
-                        }
-                    }
-                    if (Data != null)
-                    {
-                        string fn = Path.Combine(OutputDir, Book.BookCode + ".smd");
-                        if (File.Exists(fn))
-                            File.Delete(fn);
-                        using (Stream s = File.OpenWrite(fn))
-                        {
-                            using (BinaryWriter bw = new BinaryWriter(s))
-                            {
-                                RSFileWriter fw = new RSFileWriter(bw);
-                                Data.Save(fw);
-                            }
-                        }
-                    }
-                    Book = null;
-                    Data = null;
-                    Localisation = null;
+                    ProcessFileComplete(cmdFile);
                 }
             }
             Debugger.Log(0, "", "Finished all files\n\n");
@@ -136,7 +156,15 @@ namespace FilesGenerator
                     }
                     else
                         fn = string.Format("{0}_{1}.sme", BookCode, Localisation.GetProperty("LanguageName"));
-                    Localisation.Save(Path.Combine(OutputDir,fn));
+                    string filePath = Path.Combine(OutputDir, fn);
+                    try
+                    {
+                        File.Delete(filePath);
+                    }
+                    catch
+                    {
+                    }
+                    Localisation.Save(filePath);
                     Localisation = null;
                     break;
                 case "AddImage":

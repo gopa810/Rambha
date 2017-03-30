@@ -25,6 +25,8 @@ namespace SlideMaker
             Object = obj;
             textBox1.Text = obj.Text;
             textBox2.Text = obj.Tag;
+            checkBox1.Checked = obj.Selectable;
+
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -41,6 +43,14 @@ namespace SlideMaker
             if (Object != null)
             {
                 Object.Tag = textBox2.Text;
+            }
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (Object != null)
+            {
+                Object.Selectable = checkBox1.Checked;
             }
         }
     }

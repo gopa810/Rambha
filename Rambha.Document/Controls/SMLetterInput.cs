@@ -13,12 +13,6 @@ namespace Rambha.Document
 {
     public class SMLetterInput: SMControl
     {
-        [Browsable(true), Category("Layout")]
-        public SMTextDirection TextDirection { get; set; }
-
-        [Browsable(true), Category("Layout")]
-        public string ContentCells { get; set; }
-
         protected int p_focusX = 0;
         protected int p_focusY = 0;
         protected int p_lastMove = 0;
@@ -27,9 +21,9 @@ namespace Rambha.Document
             : base(page)
         {
             Text = "";
-            TextDirection = SMTextDirection.Horizontal;
-            ContentCells = "0 0 H AB_ ABECEDA; 7 7 V X_ XYZ";
             Evaluation = MNEvaluationType.Inherited;
+            ContentCells = "0,0,H,AB_,ABC|7,7,V,P___,PREV";
+            HelpTextControlName = "";
         }
 
         public override System.Drawing.Size GetDefaultSize()
@@ -37,7 +31,11 @@ namespace Rambha.Document
             return new Size(128,128);
         }
 
-        private string prevContent = "";
+        public string ContentCells { get;set; }
+
+        public string HelpTextControlName { get; set; }
+
+        public string p_prevContent = "";
         private List<CellInfo> cells = new List<CellInfo>();
         private int p_xmax;
         private int p_ymax;
@@ -53,6 +51,9 @@ namespace Rambha.Document
             public int y2 = 0;
             public string VisibleLetters = "";
             public string Letters = "";
+            public string Help = "";
+
+            public bool IsHorizontal { get { return y1 == y2; }  }
         }
 
         public override bool Load(RSFileReader br)
@@ -66,7 +67,9 @@ namespace Rambha.Document
                     {
                         case 10:
                             ContentCells = br.ReadString();
-                            TextDirection = (SMTextDirection)br.ReadInt32();
+                            break;
+                        case 11:
+                            HelpTextControlName = br.ReadString();
                             break;
                         default: 
                             return false;
@@ -85,7 +88,9 @@ namespace Rambha.Document
 
             bw.WriteByte(10);
             bw.WriteString(ContentCells);
-            bw.WriteInt32((Int32)TextDirection);
+
+            bw.WriteByte(11);
+            bw.WriteString(HelpTextControlName);
 
             bw.WriteByte(0);
         }
@@ -103,10 +108,11 @@ namespace Rambha.Document
                 p_format.LineAlignment = StringAlignment.Center;
             }
 
-            if (!prevContent.Equals(ContentCells))
+            if (!p_prevContent.Equals(ContentCells))
             {
                 AnalyzeContents();
-                prevContent = ContentCells;
+                FindFirstEmptyCell();
+                p_prevContent = ContentCells;
                 if (p_xmax < 1 || p_ymax < 1)
                     return;
             }
@@ -133,7 +139,7 @@ namespace Rambha.Document
                     rect.Y = textBounds.Y + y * p_cellx;
                     if (p_array[x, y, 1].Length > 0)
                     {
-                        if (x == p_focusX && y == p_focusY && UIStateError == MNEvaluationResult.Focused)
+                        if (x == p_focusX && y == p_focusY)
                             context.g.FillRectangle(Brushes.LightBlue, rect);
                         else
                             context.g.FillRectangle(tempBackBrush, rect);
@@ -173,20 +179,46 @@ namespace Rambha.Document
                 FindNearestCell();
             }
 
+            UpdateHelpText(null);
+
             p_lastMove = 0;
 
             base.OnClick(dc);
         }
 
+        public override bool OnDropFinished(PVDragContext dc)
+        {
+            Rectangle bounds = Area.GetBounds(dc.context);
+
+            int x = dc.lastPoint.X - ContentPadding.Left - bounds.X;
+            int y = dc.lastPoint.Y - ContentPadding.Top - bounds.Y;
+
+            if (x < 0) x = 0;
+            if (y < 0) y = 0;
+
+            p_focusX = x / p_cellx;
+            p_focusY = y / p_cellx;
+
+            if (!IsExpectedCell(p_focusX, p_focusY))
+            {
+                FindNearestCell();
+            }
+
+            AcceptString(dc.draggedItem.Tag);
+            UpdateHelpText(null);
+
+            return base.OnDropFinished(dc);
+        }
+
         private void AnalyzeContents()
         {
             cells.Clear();
-            string[] p = ContentCells.Split(';');
-            char[] splitter = { ' ' };
+            string[] p = ContentCells.Split('|');
+            char[] splitter = { ',' };
             foreach (string pp in p)
             {
                 string[] n = pp.Split(splitter, StringSplitOptions.RemoveEmptyEntries);
-                if (n.Length == 5 && (n[2] == "H" || n[2] == "V") && n[4].Length > 0)
+                if (n.Length >= 5 && (n[2] == "H" || n[2] == "V") && n[4].Length > 0)
                 {
                     int x, y;
                     if (int.TryParse(n[0], out x) && int.TryParse(n[1], out y))
@@ -211,6 +243,11 @@ namespace Rambha.Document
                         if (ci.VisibleLetters.Length < ci.Letters.Length)
                         {
                             ci.VisibleLetters = n[3].PadRight(n[4].Length, '_');
+                        }
+
+                        if (n.Length >= 6)
+                        {
+                            ci.Help = n[5];
                         }
 
                         cells.Add(ci);
@@ -240,7 +277,7 @@ namespace Rambha.Document
             ymin = 0;
             xmin = 0;
 
-            p_array = new string[xmax + 1, ymax + 1, 2];
+            p_array = new string[xmax + 1, ymax + 1, 3];
             p_xmax = xmax + 1;
             p_ymax = ymax + 1;
 
@@ -250,6 +287,7 @@ namespace Rambha.Document
                 {
                     p_array[i, j, 0] = string.Empty;
                     p_array[i, j, 1] = string.Empty;
+                    p_array[i, j, 2] = string.Empty;
                 }
             }
 
@@ -264,10 +302,12 @@ namespace Rambha.Document
                 {
                     p_array[sx, sy, 0] = ci.VisibleLetters[i] == '_' ? string.Empty : ci.VisibleLetters[i].ToString();
                     p_array[sx, sy, 1] = ci.Letters[i].ToString();
+                    p_array[sx, sy, 2] += (ci.IsHorizontal ? "\u2192  " : "\u2193  ") + ci.Help + "\n";
                     sx += xd;
                     sy += yd;
                 }
             }
+
         }
 
         public override MNEvaluationResult Evaluate()
@@ -309,12 +349,13 @@ namespace Rambha.Document
         {
             for (int i = 0; i < p_xmax; i++)
             {
-                for (int j = 0; j < p_ymax; i++)
+                for (int j = 0; j < p_ymax; j++)
                 {
                     if (IsExpectedCell(i, j) && !IsInteractedCell(i,j))
                     {
                         p_focusX = i;
                         p_focusY = j;
+                        UpdateHelpText(null);
                         return true;
                     }
                 }
@@ -335,11 +376,13 @@ namespace Rambha.Document
                 if (p_lastMove == 1)
                 {
                     p_focusX++;
+                    UpdateHelpText(null);
                     return true;
                 }
                 else if (p_lastMove == 2)
                 {
                     p_focusY++;
+                    UpdateHelpText(null);
                     return true;
                 }
                 else
@@ -353,16 +396,31 @@ namespace Rambha.Document
             {
                 p_focusX++;
                 p_lastMove = 1;
+                UpdateHelpText(null);
                 return true;
             }
             else if (b2)
             {
                 p_focusY++;
                 p_lastMove = 2;
+                UpdateHelpText(null);
                 return true;
             }
 
+            UpdateHelpText("");
             return false;
+        }
+
+        private void UpdateHelpText(string text)
+        {
+            if (p_focusX >= 0 && p_focusX < p_xmax && p_focusY >= 0 && p_focusY < p_ymax)
+            {
+                SMControl c = Page.FindObjectWithAPIName(this.HelpTextControlName);
+                if (c != null)
+                {
+                    c.ExecuteMessage("setText", new GSString(text ?? p_array[p_focusX, p_focusY, 2]));
+                }
+            }
         }
 
         public bool FindNearestCell()
@@ -423,7 +481,7 @@ namespace Rambha.Document
 
         public override GSCore ExecuteMessage(string token, GSCoreCollection args)
         {
-            if (token == "AcceptChar")
+            if (token == "acceptString")
             {
                 if (args.Count > 0)
                 {

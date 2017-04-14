@@ -41,6 +41,10 @@
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitWithoutSaveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripSeparator();
+            this.specialToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveOnlyHeaderFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveOnlyDataFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
@@ -60,10 +64,7 @@
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.shrinkImagesToTheirCanvasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pageDetailPanel1 = new SlideMaker.Views.PageDetailPanel();
-            this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripSeparator();
-            this.specialToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveOnlyHeaderFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveOnlyDataFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.generateInitialPagesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -163,6 +164,34 @@
             this.exitWithoutSaveToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
             this.exitWithoutSaveToolStripMenuItem.Text = "Exit without Save";
             this.exitWithoutSaveToolStripMenuItem.Click += new System.EventHandler(this.exitWithoutSaveToolStripMenuItem_Click);
+            // 
+            // toolStripMenuItem7
+            // 
+            this.toolStripMenuItem7.Name = "toolStripMenuItem7";
+            this.toolStripMenuItem7.Size = new System.Drawing.Size(160, 6);
+            // 
+            // specialToolStripMenuItem
+            // 
+            this.specialToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.saveOnlyHeaderFileToolStripMenuItem,
+            this.saveOnlyDataFileToolStripMenuItem});
+            this.specialToolStripMenuItem.Name = "specialToolStripMenuItem";
+            this.specialToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
+            this.specialToolStripMenuItem.Text = "Special";
+            // 
+            // saveOnlyHeaderFileToolStripMenuItem
+            // 
+            this.saveOnlyHeaderFileToolStripMenuItem.Name = "saveOnlyHeaderFileToolStripMenuItem";
+            this.saveOnlyHeaderFileToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.saveOnlyHeaderFileToolStripMenuItem.Text = "Save only Header File";
+            this.saveOnlyHeaderFileToolStripMenuItem.Click += new System.EventHandler(this.saveOnlyHeaderFileToolStripMenuItem_Click);
+            // 
+            // saveOnlyDataFileToolStripMenuItem
+            // 
+            this.saveOnlyDataFileToolStripMenuItem.Name = "saveOnlyDataFileToolStripMenuItem";
+            this.saveOnlyDataFileToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.saveOnlyDataFileToolStripMenuItem.Text = "Save only Data File";
+            this.saveOnlyDataFileToolStripMenuItem.Click += new System.EventHandler(this.saveOnlyDataFileToolStripMenuItem_Click);
             // 
             // toolStripMenuItem4
             // 
@@ -289,7 +318,8 @@
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.shrinkImagesToTheirCanvasToolStripMenuItem});
+            this.shrinkImagesToTheirCanvasToolStripMenuItem,
+            this.generateInitialPagesToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
@@ -309,33 +339,12 @@
             this.pageDetailPanel1.TabIndex = 3;
             this.pageDetailPanel1.BackToParentView += new SlideMaker.Views.NormalEventHandler(this.pageScrollArea1_BackToParentView);
             // 
-            // toolStripMenuItem7
+            // generateInitialPagesToolStripMenuItem
             // 
-            this.toolStripMenuItem7.Name = "toolStripMenuItem7";
-            this.toolStripMenuItem7.Size = new System.Drawing.Size(160, 6);
-            // 
-            // specialToolStripMenuItem
-            // 
-            this.specialToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.saveOnlyHeaderFileToolStripMenuItem,
-            this.saveOnlyDataFileToolStripMenuItem});
-            this.specialToolStripMenuItem.Name = "specialToolStripMenuItem";
-            this.specialToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
-            this.specialToolStripMenuItem.Text = "Special";
-            // 
-            // saveOnlyHeaderFileToolStripMenuItem
-            // 
-            this.saveOnlyHeaderFileToolStripMenuItem.Name = "saveOnlyHeaderFileToolStripMenuItem";
-            this.saveOnlyHeaderFileToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
-            this.saveOnlyHeaderFileToolStripMenuItem.Text = "Save only Header File";
-            this.saveOnlyHeaderFileToolStripMenuItem.Click += new System.EventHandler(this.saveOnlyHeaderFileToolStripMenuItem_Click);
-            // 
-            // saveOnlyDataFileToolStripMenuItem
-            // 
-            this.saveOnlyDataFileToolStripMenuItem.Name = "saveOnlyDataFileToolStripMenuItem";
-            this.saveOnlyDataFileToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
-            this.saveOnlyDataFileToolStripMenuItem.Text = "Save only Data File";
-            this.saveOnlyDataFileToolStripMenuItem.Click += new System.EventHandler(this.saveOnlyDataFileToolStripMenuItem_Click);
+            this.generateInitialPagesToolStripMenuItem.Name = "generateInitialPagesToolStripMenuItem";
+            this.generateInitialPagesToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.generateInitialPagesToolStripMenuItem.Text = "Generate Initial pages";
+            this.generateInitialPagesToolStripMenuItem.Click += new System.EventHandler(this.generateInitialPagesToolStripMenuItem_Click);
             // 
             // MainFrame
             // 
@@ -395,6 +404,7 @@
         private System.Windows.Forms.ToolStripMenuItem specialToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveOnlyHeaderFileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveOnlyDataFileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem generateInitialPagesToolStripMenuItem;
     }
 }
 

@@ -136,6 +136,7 @@ namespace Rambha.Document
 
             PrepareBrushesAndPens();
 
+            DrawStyledBackground(context, bounds);
             DrawStyledBorder(context, bounds);
 
             string stext = Text;
@@ -412,11 +413,15 @@ namespace Rambha.Document
 
                 if (isNewLine)
                 {
+                    if (currLine.Count == 0)
+                        lineY += lineHeight * control.Paragraph.LineSpacing / 2;
+                    else
+                        lineY += lineHeight * control.Paragraph.LineSpacing;
+
                     currLine = new SMWordLine();
                     richLayout.Lines.Add(currLine);
 
-                    lineY += lineHeight * control.Paragraph.LineSpacing;
-                    lineHeight = context.g.MeasureString("M", control.GetUsedFont()).Height;
+                    lineHeight = context.g.MeasureString("M", control.GetUsedFont()).Height / 2;
                     lineNo++;
 
                     if (Columns != -1 && !control.Autosize)

@@ -44,6 +44,7 @@
             this.selectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.electTemplateToPageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pasteOnelineToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.contextMenuStrip2.SuspendLayout();
             this.SuspendLayout();
@@ -123,12 +124,13 @@
             // 
             this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.pasteToolStripMenuItem,
+            this.pasteOnelineToolStripMenuItem,
             this.copyToolStripMenuItem,
             this.selectAllToolStripMenuItem,
             this.toolStripSeparator1,
             this.electTemplateToPageToolStripMenuItem});
             this.contextMenuStrip2.Name = "contextMenuStrip2";
-            this.contextMenuStrip2.Size = new System.Drawing.Size(195, 120);
+            this.contextMenuStrip2.Size = new System.Drawing.Size(195, 142);
             this.contextMenuStrip2.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip2_Opening);
             // 
             // copyToolStripMenuItem
@@ -156,6 +158,13 @@
             this.electTemplateToPageToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.electTemplateToPageToolStripMenuItem.Text = "Elect Template to Page";
             this.electTemplateToPageToolStripMenuItem.Click += new System.EventHandler(this.electTemplateToPageToolStripMenuItem_Click);
+            // 
+            // pasteOnelineToolStripMenuItem
+            // 
+            this.pasteOnelineToolStripMenuItem.Name = "pasteOnelineToolStripMenuItem";
+            this.pasteOnelineToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.pasteOnelineToolStripMenuItem.Text = "Paste One-line";
+            this.pasteOnelineToolStripMenuItem.Click += new System.EventHandler(this.pasteOnelineToolStripMenuItem_Click);
             // 
             // PageEditView
             // 
@@ -199,6 +208,7 @@
         private System.Windows.Forms.ToolStripMenuItem selectAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem electTemplateToPageToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem pasteOnelineToolStripMenuItem;
 
 
     }

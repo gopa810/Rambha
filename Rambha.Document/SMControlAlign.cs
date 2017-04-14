@@ -21,19 +21,19 @@ namespace Rambha.Document
         All = Top | Left | Right | Bottom
     }
 
-    public enum SMContentAlign
-    {
-        TopLeft, TopCenter, TopRight,
-        CenterLeft, Center, CenterRight,
-        BottomLeft, BottomCenter, BottomRight
-    }
-
     public enum SMVerticalAlign
     {
         Top = 0,
         Center = 1,
         Bottom = 2,
         Undefined = 3
+    }
+
+    public enum SMBackgroundType
+    {
+        None = 0,
+        Solid = 1,
+        Shadow = 2
     }
 
     public enum SMHorizontalAlign

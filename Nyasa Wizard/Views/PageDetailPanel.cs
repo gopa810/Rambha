@@ -407,6 +407,12 @@ namespace SlideMaker.Views
                 EVStorage.EvControlName.Instance.SetObject(obj as SMControl);
                 containerA.AddPanel("General", EVStorage.EvControlName.Instance);
 
+                if (obj is SMLabel)
+                {
+                    EVStorage.EvLabel.Instance.SetObject(obj as SMLabel);
+                    containerA.AddPanel("Label", EVStorage.EvLabel.Instance);
+                }
+
                 if (obj is SMImage)
                 {
                     EVStorage.EvReferencedImage.Instance.SetControl(obj as SMImage);
@@ -817,7 +823,7 @@ namespace SlideMaker.Views
                     if (c.Area.Selected)
                     {
                         c.Font.Size = Convert.ToInt32(numericUpDown1.Value);
-                        c.Font.Name = MNFontName.GilSansMurari;
+                        c.Font.Name = MNNotificationCenter.CurrentDocument.Book.DefaultFontName;
                         c.StyleDidChange();
                     }
                 }

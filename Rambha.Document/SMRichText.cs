@@ -995,5 +995,25 @@ namespace Rambha.Document
             }
         }
 
+
+        public Rectangle[] CalcRectangles(MNPageContext context, string plainText, Rectangle textBounds)
+        {
+            p_prevText = plainText;
+            drawWords = WordListFromString(plainText);
+            richLayout = RecalculateWordsLayout(context, textBounds);
+            drawLines = richLayout.Lines;
+
+            List<Rectangle> ra = new List<Rectangle>();
+            foreach (SMWordBase wb in drawWords)
+            {
+                if (wb is SMWordText)
+                {
+                    ra.Add(new Rectangle((int)wb.rect.X, (int)wb.rect.Y, (int)wb.rect.Width, (int)wb.rect.Height));
+                }
+            }
+
+            return ra.ToArray<Rectangle>();
+        }
+
     }
 }

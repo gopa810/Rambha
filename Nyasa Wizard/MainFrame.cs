@@ -522,6 +522,8 @@ namespace SlideMaker
                         MNReferencedImage img = (c as SMImage).Img.Image;
                         if (img != null && img.ImageData != null)
                         {
+                            if (!img.Name.StartsWith("Image Pasted"))
+                                continue;
                             SMRectangleArea area = c.Area;
                             Rectangle bounds = area.GetBounds(PageEditDisplaySize.LandscapeBig);
                             Size imageSize = img.ImageData.Size;
@@ -617,6 +619,125 @@ namespace SlideMaker
                     fw.logStream = sw;
                      MNNotificationCenter.CurrentDocument.Data.Save(fw);
                 }
+            }
+        }
+
+        private void generateInitialPagesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+            if (doc == null) return;
+
+            MNBookData data = doc.Data;
+
+            MNLocalisation lang = doc.DefaultLanguage;
+
+            if (data == null || lang == null)
+                return;
+
+            if (data.Pages.Count != 1)
+                return;
+
+            data.Pages[0].Title = "Title";
+            SetPageHeaderControls(0, data.Pages[0]);
+            SetControlsToPage("Title page", data.Pages[0]);
+
+            AddNewPage(doc, "start", "startPage", 0);
+            AddNewPage(doc, "tp", "tpPage", 0);
+            AddNewPage(doc, "new_letters", "tpNewLetters", 1);
+            AddNewPage(doc, "teaching_plan", "tpTeachingPlan", 1);
+            List<int> pageNos = new List<int>();
+            foreach (MNReferencedSound snd in lang.Sounds)
+            {
+                if (snd.Name.StartsWith("Page "))
+                {
+                    int i;
+                    if (int.TryParse(snd.Name.Substring(5).Trim(), out i))
+                    {
+                        pageNos.Add(i);
+                    }
+                }
+            }
+            pageNos.Sort();
+            foreach (int a in pageNos)
+            {
+                AddNewPage(doc, "Page " + a, "mainAbove", 3);
+            }
+            AddNewPage(doc, "ex_before", "", 2);
+            AddNewPage(doc, "ex_after", "", 2);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="title"></param>
+        /// <param name="templateName"></param>
+        /// <param name="type">0 - without header, 1 - header without fwd and audio,
+        /// 2 - header without audio, 3 - full header</param>
+        private void AddNewPage(MNDocument doc, string title, string templateName, int type)
+        {
+            Debugger.Log(0, "", "AddnewPage: " + title + ", " + templateName + ", " + type + "\n");
+
+            MNPage np = new MNPage(doc);
+            np.Title = title;
+
+            SetControlsToPage(templateName, np);
+
+            SetPageHeaderControls(type, np);
+
+
+            doc.Data.Pages.Add(np);
+
+        }
+
+        private static void SetControlsToPage(string templateName, MNPage np)
+        {
+            MNPage t = MNSharedObjects.internalDocument.FindTemplateName(templateName);
+            if (t != null)
+            {
+                MNPage.CopyControlsFrom(t, np);
+            }
+        }
+
+        private static void SetPageHeaderControls(int type, MNPage np)
+        {
+            switch (type)
+            {
+                case 0:
+                    np.ShowBackNavigation = false;
+                    np.ShowForwardNavigation = false;
+                    np.ShowAudio = false;
+                    np.DefaultAudioState = true;
+                    np.ShowTitle = false;
+                    np.ShowHome = false;
+                    np.ShowHelp = false;
+                    break;
+                case 1:
+                    np.ShowBackNavigation = true;
+                    np.ShowForwardNavigation = false;
+                    np.ShowAudio = false;
+                    np.DefaultAudioState = true;
+                    np.ShowTitle = true;
+                    np.ShowHome = true;
+                    np.ShowHelp = false;
+                    break;
+                case 2:
+                    np.ShowBackNavigation = true;
+                    np.ShowForwardNavigation = true;
+                    np.ShowAudio = false;
+                    np.DefaultAudioState = true;
+                    np.ShowTitle = true;
+                    np.ShowHome = true;
+                    np.ShowHelp = false;
+                    break;
+                case 3:
+                    np.ShowBackNavigation = true;
+                    np.ShowForwardNavigation = true;
+                    np.ShowAudio = true;
+                    np.DefaultAudioState = false;
+                    np.ShowTitle = true;
+                    np.ShowHome = true;
+                    np.ShowHelp = false;
+                    break;
             }
         }
 

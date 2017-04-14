@@ -264,7 +264,7 @@ namespace Rambha.Document
 
         public override GSCore ExecuteMessage(string token, GSCoreCollection args)
         {
-            if (token == "AcceptChar")
+            if (token == "acceptString")
             {
                 if (args.Count > 0)
                 {

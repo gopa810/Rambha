@@ -46,6 +46,7 @@ namespace Rambha.Document
 
             PrepareBrushesAndPens();
 
+            DrawStyledBackground(context, rect);
             DrawStyledBorder(context, rect);
 
             Rectangle bounds = ContentPadding.ApplyPadding(rect);

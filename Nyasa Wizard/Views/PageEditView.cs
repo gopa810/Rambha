@@ -168,6 +168,8 @@ namespace SlideMaker.Views
             Context.PageHeight = view_size.Height;
             Context.drawSelectionMarks = true;
 
+            CheckLabelBackgrounds();
+
             PageData.PaintBackground(Context);
             PageData.Paint(Context, false);
             PageData.Paint(Context, true);
@@ -618,6 +620,10 @@ namespace SlideMaker.Views
             Rectangle abst = Rectangle.Empty;
             foreach (SMControl c in PageData.SelectedObjects)
             {
+                // if resizing, then recalculate internal layout
+                if (Context.trackingType != SMControlSelection.All)
+                    c.TextDidChange();
+
                 SMRectangleArea area = c.Area;
                 if (origAreas.ContainsKey(c.Id))
                 {
@@ -1110,52 +1116,8 @@ namespace SlideMaker.Views
                     }
                 }
 
-                SMControl fc = Page.FindObjectContainingPoint(Context, Context.PhysicalToLogical(LastUserPoint));
-                if (fc != null)
-                {
-                    if (fc is SMLabel)
-                    {
-                        SMLabel lab = (SMLabel)fc;
-                        lab.Text = text;
-                    }
-                    else if (fc is SMTextContainer)
-                    {
-                        SMTextContainer cnt = (SMTextContainer)fc;
-                        cnt.Text = text;
-                    }
-                    else if (fc is SMOrderedList)
-                    {
-                        SMOrderedList sm = (SMOrderedList)fc;
-                        sm.AddText(text);
-                    }
-                    else if (fc is SMImage)
-                    {
-                        SMImage si = (SMImage)fc;
-                        si.Text = text;
-                        if (si.ContentArangement == SMContentArangement.ImageOnly)
-                            si.ContentArangement = SMContentArangement.ImageAbove;
-                    }
-                    else if (fc is SMSelection)
-                    {
-                        SMSelection ss = (SMSelection)fc;
-                        ss.Text = text.Replace(" ", "|");
-                    }
-                    Invalidate();
-                }
-                else
-                {
-                    object obj = PageData.TagToObject(strType) ?? PageData.TagToObject("Label");
-                    if (obj is SMControl)
-                    {
-                        SMControl pm = (SMControl)obj;
-                        pm.Id = Document.Data.GetNextId();
-                        pm.Text = text;
-                        pm.Autosize = true;
 
-                        // creating coordinates
-                        PlaceObjectIntoPage(LastUserPoint, pm, Size.Empty);
-                    }
-                }
+                PasteTextAtPage(strType, text);
             }
             else if (Clipboard.ContainsImage())
             {
@@ -1603,6 +1565,128 @@ namespace SlideMaker.Views
             }
         }
 
+        private void pasteOnelineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Clipboard.ContainsText(TextDataFormat.UnicodeText))
+            {
+                string strType = "Label";
+                string text = (string)Clipboard.GetData(DataFormats.UnicodeText);
+                text = text.Trim().Replace("\r\n", " ").Replace("\n", " ");
+
+                PasteTextAtPage(strType, text);
+            }
+        }
+
+        private void PasteTextAtPage(string strType, string text)
+        {
+            SMControl fc = Page.FindObjectContainingPoint(Context, Context.PhysicalToLogical(LastUserPoint));
+            if (fc != null)
+            {
+                if (fc is SMLabel || fc is SMCheckBox || fc is SMTextContainer)
+                {
+                    fc.Text = text;
+                }
+                else if (fc is SMOrderedList)
+                {
+                    SMOrderedList sm = (SMOrderedList)fc;
+                    sm.AddText(text);
+                }
+                else if (fc is SMImage)
+                {
+                    SMImage si = (SMImage)fc;
+                    si.Text = text;
+                    if (si.ContentArangement == SMContentArangement.ImageOnly)
+                        si.ContentArangement = SMContentArangement.ImageAbove;
+                }
+                else if (fc is SMSelection)
+                {
+                    SMSelection ss = (SMSelection)fc;
+                    ss.Text = text.Replace(" ", "|");
+                }
+                Invalidate();
+            }
+            else
+            {
+                object obj = PageData.TagToObject(strType) ?? PageData.TagToObject("Label");
+                if (obj is SMControl)
+                {
+                    SMControl pm = (SMControl)obj;
+                    pm.Id = Document.Data.GetNextId();
+                    pm.Text = text;
+                    pm.Autosize = true;
+
+                    // creating coordinates
+                    PlaceObjectIntoPage(LastUserPoint, pm, Size.Empty);
+                }
+            }
+        }
+
+
+        internal void CheckLabelBackgrounds()
+        {
+            if (PageData != null)
+            {
+                foreach (SMControl sc in PageData.Objects)
+                {
+                    CheckBackgroundShadow(sc);
+                }
+            }
+        }
+
+        private void CheckBackgroundShadow(SMControl sc)
+        {
+            if (sc is SMLabel)
+            {
+                SMLabel lab = sc as SMLabel;
+                if (lab.BackType == SMBackgroundType.Shadow && lab.BackgroundImage == null)
+                {
+                    CreateBackgroundImageForLabel(lab);
+                }
+            }
+        }
+
+        private void CreateBackgroundImageForLabel(SMLabel lab)
+        {
+            RectangleStatistic rs = new RectangleStatistic();
+
+                        SMRectangleArea area = lab.Area;
+            Rectangle bounds = area.GetBounds(Context);
+            Rectangle textBounds = lab.ContentPadding.ApplyPadding(bounds);
+
+
+            string plainText = lab.Text;
+            MNReferencedAudioText runningText = null;
+
+            if (lab.Content != null)
+            {
+                plainText = null;
+                if (lab.Content is MNReferencedText)
+                    plainText = ((MNReferencedText)lab.Content).Text;
+                else if (lab.Content is MNReferencedAudioText)
+                    runningText = lab.Content as MNReferencedAudioText;
+                else if (lab.Content is MNReferencedSound)
+                    plainText = Text;
+            }
+
+            if (plainText.StartsWith("$"))
+            {
+                plainText = Document.ResolveProperty(plainText.Substring(1));
+            }
+
+
+            Rectangle[] rc = lab.richText.CalcRectangles(Context, plainText, textBounds);
+
+            foreach (Rectangle ri in rc)
+            {
+                rs.Rects.Add(ri);
+            }
+
+            ShadowPainter sp = new ShadowPainter(rs.TotalRectangle, Color.White, 16, 16);
+            rs.DrawInto(sp);
+
+            lab.BackgroundImage = sp.GetPNGImage();
+            lab.BackgroundImageOffset = sp.OffsetBitmap;
+        }
     }
 
 

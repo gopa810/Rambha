@@ -87,40 +87,52 @@ namespace Rambha.Document
 
             Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
 
-            Font font = GetUsedFont();
-
-            SizeF cbSize = context.g.MeasureString("M", font);
-            int inpad = (int)(cbSize.Height / 8);
-            int inpad2 = inpad / 2;
-            int height = (int)(cbSize.Height * 3 / 4);
-
-
-            SizeF sf = richText.MeasureString(context, Text, textBounds.Width - height - 2*inpad);
-            Size textSize = new Size((int)sf.Width + 5, (int)sf.Height);
-
-            Pen drawPen = (UIStateError == MNEvaluationResult.Incorrect ? Pens.Red : tempForePen);
-
-            Rectangle rectCB = textBounds;
-            if (CheckBoxAtEnd)
+            if (Text.Length == 0)
             {
-                rectCB = new Rectangle(textBounds.X + textSize.Width + inpad, rectCB.Top + inpad, height, height);
-                textBounds.Size = textSize;
+                bool b = UIStatePressed;
+                UIStatePressed |= UIStateChecked;
+                DrawStyledBackground(context, textBounds);
+                DrawStyledBorder(context, textBounds);
+                UIStatePressed = b;
             }
             else
             {
-                rectCB = new Rectangle(rectCB.Left + inpad, rectCB.Top + inpad, height, height);
-                textBounds.Size = textSize;
-                textBounds.X += height + 2 * inpad;
-            }
 
-            context.g.DrawRectangle(drawPen, rectCB);
-            if (Status)
-            {
-                rectCB.Inflate(-inpad2, -inpad2);
-                context.g.FillRectangle(tempForeBrush, rectCB);
-            }
+                Font font = GetUsedFont();
 
-            richText.DrawString(context, Text, textBounds);
+                SizeF cbSize = context.g.MeasureString("M", font);
+                int inpad = (int)(cbSize.Height / 8);
+                int inpad2 = inpad / 2;
+                int height = (int)(cbSize.Height * 3 / 4);
+
+
+                SizeF sf = richText.MeasureString(context, Text, textBounds.Width - height - 2*inpad);
+                Size textSize = new Size((int)sf.Width + 5, (int)sf.Height);
+
+                Pen drawPen = (UIStateError == MNEvaluationResult.Incorrect ? Pens.Red : tempForePen);
+
+                Rectangle rectCB = textBounds;
+                if (CheckBoxAtEnd)
+                {
+                    rectCB = new Rectangle(textBounds.X + textSize.Width + inpad, rectCB.Top + inpad, height, height);
+                    textBounds.Size = textSize;
+                }
+                else
+                {
+                    rectCB = new Rectangle(rectCB.Left + inpad, rectCB.Top + inpad, height, height);
+                    textBounds.Size = textSize;
+                    textBounds.X += height + 2 * inpad;
+                }
+
+                context.g.DrawRectangle(drawPen, rectCB);
+                if (Status)
+                {
+                    rectCB.Inflate(-inpad2, -inpad2);
+                    context.g.FillRectangle(tempForeBrush, rectCB);
+                }
+
+                richText.DrawString(context, Text, textBounds);
+            }
 
             // draw selection marks
             base.Paint(context, false);

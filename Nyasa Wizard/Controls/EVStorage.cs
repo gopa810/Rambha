@@ -79,6 +79,7 @@ namespace SlideMaker
         public static LazyControl<EVControlStyle> EvControlStyle = new LazyControl<EVControlStyle>();
         public static LazyControl<EVPageName> EvPageName = new LazyControl<EVPageName>();
         public static LazyControl<EVOrderedList> EvOrderedList = new LazyControl<EVOrderedList>();
+        public static LazyControl<EVLabel> EvLabel = new LazyControl<EVLabel>();
     }
 
     public class LazyControl<T> where T : UserControl, new()

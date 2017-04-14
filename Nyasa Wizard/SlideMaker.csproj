@@ -94,6 +94,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\EVLabel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EVLabel.Designer.cs">
+      <DependentUpon>EVLabel.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\EVOrderedList.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -260,6 +266,7 @@
     <Compile Include="Controls\EVControlName.Designer.cs">
       <DependentUpon>EVControlName.cs</DependentUpon>
     </Compile>
+    <Compile Include="ShadowPainter.cs" />
     <Compile Include="ToolWindowInsertPageLayout.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -358,6 +365,9 @@
     <Compile Include="TreeObjectView\TreeObjectView.Designer.cs">
       <DependentUpon>TreeObjectView.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Controls\EVLabel.resx">
+      <DependentUpon>EVLabel.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\EVOrderedList.resx">
       <DependentUpon>EVOrderedList.cs</DependentUpon>
     </EmbeddedResource>

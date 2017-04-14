@@ -49,6 +49,9 @@ namespace Rambha.Document
         [Browsable(false), Category("Presentation")]
         public int DefaultFontSize { get; set; }
 
+        [Browsable(true), Category("Presentation")]
+        public MNFontName DefaultFontName { get; set; }
+
         [Editor(typeof(ImageSelectionPropertyEditor), typeof(UITypeEditor))]
         [Browsable(true), DisplayName("Book Icon"), Category("Document")]
         public MNReferencedImage BookImageRef { get; set; }
@@ -107,6 +110,7 @@ namespace Rambha.Document
             HomePage = "start";
             Version = 2;
             DefaultFontSize = 32;
+            DefaultFontName = MNFontName.GilSansMurari;
 
             WorkTime.SetTotalWorkTime(0);
         }
@@ -161,6 +165,9 @@ namespace Rambha.Document
 
             bw.WriteByte(25);
             bw.WriteInt32(DefaultFontSize);
+
+            bw.WriteByte(26);
+            bw.WriteInt32((int)DefaultFontName);
 
             bw.WriteByte(0);
         }
@@ -227,6 +234,9 @@ namespace Rambha.Document
                         break;
                     case 25:
                         DefaultFontSize = br.ReadInt32();
+                        break;
+                    case 26:
+                        DefaultFontName = (MNFontName)br.ReadInt32();
                         break;
                 }
             }

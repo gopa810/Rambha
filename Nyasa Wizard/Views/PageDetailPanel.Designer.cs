@@ -77,6 +77,8 @@
             this.tabPageProject = new System.Windows.Forms.TabPage();
             this.treeObjectView1 = new SlideMaker.Views.TreeObjectView();
             this.tabPageStyles = new System.Windows.Forms.TabPage();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
             this.button14 = new System.Windows.Forms.Button();
             this.button13 = new System.Windows.Forms.Button();
             this.button12 = new System.Windows.Forms.Button();
@@ -103,8 +105,6 @@
             this.label1 = new System.Windows.Forms.Label();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.label12 = new System.Windows.Forms.Label();
-            this.label13 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
             this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.Panel2.SuspendLayout();
@@ -682,6 +682,28 @@
             this.tabPageStyles.UseVisualStyleBackColor = true;
             this.tabPageStyles.Click += new System.EventHandler(this.tabPageStyles_Click);
             // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 17F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label13.Location = new System.Drawing.Point(84, 47);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(59, 29);
+            this.label13.TabIndex = 25;
+            this.label13.Text = "20pt";
+            this.label13.Click += new System.EventHandler(this.label13_Click);
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.Location = new System.Drawing.Point(89, 30);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(62, 17);
+            this.label12.TabIndex = 24;
+            this.label12.Text = "12pt text";
+            this.label12.Click += new System.EventHandler(this.label12_Click);
+            // 
             // button14
             // 
             this.button14.Font = new System.Drawing.Font("Garamond", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -850,7 +872,7 @@
             0,
             0});
             this.numericUpDown1.Minimum = new decimal(new int[] {
-            18,
+            15,
             0,
             0,
             0});
@@ -971,28 +993,6 @@
             // 
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
-            // 
-            // label12
-            // 
-            this.label12.AutoSize = true;
-            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(89, 30);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(62, 17);
-            this.label12.TabIndex = 24;
-            this.label12.Text = "12pt text";
-            this.label12.Click += new System.EventHandler(this.label12_Click);
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 17F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.Location = new System.Drawing.Point(84, 47);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(59, 29);
-            this.label13.TabIndex = 25;
-            this.label13.Text = "20pt";
-            this.label13.Click += new System.EventHandler(this.label13_Click);
             // 
             // PageDetailPanel
             // 

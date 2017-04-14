@@ -441,7 +441,7 @@ namespace Rambha.Document
                     else if (!Char.IsWhiteSpace(readedChar))
                     {
                         mode = TextParseMode.ReadArgName;
-                        if (argumentName.Length > 0)
+                        if (argumentName.Length > 0 && !tt.attrs.ContainsKey(argumentName))
                         {
                             tt.attrs.Add(argumentName, string.Empty);
                         }
@@ -500,7 +500,7 @@ namespace Rambha.Document
                         mode = TextParseMode.WaitForArgOrEnd;
                         if (argumentName.Length > 0)
                         {
-                            tt.attrs.Add(argumentName, sb.ToString());
+                            tt.attrs[argumentName] = sb.ToString();
                             sb.Clear();
                             argumentName = "";
                         }
@@ -667,13 +667,13 @@ namespace Rambha.Document
         private static void AppendTag(List<SMWordBase> list, StringBuilder word, TextTag tt, SMControl control, RunningFormat fmt)
         {
             // TODO
+            ClearWordBuffer(list, word, control, fmt);
             switch (tt.tag)
             {
                 case "draggable":
                     fmt.dragResponse = SMDragResponse.Drag;
                     break;
                 case "/draggable":
-                    ClearWordBuffer(list, word, control, fmt);
                     fmt.dragResponse = SMDragResponse.None;
                     break;
                 case "drop":
@@ -700,25 +700,20 @@ namespace Rambha.Document
                     }
                     break;
                 case "page":
-                    ClearWordBuffer(list, word, control, fmt);
                     list.Add(new SMWordSpecial(control.NormalState, control.NormalState, control.Font) { Type = SMWordSpecialType.NewPage });
                     break;
                 case "hr":
-                    ClearWordBuffer(list, word, control, fmt);
                     list.Add(new SMWordSpecial(control.NormalState, control.NormalState, control.Font) { Type = SMWordSpecialType.HorizontalLine });
                     break;
                 case "br":
-                    ClearWordBuffer(list, word, control, fmt);
                     list.Add(new SMWordSpecial(control.NormalState, control.HighlightState, control.Font) { Type = SMWordSpecialType.Newline });
                     AppendWord(list, "\n", control, fmt);
                     break;
                 case "col":
-                    ClearWordBuffer(list, word, control, fmt);
                     list.Add(new SMWordSpecial(control.NormalState, control.HighlightState, control.Font) { Type = SMWordSpecialType.NewColumn });
                     //AppendWord(list, "\n", control, fmt);
                     break;
                 case "r":
-                    ClearWordBuffer(list, word, control, fmt);
                     fmt.Bold = false;
                     fmt.Italic = false;
                     fmt.Strikeout = false;
@@ -774,6 +769,7 @@ namespace Rambha.Document
                     //fmt.fontStyleValid = (fmt.fontStyle != control.Style.Font.Style);
                     break;
                 default:
+                    ClearWordBuffer(list, word, control, fmt);
                     if (tt.tag.StartsWith("fs"))
                     {
                         int arg = 0;

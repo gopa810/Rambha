@@ -147,6 +147,7 @@ namespace SlideMaker
         {
             public bool boldChanged = false;
             public bool italicChanged = false;
+            public bool underlineChanged = false;
             public bool fontSizeChanged = false;
             public FMTChange()
             {
@@ -163,6 +164,11 @@ namespace SlideMaker
                     italicChanged = true;
                     italic = newLevel.italic;
                 }
+                if (oldLevel.underline != newLevel.underline)
+                {
+                    underlineChanged = true;
+                    underline = newLevel.underline;
+                }
                 if (oldLevel.fontSize != newLevel.fontSize)
                 {
                     fontSizeChanged = true;
@@ -175,6 +181,7 @@ namespace SlideMaker
         {
             public bool bold = false;
             public bool italic = false;
+            public bool underline = false;
             public int fontSize = 24;
             public bool block = false;
             public FMT()
@@ -184,6 +191,7 @@ namespace SlideMaker
             {
                 bold = a.bold;
                 italic = a.italic;
+                underline = a.underline;
                 fontSize = a.fontSize;
             }
         }
@@ -217,6 +225,7 @@ namespace SlideMaker
             {
                 LastLevel.bold = false;
                 LastLevel.italic = false;
+                LastLevel.underline = false;
                 LastLevel.fontSize = 24;
             }
 
@@ -378,6 +387,10 @@ namespace SlideMaker
                         {
                             tw.AppendFormat("<{0}i>", c.italic ? "" : "/");
                         }
+                        if (c.underlineChanged)
+                        {
+                            tw.AppendFormat("<{0}u>", c.underline ? "" : "/");
+                        }
                         idx++;
                         break;
                     case ItemType.Text:
@@ -389,7 +402,7 @@ namespace SlideMaker
                         switch (tracker.outCmd.ToString())
                         {
                             case "\'":
-                                tw.Append(Convert.ToChar(Convert.ToInt32(tracker.outArg.ToString(), 16)));
+                                tw.Append(Convert.ToChar(Convert.ToInt32(tracker.outArg.ToString().Substring(0,2), 16)));
                                 break;
                             case "b":
                                 if (tracker.Arg == "0")
@@ -421,8 +434,25 @@ namespace SlideMaker
                                 }
                                 else
                                 {
-                                    LastLevel.bold = true;
+                                    LastLevel.italic = true;
                                     tw.Append("<i>");
+                                }
+                                break;
+                            case "ul":
+                                if (tracker.Arg == "0")
+                                {
+                                    LastLevel.underline = false;
+                                    tw.Append("</u>");
+                                }
+                                else if (tracker.Arg == "1")
+                                {
+                                    LastLevel.underline = true;
+                                    tw.Append("<u>");
+                                }
+                                else
+                                {
+                                    LastLevel.underline = true;
+                                    tw.Append("<u>");
                                 }
                                 break;
                             case "fonttbl":

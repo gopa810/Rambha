@@ -17,6 +17,8 @@ namespace FilesGenerator
         public Form1()
         {
             InitializeComponent();
+            //Form3 f = new Form3();
+            //f.Show();
         }
 
         private void button1_Click(object sender, EventArgs e)

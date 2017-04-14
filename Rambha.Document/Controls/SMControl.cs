@@ -104,6 +104,13 @@ namespace Rambha.Document
         [Browsable(true), Category("Layout")]
         public SMControlSelection Dock { get; set; }
 
+        [Browsable(true), Category("Layout")]
+        public SMBackgroundType BackType { get; set; }
+
+        public Image BackgroundImage = null;
+        public Point BackgroundImageOffset = Point.Empty;
+
+
         [Browsable(false)]
         public SMRectangleArea Area
         {
@@ -207,6 +214,9 @@ namespace Rambha.Document
                     return new GSBoolean(UIStateVisible);
                 case "getText":
                     return new GSString(Text);
+                case "setText":
+                    Text = args.getSafe(0).getStringValue();
+                    break;
                 case "toogleCheckZero":
                     SetCheckState(!UIStateChecked, 0, 1);
                     break;
@@ -584,6 +594,19 @@ namespace Rambha.Document
             bw.WriteByte(232);
             bw.WriteInt32((int)Dock);
 
+            bw.WriteByte(231);
+            bw.WriteInt32((int)BackType);
+
+            if (BackgroundImage != null)
+            {
+                bw.WriteByte(230);
+                bw.WriteImage(BackgroundImage);
+            }
+
+            bw.WriteByte(229);
+            bw.WriteInt32(BackgroundImageOffset.X);
+            bw.WriteInt32(BackgroundImageOffset.Y);
+
             // end-of-object
             bw.WriteByte(0);
         }
@@ -687,6 +710,17 @@ namespace Rambha.Document
                         break;
                     case 232:
                         Dock = (SMControlSelection)br.ReadInt32();
+                        if (Dock != SMControlSelection.None)
+                            BackType = SMBackgroundType.Solid;
+                        break;
+                    case 231:
+                        BackType = (SMBackgroundType)br.ReadInt32();
+                        break;
+                    case 230:
+                        BackgroundImage = br.ReadImage();
+                        break;
+                    case 229:
+                        BackgroundImageOffset = new Point(br.ReadInt32(), br.ReadInt32());
                         break;
                     default:
                         return false;
@@ -767,7 +801,7 @@ namespace Rambha.Document
             }
         }
 
-        protected void DrawStyledBorder(MNPageContext context, Rectangle bounds)
+        protected void DrawStyledBackground(MNPageContext context, Rectangle bounds)
         {
             bool highState = UIStatePressed || UIStateHover;
             SMStatusLayout layout = (highState ? HighlightState : NormalState);
@@ -776,20 +810,39 @@ namespace Rambha.Document
             {
                 case SMBorderStyle.Rectangle:
                     context.g.FillRectangle(tempBackBrush, bounds);
-                    context.g.DrawRectangle(tempBorderPen, bounds);
                     break;
                 case SMBorderStyle.RoundRectangle:
-                    context.g.DrawFillRoundedRectangle(tempBorderPen, tempBackBrush, bounds, layout.CornerRadius);
+                    context.g.FillRoundedRectangle(tempBackBrush, bounds, layout.CornerRadius);
                     break;
                 case SMBorderStyle.Elipse:
                     context.g.FillEllipse(tempBackBrush, bounds);
-                    context.g.DrawEllipse(tempBorderPen, bounds);
                     break;
                 default:
                     if (layout.BackColor != Color.Transparent)
                     {
                         context.g.FillRectangle(tempBackBrush, bounds);
                     }
+                    break;
+            }
+        }
+
+        protected void DrawStyledBorder(MNPageContext context, Rectangle bounds)
+        {
+            bool highState = UIStatePressed || UIStateHover;
+            SMStatusLayout layout = (highState ? HighlightState : NormalState);
+            //Debugger.Log(0, "", "Drawing " + highState + " border for control " + Id + ", but conn is found: " + (conn != null) + "\n");
+            switch (layout.BorderStyle)
+            {
+                case SMBorderStyle.Rectangle:
+                    context.g.DrawRectangle(tempBorderPen, bounds);
+                    break;
+                case SMBorderStyle.RoundRectangle:
+                    context.g.DrawRoundedRectangle(tempBorderPen, bounds, layout.CornerRadius);
+                    break;
+                case SMBorderStyle.Elipse:
+                    context.g.DrawEllipse(tempBorderPen, bounds);
+                    break;
+                default:
                     break;
             }
         }
@@ -990,6 +1043,7 @@ namespace Rambha.Document
 
                 Rectangle currBounds = bounds;
                 currBounds.Inflate(4, 4);
+                DrawStyledBackground(context, currBounds);
                 DrawStyledBorder(context, currBounds);
                 context.g.DrawImage(image, bounds);
             }
@@ -997,6 +1051,7 @@ namespace Rambha.Document
             {
                 Rectangle currBounds = bounds;
                 currBounds.Inflate(4, 4);
+                DrawStyledBackground(context, currBounds);
                 DrawStyledBorder(context, currBounds);
                 context.g.DrawImage(image, bounds);
             }

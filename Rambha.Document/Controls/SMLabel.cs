@@ -20,10 +20,6 @@ namespace Rambha.Document
         [Browsable(true), Category("Layout")]
         public SMRunningLine RunningLine { get; set; }
 
-        private Size p_textSize = Size.Empty;
-
-        private string p_prevText = "";
-        private List<SMWordBase> drawWords = null;
 
         public SMLabel(MNPage p)
             : base(p)
@@ -32,6 +28,7 @@ namespace Rambha.Document
             RichContent = true;
             RunningLine = SMRunningLine.Natural;
             richText = new SMRichText(this);
+            BackType = SMBackgroundType.None;
         }
 
         protected override GSCore ExecuteMessageSet(GSCore a1, GSCore a2, GSCoreCollection args)
@@ -55,13 +52,17 @@ namespace Rambha.Document
             {
                 //drawWords = SMWordToken.WordListFromString(Text, this);
                 richText.ForceRecalc();
+                BackgroundImage = null;
             }
         }
 
         public override void TextDidChange()
         {
             if (richText != null)
+            {
                 richText.ForceRecalc();
+                BackgroundImage = null;
+            }
         }
 
         public SMRichText richText = null;
@@ -114,7 +115,16 @@ namespace Rambha.Document
                     r.Width = context.PageWidth;
                     textBounds.X = PADDING_DOCK_LEFT;
                     textBounds.Y = r.Y + PADDING_DOCK_TOP;
-                    context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
+                    if (BackType == SMBackgroundType.Solid)
+                    {
+                        context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
+                    }
+                    else if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
+                    {
+                        context.g.DrawImage(BackgroundImage, 
+                            textBounds.X + BackgroundImageOffset.X, 
+                            textBounds.Y + BackgroundImageOffset.Y);
+                    }
                     richText.Paragraph.VertAlign = SMVerticalAlign.Top;
                     richText.DrawString(context, textBounds);
                     Area.RelativeArea = r;
@@ -127,13 +137,76 @@ namespace Rambha.Document
                     r.Width = context.PageWidth;
                     textBounds.X = PADDING_DOCK_LEFT;
                     textBounds.Y = r.Y + PADDING_DOCK_TOP;
-                    context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
+                    if (BackType == SMBackgroundType.Solid)
+                    {
+                        context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
+                    }
+                    else if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
+                    {
+                        context.g.DrawImage(BackgroundImage,
+                            textBounds.X + BackgroundImageOffset.X,
+                            textBounds.Y + BackgroundImageOffset.Y);
+                    }
+                    richText.Paragraph.VertAlign = SMVerticalAlign.Top;
+                    richText.DrawString(context, textBounds);
+                    Area.RelativeArea = r;
+                }
+                else if (Dock == SMControlSelection.Right)
+                {
+                    r.X = context.PageWidth - textSize.Width - PADDING_DOCK_LEFT - PADDING_DOCK_RIGHT;
+                    r.Y = MNPage.HEADER_HEIGHT;
+                    r.Height = context.PageHeight - MNPage.HEADER_HEIGHT;
+                    r.Width = textSize.Width + PADDING_DOCK_RIGHT + PADDING_DOCK_LEFT;
+                    textBounds.X = r.X + PADDING_DOCK_LEFT;
+                    textBounds.Y = r.Y + PADDING_DOCK_TOP;
+                    if (BackType == SMBackgroundType.Solid)
+                    {
+                        context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
+                    }
+                    else if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
+                    {
+                        context.g.DrawImage(BackgroundImage,
+                            textBounds.X + BackgroundImageOffset.X,
+                            textBounds.Y + BackgroundImageOffset.Y);
+                    }
+                    richText.Paragraph.VertAlign = SMVerticalAlign.Top;
+                    richText.DrawString(context, textBounds);
+                    Area.RelativeArea = r;
+                }
+                else if (Dock == SMControlSelection.Left)
+                {
+                    r.X = 0;
+                    r.Y = MNPage.HEADER_HEIGHT;
+                    r.Height = context.PageHeight - MNPage.HEADER_HEIGHT;
+                    r.Width = textSize.Width + PADDING_DOCK_RIGHT + PADDING_DOCK_LEFT;
+                    textBounds.X = r.X + PADDING_DOCK_LEFT;
+                    textBounds.Y = r.Y + PADDING_DOCK_TOP;
+                    if (BackType == SMBackgroundType.Solid)
+                    {
+                        context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
+                    }
+                    else if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
+                    {
+                        context.g.DrawImage(BackgroundImage,
+                            textBounds.X + BackgroundImageOffset.X,
+                            textBounds.Y + BackgroundImageOffset.Y);
+                    }
                     richText.Paragraph.VertAlign = SMVerticalAlign.Top;
                     richText.DrawString(context, textBounds);
                     Area.RelativeArea = r;
                 }
                 else
                 {
+                    if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
+                    {
+                        context.g.DrawImage(BackgroundImage,
+                            textBounds.X + BackgroundImageOffset.X,
+                            textBounds.Y + BackgroundImageOffset.Y);
+                    }
+                    else
+                    {
+                        DrawStyledBackground(context, bounds);
+                    }
                     DrawStyledBorder(context, bounds);
 
                     richText.DrawString(context, textBounds);
@@ -171,6 +244,7 @@ namespace Rambha.Document
             }
             else if (runningText != null)
             {
+                DrawStyledBackground(context, bounds);
                 DrawStyledBorder(context, bounds);
 
                 Point curr = new Point(textBounds.Left, textBounds.Top);
@@ -217,68 +291,6 @@ namespace Rambha.Document
             }
 
             return base.OnDropFinished(dc);
-        }
-
-        public Rectangle FindOptimalSize(MNPageContext context, string str)
-        {
-            Rectangle t1, t2, t3, res;
-            SMRichLayout lay = null;
-            int s1, s2, s3, ses;
-            double scrRatio = Convert.ToDouble(context.PageWidth) / context.PageHeight;
-            double r1, r2, r3;
-            Text = str;
-            p_prevText = Text;
-            drawWords = SMWordToken.WordListFromString(Text, this);
-            if (drawWords.Count == 0)
-                return Rectangle.Empty;
-
-            t1 = new Rectangle(context.PageWidth/30, context.PageHeight/30, context.PageWidth*28/30, context.PageHeight*28/32);
-            lay = SMTextContainer.RecalculateWordsLayout(context, t1, drawWords, this, RunningLine, -1);
-            s1 = lay.bottomY - t1.Top;
-            r1 = Math.Abs(Convert.ToDouble(t1.Width) / s1 - scrRatio);
-
-            t2 = new Rectangle(context.PageWidth * 5 / 32, context.PageHeight * 5 / 32, context.PageWidth * 20 / 32, context.PageHeight * 20 / 32);
-            lay = SMTextContainer.RecalculateWordsLayout(context, t2, drawWords, this, RunningLine, -1);
-            s2 = lay.bottomY - t2.Top;
-            r2 = Math.Abs(Convert.ToDouble(t2.Width) / s2 - scrRatio);
-
-            t3 = new Rectangle(context.PageWidth / 4, context.PageHeight / 4, context.PageWidth / 2, context.PageHeight / 2);
-            lay = SMTextContainer.RecalculateWordsLayout(context, t3, drawWords, this, RunningLine, -1);
-            s3 = lay.bottomY - t3.Top;
-            r3 = Math.Abs(Convert.ToDouble(t3.Width) / s3 - scrRatio);
-
-            if (r1 < r2)
-            {
-                if (r1 < r3)
-                {
-                    res = t1;
-                    ses = s1;
-                }
-                else
-                {
-                    res = t3;
-                    ses = s3;
-                }
-            }
-            else if (r2 < r3)
-            {
-                res = t2;
-                ses = s2;
-            }
-            else
-            {
-                res = t3;
-                ses = s3;
-            }
-
-            ses = Math.Abs(ses);
-
-            res.Height = ses + ContentPadding.Top + ContentPadding.Bottom;
-            res.Y = context.PageHeight / 2 - ses / 2 - ContentPadding.Top;
-            res.X -= ContentPadding.Left;
-            res.Width += ContentPadding.Left + ContentPadding.Right;
-
-            return res;
         }
 
         public override bool Load(RSFileReader br)

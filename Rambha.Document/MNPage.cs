@@ -11,7 +11,6 @@ using System.Windows.Forms;
 using System.IO;
 using System.Drawing.Design;
 
-using Rambha.Document.Views;
 using Rambha.Script;
 using Rambha.Serializer;
 
@@ -85,6 +84,8 @@ namespace Rambha.Document
         private Brush nontransparentBackgroundBrush = null;
         private Brush semitransparentBackgroundBrush = null;
 
+        public byte[] InitialStatus = null;
+
         public const int HEADER_HEIGHT = 64;
 
         public Color BackgroundColor
@@ -118,7 +119,6 @@ namespace Rambha.Document
         // not stored
         //
 
-        [Browsable(true), Editor(typeof(TemplateSelectionEditor), typeof(UITypeEditor))]
         public MNPage Template 
         {
             get 
@@ -336,6 +336,10 @@ namespace Rambha.Document
                 {
                     case 10:
                         Id = br.ReadInt64();
+                        if (Id == 0)
+                        {
+                            Id = Document.Data.GetNextId();
+                        }
                         Title = br.ReadString();
                         Description = br.ReadString();
                         IsTemplate = br.ReadBool();
@@ -455,6 +459,7 @@ namespace Rambha.Document
                     ShowAudio = false;
                 }
             }
+
 
             return true;
         }
@@ -710,7 +715,7 @@ namespace Rambha.Document
 
                     if (context.drawSelectionMarks)
                     {
-                        g.DrawRectangle((area.Selected ? Pens.Pink : Pens.LightGray), rect);
+                        g.DrawRectangle((area.Selected ? Pens.Turquoise : Pens.LightGray), rect);
                     }
 
                     if (!po.UIStateEnabled)
@@ -747,8 +752,8 @@ namespace Rambha.Document
                     if (ShowHome)
                     {
                         g.FillRectangle((context.hitHeaderButton == 2 ? Brushes.Blue : Brushes.Black), leftX, 0, height, height);
-                        if (context.navigIconHome != null)
-                            g.DrawImage(context.navigIconHome, leftX, 0, height, height);
+                        if (context.navigIconMenu != null)
+                            g.DrawImage(context.navigIconMenu, leftX, 0, height, height);
                         leftX += height;
                     }
 
@@ -1050,6 +1055,37 @@ namespace Rambha.Document
             bw.WriteByte(0);
         }
 
+
+        public void StoreStatus()
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(ms))
+                {
+                    RSFileWriter fw = new RSFileWriter(bw);
+
+                    SaveStatus(fw);
+
+                    InitialStatus = ms.GetBuffer();
+                }
+            }
+        }
+
+        public void RestoreStatus()
+        {
+            if (InitialStatus == null)
+                return;
+
+            using (MemoryStream ms = new MemoryStream(InitialStatus))
+            {
+                using (BinaryReader br = new BinaryReader(ms))
+                {
+                    RSFileReader fr = new RSFileReader(br);
+                    LoadStatus(fr);
+                }
+            }
+        }
+
         public int GetSelectedCount()
         {
             int count = 0;
@@ -1205,8 +1241,55 @@ namespace Rambha.Document
                     if (sc.UIStateChecked)
                         count++;
                 if (count > p)
+                {
+                    Debugger.Log(0, "", "C\n");
                     sc.UIStateChecked = false;
+                }
             }
+        }
+
+        public List<SMControl> GetGroupControls(string groupName)
+        {
+            List<SMControl> cl = new List<SMControl>();
+            foreach (SMControl sc in Objects)
+            {
+                if (sc.GroupName.Equals(groupName))
+                    cl.Add(sc);
+            }
+            return cl;
+        }
+
+        public List<SMControl> GetGroupControlsChecked(string groupName)
+        {
+            List<SMControl> cl = new List<SMControl>();
+            foreach (SMControl sc in Objects)
+            {
+                if (sc.GroupName.Equals(groupName) && sc.UIStateChecked)
+                    cl.Add(sc);
+            }
+            return cl;
+        }
+
+        public List<SMControl> GetGroupControlsExcept(string groupName, SMControl s)
+        {
+            List<SMControl> cl = new List<SMControl>();
+            foreach (SMControl sc in Objects)
+            {
+                if (sc.GroupName.Equals(groupName) && sc != s)
+                    cl.Add(sc);
+            }
+            return cl;
+        }
+
+        public List<SMControl> GetGroupControlsCheckedExcept(string groupName, SMControl s)
+        {
+            List<SMControl> cl = new List<SMControl>();
+            foreach (SMControl sc in Objects)
+            {
+                if (sc.GroupName.Equals(groupName) && sc != s && sc.UIStateChecked)
+                    cl.Add(sc);
+            }
+            return cl;
         }
 
         public int CountGroupChecked(string GroupName)
@@ -1245,5 +1328,61 @@ namespace Rambha.Document
             return null;
         }
 
+
+        public bool HasControlsWithHints 
+        {
+            get
+            {
+                foreach (SMControl s in Objects)
+                {
+                    if (s.Hints.Length > 0)
+                        return true;
+                }
+                return false;
+            }
+        }
+
+        public bool HasControlsWithSpots
+        {
+            get
+            {
+                foreach (SMControl s in Objects)
+                {
+                    if (s is SMImage)
+                    {
+                        SMImage si = s as SMImage;
+                        MNReferencedImage ri = (si != null && si.Img != null) ? si.Img.Image : null;
+                        if (ri != null)
+                        {
+                            if (ri.HasSpots())
+                                return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+
+        public bool HasGroup(string groupName)
+        {
+            foreach (SMControl c in Objects)
+            {
+                if (c.GroupName.Equals(groupName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void ResetStatus()
+        {
+            Connections.Clear();
+            foreach (SMControl c in Objects)
+            {
+                c.ResetStatus();
+            }
+        }
     }
 }

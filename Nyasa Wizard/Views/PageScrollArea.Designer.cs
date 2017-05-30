@@ -30,6 +30,8 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PageScrollArea));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
             this.toolStripComboBox1 = new System.Windows.Forms.ToolStripComboBox();
@@ -54,10 +56,10 @@
             this.setDropableOneToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setEvaluationInheritedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setEvaluationNoneToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
+            this.clearAllConnnectionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1 = new System.Windows.Forms.Panel();
             this.pageEditView1 = new SlideMaker.Views.PageEditView();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -79,6 +81,28 @@
             this.toolStrip1.Size = new System.Drawing.Size(668, 25);
             this.toolStrip1.TabIndex = 3;
             this.toolStrip1.Text = "toolStrip1";
+            // 
+            // toolStripButton1
+            // 
+            this.toolStripButton1.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripButton1.Image = global::SlideMaker.Properties.Resources.navigIconBack;
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(23, 22);
+            this.toolStripButton1.Text = "toolStripButton1";
+            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click_1);
+            // 
+            // toolStripButton2
+            // 
+            this.toolStripButton2.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.toolStripButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripButton2.Image = global::SlideMaker.Properties.Resources.navigIconFwd;
+            this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton2.Name = "toolStripButton2";
+            this.toolStripButton2.Size = new System.Drawing.Size(23, 22);
+            this.toolStripButton2.Text = "toolStripButton2";
+            this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
             // 
             // toolStripSeparator1
             // 
@@ -231,7 +255,9 @@
             this.setDraggableLineToolStripMenuItem,
             this.setDropableOneToolStripMenuItem,
             this.setEvaluationInheritedToolStripMenuItem,
-            this.setEvaluationNoneToolStripMenuItem});
+            this.setEvaluationNoneToolStripMenuItem,
+            this.toolStripMenuItem3,
+            this.clearAllConnnectionsToolStripMenuItem});
             this.toolStripSplitButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripSplitButton3.Image")));
             this.toolStripSplitButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripSplitButton3.Name = "toolStripSplitButton3";
@@ -273,6 +299,18 @@
             this.setEvaluationNoneToolStripMenuItem.Text = "set Evaluation - None";
             this.setEvaluationNoneToolStripMenuItem.Click += new System.EventHandler(this.setEvaluationNoneToolStripMenuItem_Click);
             // 
+            // toolStripMenuItem3
+            // 
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(202, 6);
+            // 
+            // clearAllConnnectionsToolStripMenuItem
+            // 
+            this.clearAllConnnectionsToolStripMenuItem.Name = "clearAllConnnectionsToolStripMenuItem";
+            this.clearAllConnnectionsToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.clearAllConnnectionsToolStripMenuItem.Text = "clear all connnections";
+            this.clearAllConnnectionsToolStripMenuItem.Click += new System.EventHandler(this.clearAllConnnectionsToolStripMenuItem_Click);
+            // 
             // panel1
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -299,28 +337,6 @@
             this.pageEditView1.ViewSize = new System.Drawing.Size(1024, 768);
             this.pageEditView1.ZoomRatio = 1F;
             this.pageEditView1.NewPageRequested += new SlideMaker.Views.PageChangedEventHandler(this.pageEditView1_NewPageRequested);
-            // 
-            // toolStripButton1
-            // 
-            this.toolStripButton1.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.toolStripButton1.Image = global::SlideMaker.Properties.Resources.navigIconBack;
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(23, 22);
-            this.toolStripButton1.Text = "toolStripButton1";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click_1);
-            // 
-            // toolStripButton2
-            // 
-            this.toolStripButton2.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.toolStripButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.toolStripButton2.Image = global::SlideMaker.Properties.Resources.navigIconFwd;
-            this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton2.Name = "toolStripButton2";
-            this.toolStripButton2.Size = new System.Drawing.Size(23, 22);
-            this.toolStripButton2.Text = "toolStripButton2";
-            this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
             // 
             // PageScrollArea
             // 
@@ -373,5 +389,7 @@
         private System.Windows.Forms.ToolStripMenuItem setEvaluationNoneToolStripMenuItem;
         private System.Windows.Forms.ToolStripButton toolStripButton1;
         private System.Windows.Forms.ToolStripButton toolStripButton2;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem3;
+        private System.Windows.Forms.ToolStripMenuItem clearAllConnnectionsToolStripMenuItem;
     }
 }

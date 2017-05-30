@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Drawing;
 
 using Rambha.Script;
 
@@ -31,5 +32,8 @@ namespace Rambha.Document
 
         void AddNextScript(string scriptText);
         GSCore ResolveProperty(string property);
+        Image GetBuiltInImage(string imageName);
+
+        void ScheduleCall(int delayMilli, GSCore target, params object [] args);
     }
 }

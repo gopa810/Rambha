@@ -145,4 +145,46 @@
   <data name="SpeakerOn" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\SpeakerOn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="menuIconSelLang" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\manuItemSelLang.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconBack" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconBack.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconBook" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconBook.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconExercA" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconExercA.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconExercB" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconExercB.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconFwd" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconFwd.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconHome" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconHome.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconSelBook" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconSelBook.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconShowHints" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconShowHints.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuItemRestart" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuItemRestart.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuItemShowSpots" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuItemShowSpots.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="navigIconMenu" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\navigIconMenu.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconParents" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconParents.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="menuIconMenu" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\menuIconMenu.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

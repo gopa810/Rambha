@@ -86,15 +86,49 @@ namespace Rambha.Document
             Point sc = Point.Empty;
             Point tc = Point.Empty;
 
-            if (Source.NormalState.BorderStyle == SMBorderStyle.Elipse)
-                sc = IntersectionPointLineElipse(rs, CenterPoint(rt));
-            else
-                sc = IntersectionPointLineRect(rs, CenterPoint(rt));
+            if (Source.DragLineAlign == SMDragLineAlign.Undef)
+            {
+                if (Source.NormalState.BorderStyle == SMBorderStyle.Elipse)
+                    sc = IntersectionPointLineElipse(rs, CenterPoint(rt));
+                else
+                    sc = IntersectionPointLineRect(rs, CenterPoint(rt));
+            }
+            else if (Source.DragLineAlign == SMDragLineAlign.LeftRight)
+            {
+                if (rs.Left > rt.Right)
+                    sc = new Point(rs.Left, rs.Top + rs.Height / 2);
+                else
+                    sc = new Point(rs.Right, rs.Top + rs.Height/2);
+            }
+            else if (Source.DragLineAlign == SMDragLineAlign.TopBottom)
+            {
+                if (rs.Top > rt.Bottom)
+                    sc = new Point(rs.Left + rs.Width / 2, rs.Top);
+                else
+                    sc = new Point(rs.Left + rs.Width / 2, rs.Bottom);
+            }
 
-            if (Target.NormalState.BorderStyle == SMBorderStyle.Elipse)
-                tc = IntersectionPointLineElipse(rt, CenterPoint(rs));
+            if (Target.DragLineAlign == SMDragLineAlign.LeftRight)
+            {
+                if (rs.Left < rt.Right)
+                    tc = new Point(rt.Left, rt.Top + rt.Height / 2);
+                else
+                    tc = new Point(rt.Right, rt.Top + rt.Height / 2);
+            }
+            else if (Target.DragLineAlign == SMDragLineAlign.TopBottom)
+            {
+                if (rs.Top < rt.Bottom)
+                    tc = new Point(rt.Left + rt.Width / 2, rt.Top);
+                else
+                    tc = new Point(rt.Left + rt.Width / 2, rt.Bottom);
+            }
             else
-                tc = IntersectionPointLineRect(rt, CenterPoint(rs));
+            {
+                if (Target.NormalState.BorderStyle == SMBorderStyle.Elipse)
+                    tc = IntersectionPointLineElipse(rt, CenterPoint(rs));
+                else
+                    tc = IntersectionPointLineRect(rt, CenterPoint(rs));
+            }
 
 
             switch (ConnectionStyle)

@@ -216,12 +216,7 @@ namespace Rambha.Document
             }
             else if (token.Equals("restart"))
             {
-                foreach (SMMemoryGameCard card in cards)
-                {
-                    card.CanChangeState = true;
-                    card.State = SMMemoryCardState.Hidden;
-                }
-                MixCards();
+                ResetStatus();
             }
             return base.ExecuteMessage(token, args);
         }
@@ -459,7 +454,7 @@ namespace Rambha.Document
 
         public override void LoadStatus(RSFileReader br)
         {
-            base.LoadStatus(br);
+            base.LoadStatusCore(br);
 
             byte b;
             int r, c;
@@ -510,7 +505,7 @@ namespace Rambha.Document
 
         public override void SaveStatus(RSFileWriter bw)
         {
-            base.SaveStatus(bw);
+            base.SaveStatusCore(bw);
 
             if (Rows > 0 && Rows < 100 && Columns > 0 && Columns < 100)
             {
@@ -537,6 +532,18 @@ namespace Rambha.Document
             }
 
             bw.WriteByte(0);
+        }
+
+        public override void ResetStatus()
+        {
+            foreach (SMMemoryGameCard card in cards)
+            {
+                card.CanChangeState = true;
+                card.State = SMMemoryCardState.Hidden;
+            }
+            MixCards();
+
+            base.ResetStatus();
         }
 
         public override bool Load(RSFileReader br)

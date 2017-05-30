@@ -63,7 +63,7 @@ namespace Rambha.Document
 
         public Image navigIconBack = null;
         public Image navigIconFwd = null;
-        public Image navigIconHome = null;
+        public Image navigIconMenu = null;
         public Image navigIconHelp = null;
         public Image navigArrowBack = null;
         public Image navigArrowFwd = null;
@@ -71,6 +71,7 @@ namespace Rambha.Document
         public Image navigSpeakerOff = null;
 
         public SMTitledMessage messageBox = null;
+        public Pen SpotAreaBorderPen = null;
 
 
         public MNPageContext()
@@ -80,12 +81,13 @@ namespace Rambha.Document
             LastInvertMatrix = new Matrix();
             CurrentPage = null;
             HintFont = new Font(FontFamily.GenericSansSerif, 9);
-            MenuFont = SystemFonts.MenuFont;
-            MenuTitleFont = new Font(FontFamily.GenericSansSerif, 13);
+            MenuFont = SMGraphics.GetFontVariation(MNFontName.GilSansMurari, 18);
+            MenuTitleFont = new Font(FontFamily.GenericSansSerif, 24);
             DragItemFont = new Font(FontFamily.GenericSansSerif, 35);
-            PageTitleFont = new Font(FontFamily.GenericSansSerif, 20);
+            PageTitleFont = new Font(FontFamily.GenericSansSerif, 20, FontStyle.Italic);
             semitransparentGrayBrush = new SolidBrush(Color.FromArgb(128, Color.Gray));
             messageBox = new SMTitledMessage(CurrentPage);
+            SpotAreaBorderPen = new Pen(Color.LightBlue, 3);
         }
 
         public void ShowMessageBox()

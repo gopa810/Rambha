@@ -138,7 +138,7 @@ namespace SlideMaker.Views
             Context.navigIconBack = Properties.Resources.navigIconBack;
             Context.navigIconFwd = Properties.Resources.navigIconFwd;
             Context.navigIconHelp = Properties.Resources.navigIconHelp;
-            Context.navigIconHome = Properties.Resources.navigIconHome;
+            Context.navigIconMenu = Properties.Resources.navigIconMenu;
             Context.navigArrowBack = Properties.Resources.navigArrowLeft;
             Context.navigArrowFwd = Properties.Resources.navigArrowRight;
             Context.navigSpeakerOn = Properties.Resources.SpeakerOn;
@@ -387,22 +387,30 @@ namespace SlideMaker.Views
         public void SelectObjectsContainingPoint(MNPageContext Context, Point logPoint)
         {
             SelectionArea.RelativeArea = Rectangle.Empty;
-
+            bool hit = false;
             for (int i = PageData.Objects.Count - 1; i >= 0; i--)
             {
                 SMControl po = PageData.Objects[i];
                 if (po.Area.TestHitLogical(Context, logPoint))
                 {
+                    hit = true;
+                    //Debugger.Log(0, "", "Object hit" + po.Text + " : " + po.Area.Selected + "\n");
                     po.Area.Selected = !po.Area.Selected;
+
+                    if (po.Area.Selected)
+                    {
+                        //Debugger.Log(0, "", " - merging rect\n");
+                        MNPage.MergeRectangles(ref SelectionArea.RelativeArea, po.Area.GetRawRectangle(PageEditDisplaySize.LandscapeBig));
+                        Context.trackingType = SMControlSelection.All;
+                        break;
+                    }
+                }
+                else
+                {
+                    hit = false;
+                    //Debugger.Log(0, "", "Object not hit" + po.Text + " : " + po.Area.Selected + "\n");
                 }
 
-                if (po.Area.Selected)
-                {
-                    //Debugger.Log(0, "", " - merging rect\n");
-                    MNPage.MergeRectangles(ref SelectionArea.RelativeArea, po.Area.GetRawRectangle(PageEditDisplaySize.LandscapeBig));
-                    Context.trackingType = SMControlSelection.All;
-                    break;
-                }
             }
 
             //Debugger.Log(0,"", "SelectObjectsContainingPoint TotalSelectionrect = " + TotalSelectionRect + "\n");
@@ -419,12 +427,12 @@ namespace SlideMaker.Views
                 if (testResult != SMControlSelection.None)
                 {
                     area.Selected = true;
-                    Debugger.Log(0, "", " - merging rect\n");
+                    //Debugger.Log(0, "", " - merging rect\n");
                     MNPage.MergeRectangles(ref SelectionArea.RelativeArea, area.GetRawRectangle(Context.DisplaySize));
                 }
             }
 
-            Debugger.Log(0, "", "SelectObjectsIntersectingRect TotalSelectionrect = " + SelectionArea.RelativeArea + "\n");
+            //Debugger.Log(0, "", "SelectObjectsIntersectingRect TotalSelectionrect = " + SelectionArea.RelativeArea + "\n");
 
         }
 
@@ -509,7 +517,7 @@ namespace SlideMaker.Views
                 Context.trackingType = SMControlSelection.None;
             }
 
-            Debugger.Log(0, "", "Preserve Selection result: " + Context.trackingType + "\n");
+            //Debugger.Log(0, "", "Preserve Selection result: " + Context.trackingType + "\n");
 
             return Context.isTracking;
         }
@@ -1417,17 +1425,26 @@ namespace SlideMaker.Views
         /// 
         /// </summary>
         /// <param name="type">0 - toogleCheckZero, 1 - toogleCheckOne, 2 - toogleCheckMany</param>
-        public void MakeGroup(int type)
+        public void MakeGroup(int type, string grp_name)
         {
-            DialogNewName dlg = new DialogNewName();
-            dlg.NamePrompt = "New Group Name:";
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (grp_name == null)
+            {
+                DialogNewName dlg = new DialogNewName();
+                dlg.NamePrompt = "New Group Name:";
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    grp_name = dlg.ObjectName;
+                }
+            }
+
+            if (grp_name != null)
             {
                 foreach (SMControl ct in PageData.Objects)
                 {
                     if (ct.Area.Selected)
                     {
-                        ct.GroupName = dlg.ObjectName;
+                        ct.Clickable = true;
+                        ct.GroupName = grp_name;
                         switch(type)
                         {
                             case 0:
@@ -1456,8 +1473,10 @@ namespace SlideMaker.Views
                         ct.ExpectedChecked = Bool3.False;
                     else if (p == 1)
                         ct.ExpectedChecked = Bool3.True;
-                    else
+                    else if (p == 2)
                         ct.ExpectedChecked = Bool3.Undef;
+                    else if (p == 3)
+                        ct.ExpectedChecked = Bool3.Both;
                 }
             }
         }
@@ -1475,6 +1494,18 @@ namespace SlideMaker.Views
                         case 1: c.Draggable = SMDragResponse.Line; break;
                         case 2: c.Draggable = SMDragResponse.Drag; break;
                         case 3: c.Draggable = SMDragResponse.Undef; break;
+                    }
+                }
+            }
+            else if (p == "dragline")
+            {
+                foreach (SMControl c in list)
+                {
+                    switch (p_2)
+                    {
+                        case 0: c.DragLineAlign = SMDragLineAlign.Undef; break;
+                        case 1: c.DragLineAlign = SMDragLineAlign.TopBottom; break;
+                        case 2: c.DragLineAlign = SMDragLineAlign.LeftRight; break;
                     }
                 }
             }
@@ -1638,9 +1669,16 @@ namespace SlideMaker.Views
             if (sc is SMLabel)
             {
                 SMLabel lab = sc as SMLabel;
-                if (lab.BackType == SMBackgroundType.Shadow && lab.BackgroundImage == null)
+                if (lab.BackType == SMBackgroundType.Shadow)
                 {
-                    CreateBackgroundImageForLabel(lab);
+                    if (lab.BackgroundImage == null)
+                    {
+                        CreateBackgroundImageForLabel(lab);
+                    }
+                }
+                else
+                {
+                    lab.BackgroundImage = null;
                 }
             }
         }
@@ -1665,7 +1703,7 @@ namespace SlideMaker.Views
                 else if (lab.Content is MNReferencedAudioText)
                     runningText = lab.Content as MNReferencedAudioText;
                 else if (lab.Content is MNReferencedSound)
-                    plainText = Text;
+                    plainText = lab.Text;
             }
 
             if (plainText.StartsWith("$"))
@@ -1686,6 +1724,30 @@ namespace SlideMaker.Views
 
             lab.BackgroundImage = sp.GetPNGImage();
             lab.BackgroundImageOffset = sp.OffsetBitmap;
+        }
+
+        public void ClearAllConnections()
+        {
+            if (PageData != null)
+            {
+                PageData.Connections.Clear();
+                foreach (SMControl c in PageData.Objects)
+                {
+                    c.UIStateHover = false;
+                    if (c is SMTextContainer)
+                    {
+                        (c as SMTextContainer).drawWords.Clear();
+                        (c as SMTextContainer).drawWordsModified = true;
+                    }
+                    else if (c is SMImage)
+                    {
+                        (c as SMImage).DroppedTag = "";
+                        (c as SMImage).DroppedText = "";
+                        (c as SMImage).DroppedImage = null;
+                    }
+                }
+                Invalidate();
+            }
         }
     }
 

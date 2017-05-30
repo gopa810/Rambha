@@ -18,6 +18,13 @@ namespace Rambha.Document
         public static Dictionary<MNFontName, Font> BuiltInFonts = new Dictionary<MNFontName, Font>();
         public static StringFormat StrFormatLeftCenter;
 
+        public static SMStatusLayout clickableLayoutN = new SMStatusLayout();
+        public static SMStatusLayout clickableLayoutH = new SMStatusLayout();
+        public static SMStatusLayout draggableLayoutN = new SMStatusLayout();
+        public static SMStatusLayout draggableLayoutH = new SMStatusLayout();
+        public static SMStatusLayout dropableLayoutN = new SMStatusLayout();
+        public static SMStatusLayout dropableLayoutH = new SMStatusLayout();
+
         static SMGraphics()
         {
             StrFormatCenter = new StringFormat();
@@ -28,6 +35,44 @@ namespace Rambha.Document
             StrFormatLeftCenter.Alignment = StringAlignment.Near;
             StrFormatLeftCenter.LineAlignment = StringAlignment.Center;
 
+            // clickable
+            clickableLayoutN.BorderColor = Color.Brown;
+            clickableLayoutN.BackColor = Color.NavajoWhite;
+            clickableLayoutN.ForeColor = Color.Brown;
+            clickableLayoutN.BorderWidth = 1;
+            clickableLayoutN.BorderStyle = SMBorderStyle.RoundRectangle;
+
+            clickableLayoutH.BorderColor = Color.Brown;
+            clickableLayoutH.BackColor = Color.Brown;
+            clickableLayoutH.ForeColor = Color.White;
+            clickableLayoutH.BorderWidth = 1;
+            clickableLayoutH.BorderStyle = SMBorderStyle.RoundRectangle;
+
+            // draggable
+            draggableLayoutN.BorderColor = Color.Black;
+            draggableLayoutN.BackColor = Color.LightYellow;
+            draggableLayoutN.ForeColor = Color.Black;
+            draggableLayoutN.BorderWidth = 1;
+            draggableLayoutN.BorderStyle = SMBorderStyle.RoundRectangle;
+
+            draggableLayoutH.BorderColor = Color.Black;
+            draggableLayoutH.BackColor = Color.Orange;
+            draggableLayoutH.ForeColor = Color.Black;
+            draggableLayoutH.BorderWidth = 1;
+            draggableLayoutH.BorderStyle = SMBorderStyle.RoundRectangle;
+
+            // dropable
+            dropableLayoutN.BorderColor = Color.Yellow;
+            dropableLayoutN.BackColor = Color.Transparent;
+            dropableLayoutN.ForeColor = Color.Brown;
+            dropableLayoutN.BorderWidth = 4;
+            dropableLayoutN.BorderStyle = SMBorderStyle.RoundRectangle;
+
+            dropableLayoutH.BorderColor = Color.Orange;
+            dropableLayoutH.BackColor = Color.Transparent;
+            dropableLayoutH.ForeColor = Color.Black;
+            dropableLayoutH.BorderWidth = 4;
+            dropableLayoutH.BorderStyle = SMBorderStyle.RoundRectangle;
 
             InstalledFontCollection inst = new InstalledFontCollection();
             foreach (FontFamily ff in inst.Families)
@@ -157,6 +202,29 @@ namespace Rambha.Document
             }
 
             return p_virtual_fonts[code];
+        }
+
+        public static Size RestrictSize(Size size, int dim)
+        {
+            if (size.Width > dim && size.Height > dim)
+            {
+                if (size.Width > size.Height)
+                {
+                    if (size.Width > dim)
+                    {
+                        return new Size(32, Convert.ToInt32(size.Height * 32.0 / size.Width));
+                    }
+                }
+                else
+                {
+                    if (size.Height > 32)
+                    {
+                        return new Size(Convert.ToInt32(size.Width * 32.0 / size.Height), 32);
+                    }
+                }
+            }
+
+            return new Size(dim, dim);
         }
     }
 }

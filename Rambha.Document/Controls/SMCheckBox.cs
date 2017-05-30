@@ -39,6 +39,7 @@ namespace Rambha.Document
             return new Size(256,32);
         }
 
+
         public override bool Load(RSFileReader br)
         {
             if (base.Load(br))
@@ -83,7 +84,7 @@ namespace Rambha.Document
         {
             Rectangle bounds = Area.GetBounds(context);
 
-            PrepareBrushesAndPens();
+            SMStatusLayout layout = PrepareBrushesAndPens();
 
             Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
 
@@ -92,7 +93,7 @@ namespace Rambha.Document
                 bool b = UIStatePressed;
                 UIStatePressed |= UIStateChecked;
                 DrawStyledBackground(context, textBounds);
-                DrawStyledBorder(context, textBounds);
+                DrawStyledBorder(context, layout, textBounds);
                 UIStatePressed = b;
             }
             else
@@ -121,18 +122,33 @@ namespace Rambha.Document
                 {
                     rectCB = new Rectangle(rectCB.Left + inpad, rectCB.Top + inpad, height, height);
                     textBounds.Size = textSize;
-                    textBounds.X += height + 2 * inpad;
+                    textBounds.X += height + 2 * inpad + ContentPadding.LeftRight;
                 }
 
-                context.g.DrawRectangle(drawPen, rectCB);
                 if (Status)
                 {
-                    rectCB.Inflate(-inpad2, -inpad2);
-                    context.g.FillRectangle(tempForeBrush, rectCB);
+                    context.g.DrawFillRoundedRectangle(SMGraphics.GetPen(layout.ForeColor, 1), SMGraphics.GetBrush(layout.BackColor), rectCB, 5);
+                }
+                else
+                {
+                    context.g.DrawRoundedRectangle(SMGraphics.GetPen(layout.ForeColor, 1), rectCB, 5);
                 }
 
-                richText.DrawString(context, Text, textBounds);
+                if (Clickable)
+                    richText.DrawString(context, SMGraphics.clickableLayoutN, Text, textBounds);
+                else
+                    richText.DrawString(context, NormalState, Text, textBounds);
             }
+
+            // in case this is wrongly checked, run clearing the state in 2 secs
+            if (UIStateError == MNEvaluationResult.Incorrect && UIStateChecked)
+            {
+                if (Document.HasViewer)
+                {
+                    Document.Viewer.ScheduleCall(MNNotificationCenter.RectifyDelay, this, "clearCheck");
+                }
+            }
+
 
             // draw selection marks
             base.Paint(context, false);
@@ -157,27 +173,20 @@ namespace Rambha.Document
 
             if (HasImmediateEvaluation || HasLazyEvaluation)
             {
-                if (ExpectedChecked == Bool3.Undef)
-                {
-                    return (UIStateError = MNEvaluationResult.NotEvaluated);
-                }
-                else
-                {
-                    bool expStatus = (ExpectedChecked == Bool3.True);
-                    UIStateError = (expStatus == Status) ? MNEvaluationResult.Correct : MNEvaluationResult.Incorrect;
-                }
+                UIStateError = GenericCheckedEvaluation();
             }
             return UIStateError;
         }
 
         public override void DisplayAnswers()
         {
-            Status = (ExpectedChecked == Bool3.True);
+            Status = (ExpectedChecked == Bool3.True || ExpectedChecked == Bool3.Both);
         }
 
         public override void LoadStatus(RSFileReader br)
         {
-            base.LoadStatus(br);
+            base.LoadStatusCore(br);
+
             byte b;
             while ((b = br.ReadByte()) != 0)
             {
@@ -192,12 +201,17 @@ namespace Rambha.Document
 
         public override void SaveStatus(RSFileWriter bw)
         {
-            base.SaveStatus(bw);
+            base.SaveStatusCore(bw);
 
             bw.WriteByte(20);
             bw.WriteBool(Status);
 
             bw.WriteByte(0);
+        }
+
+        public override void ResetStatus()
+        {
+            base.ResetStatus();
         }
     }
 }

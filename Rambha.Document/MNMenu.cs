@@ -41,7 +41,7 @@ namespace Rambha.Document
                         UserTitle = br.ReadString();
                         break;
                     case 20:
-                        MNMenuItem mi = new MNMenuItem();
+                        MNMenuItem mi = new MNMenuItem(document);
                         mi.Load(document, br);
                         Items.Add(mi);
                         break;
@@ -70,7 +70,6 @@ namespace Rambha.Document
         {
             // if needed, calculate dimensions
             int spaceItems = 16;
-            int itemWidth = 64;
             int itemHeight = 64;
             int padding = 32;
 
@@ -82,26 +81,23 @@ namespace Rambha.Document
                 hasTitle = true;
             }
 
-            SizeF itemTextSize = Context.g.MeasureString("ITEM", Context.MenuFont);
-            Size itemsRect = new Size(itemWidth * Items.Count + (Items.Count > 0 ? Items.Count - 1 : 0) * spaceItems, itemHeight);
+            float maxItemWidth = 324f;
+            float itemsAreaHeight = 0;
+            foreach (MNMenuItem mi in Items)
+            {
+                SizeF szf = Context.g.MeasureString(mi.Text, Context.MenuFont);
+                maxItemWidth = Math.Max(maxItemWidth, szf.Width);
+                itemsAreaHeight += mi.IsSeparator ? spaceItems : itemHeight;
+            }
 
             int ay = padding;
             int by = ay + (hasTitle ? (int)titleSize.Height + spaceItems : 0);
-            int cy = by + itemHeight + spaceItems;
-            int dy = cy + (int)itemTextSize.Height;
-            int ey = dy + padding;
+            int cy = by + (int)itemsAreaHeight + padding;
 
-            int width = Math.Max((int)titleSize.Width, itemsRect.Width) + 2 * padding;
+            int width = (int)Math.Max(titleSize.Width, maxItemWidth) + 2 * padding;
 
-            drawRect = new Rectangle(Context.PageWidth / 2 - width / 2, Context.PageHeight / 2 - ey / 2,
-                width, ey);
-
-            int currX = (drawRect.Left + drawRect.Right) / 2 - itemsRect.Width / 2;
-            for (int i = 0; i < Items.Count; i++)
-            {
-                Items[i].drawRect = new Rectangle(currX, drawRect.Top + by, itemWidth, dy - by);
-                currX += itemWidth + spaceItems;
-            }
+            drawRect = new Rectangle(Context.PageWidth / 2 - width / 2, Context.PageHeight / 2 - cy / 2,
+                width, cy);
 
             // draw menu
             Context.g.FillRectangle(Context.semitransparentGrayBrush, 0, 0, Context.PageWidth, Context.PageHeight);
@@ -112,20 +108,38 @@ namespace Rambha.Document
             {
                 Context.g.DrawString(UserTitle, Context.MenuTitleFont, Brushes.DarkGray, 
                     Context.PageWidth / 2 - (int)titleSize.Width / 2, drawRect.Top + ay);
+                Context.g.FillRectangle(Brushes.Gray, drawRect.X + 8, drawRect.Top + (int)titleSize.Height + 2 * ay, drawRect.Width - 16, 3);
             }
 
             int ix = 0;
+            int iy = by;
             foreach (MNMenuItem mi in Items)
             {
+                mi.drawRect.X = drawRect.X;
+                mi.drawRect.Y = drawRect.Top + iy;
+                mi.drawRect.Width = drawRect.Width;
+                mi.drawRect.Height = mi.IsSeparator ? spaceItems : itemHeight;
+
                 if (ix == Context.selectedMenuItem)
                 {
                     Context.g.FillRectangle(Brushes.LightSkyBlue, mi.drawRect);
                 }
-                Context.g.DrawImage(mi.Image.ImageData, mi.drawRect.Left, 
-                    mi.drawRect.Top, itemWidth, itemHeight);
-                SizeF textSize = Context.g.MeasureString(mi.Text, Context.MenuFont);
-                Context.g.DrawString(mi.Text, Context.MenuFont, Brushes.Black, 
-                    mi.drawRect.Left + mi.drawRect.Width / 2 - (int)textSize.Width / 2, drawRect.Top + cy);
+
+                if (!mi.IsSeparator)
+                {
+                    Context.g.DrawImage(mi.Image, drawRect.Left + 8,
+                        mi.drawRect.Top + 8, itemHeight - 16, itemHeight - 16);
+                    Rectangle rtext = new Rectangle(mi.drawRect.Left + itemHeight + 16, mi.drawRect.Top, 
+                        mi.drawRect.Width - itemHeight - 16, itemHeight);
+                    Context.g.DrawString(mi.Text, Context.MenuFont, Brushes.Black, rtext, SMGraphics.StrFormatLeftCenter);
+                    iy += itemHeight;
+                }
+                else
+                {
+                    Context.g.DrawLine(Pens.Gray, mi.drawRect.Left + spaceItems, mi.drawRect.Top + spaceItems/2, 
+                        mi.drawRect.Right - spaceItems, mi.drawRect.Top + spaceItems/2);
+                    iy += spaceItems;
+                }
                 ix++;
             }
         }
@@ -139,7 +153,7 @@ namespace Rambha.Document
             int i = 0;
             foreach (MNMenuItem mi in Items)
             {
-                if (mi.drawRect.Contains(context.lastPoint))
+                if (mi.drawRect.Contains(context.lastPoint) && !mi.IsSeparator)
                 {
                     return i;
                 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Drawing;
 
 using Rambha.Script;
 using Rambha.Document;
@@ -377,6 +378,73 @@ namespace SlideViewer
         public void AddNextScript(string scriptText)
         {
             scheduledScripts.Add(scriptText);
+        }
+
+        public Image GetBuiltInImage(string BuiltInImage)
+        {
+            if (BuiltInImage.Equals("navigIconHome"))
+                return Properties.Resources.navigIconHome;
+            if (BuiltInImage.Equals("navigIconBack"))
+                return Properties.Resources.navigIconBack;
+            if (BuiltInImage.Equals("navigIconFwd"))
+                return Properties.Resources.navigIconFwd;
+            if (BuiltInImage.Equals("navigIconHelp"))
+                return Properties.Resources.navigIconHelp;
+            if (BuiltInImage.Equals("SpeakerOn"))
+                return Properties.Resources.SpeakerOn;
+            if (BuiltInImage.Equals("menuIconSelLang"))
+                return Properties.Resources.menuIconSelLang;
+            if (BuiltInImage.Equals("menuIconSelBook"))
+                return Properties.Resources.menuIconSelBook;
+            if (BuiltInImage.Equals("menuIconBack"))
+                return Properties.Resources.menuIconBack;
+            if (BuiltInImage.Equals("menuIconBook"))
+                return Properties.Resources.menuIconBook;
+            if (BuiltInImage.Equals("menuIconExercA"))
+                return Properties.Resources.menuIconExercA;
+            if (BuiltInImage.Equals("menuIconExercB"))
+                return Properties.Resources.menuIconExercB;
+            if (BuiltInImage.Equals("menuIconFwd"))
+                return Properties.Resources.menuIconFwd;
+            if (BuiltInImage.Equals("menuIconHome"))
+                return Properties.Resources.menuIconHome;
+            if (BuiltInImage.Equals("menuIconShowHints"))
+                return Properties.Resources.menuIconShowHints;
+            if (BuiltInImage.Equals("menuIconMenu"))
+                return Properties.Resources.menuIconMenu;
+            if (BuiltInImage.Equals("menuIconParents"))
+                return Properties.Resources.menuIconParents;
+            if (BuiltInImage.Equals("menuItemRestart"))
+                return Properties.Resources.menuItemRestart;
+            if (BuiltInImage.Equals("menuItemShowSpots"))
+                return Properties.Resources.menuItemShowSpots;
+
+            return null;
+        }
+
+
+        public void ScheduleCall(int delayMilli, GSCore target, params object[] args)
+        {
+            GSCoreCollection cs = new GSCoreCollection();
+            cs.Add(new GSInt32(delayMilli));
+            cs.Add(target);
+            foreach (object a in args)
+            {
+                if (a is string)
+                {
+                    cs.Add(new GSString(a as string));
+                }
+                else if (a is int)
+                {
+                    cs.Add(new GSInt32((int)a));
+                }
+                else if (a is GSCore)
+                {
+                    cs.Add(a as GSCore);
+                }
+            }
+
+            ViewController.ExecuteMessage("scheduleCall", cs);
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Drawing;
 using System.Xml;
 using System.IO;
+using System.Diagnostics;
 
 using Rambha.Serializer;
 
@@ -117,8 +118,10 @@ namespace Rambha.Document
         {
             if (Spots == null) return null;
             Point rel = AbsToRel(showRect, clientPoint, sourceRect);
+            Debugger.Log(0, "", string.Format(" >> Point clientRel: {0}\n", rel));
             foreach (MNReferencedSpot spot in Spots)
             {
+                Debugger.Log(0, "", string.Format("  > Spot {0} :: {1} :: {2}\n", spot.Center, spot.AnchorA, spot.AnchorB));
                 if (spot.Contains(rel))
                     return spot;
             }

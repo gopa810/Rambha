@@ -90,6 +90,9 @@ namespace Rambha.Document
         public SMDragResponse Draggable { get; set; }
 
         [Browsable(true), Category("Behavior")]
+        public SMDragLineAlign DragLineAlign { get; set; }
+
+        [Browsable(true), Category("Behavior")]
         public SMConnectionCardinality Cardinality { get; set; }
 
         [Browsable(true), Category("Behavior")]
@@ -130,7 +133,6 @@ namespace Rambha.Document
         public bool UIStateChecked = false;
 
         public Size AutosizeSize = Size.Empty;
-        public List<SMTokenItem> DroppedItems = new List<SMTokenItem>();
 
         [Browsable(false)]
         public MNReferencedCore Content { get; set; }
@@ -170,6 +172,7 @@ namespace Rambha.Document
             DefaultChecked = Bool3.Undef;
             Selectable = true;
             ScriptOnClick = "";
+            DragLineAlign = SMDragLineAlign.Undef;
         }
 
         public override GSCore GetPropertyValue(string s)
@@ -212,19 +215,29 @@ namespace Rambha.Document
                     break;
                 case "getVisible":
                     return new GSBoolean(UIStateVisible);
+                case "title":
+                    return new GSString(Text);
                 case "getText":
                     return new GSString(Text);
                 case "setText":
                     Text = args.getSafe(0).getStringValue();
                     break;
                 case "toogleCheckZero":
-                    SetCheckState(!UIStateChecked, 0, 1);
+                    SetCheckState(true, 0, 1);
                     break;
                 case "toogleCheckOne":
-                    SetCheckState(!UIStateChecked, 1, 1);
+                    SetCheckState(true, 1, 1);
                     break;
                 case "toogleCheckMany":
-                    SetCheckState(!UIStateChecked, 0, 100);
+                    SetCheckState(true, 0, 100);
+                    break;
+                case "toogleCheck":
+                    ToogleCheckState();
+                    break;
+                case "clearCheck":
+                Debugger.Log(0, "", "J\n");
+                    UIStateChecked = false;
+                    UIStateError = MNEvaluationResult.NotEvaluated;
                     break;
                 case "set":
                     return ExecuteMessageSet(args[0], args[1], args);
@@ -232,26 +245,61 @@ namespace Rambha.Document
             return base.ExecuteMessage(token, args);
         }
 
-        public void SetCheckState(bool ns, int minCheck, int maxCheck)
+        public void ToogleCheckState()
         {
-            if (ns)
+            Debugger.Log(0, "", "G\n");
+            UIStateChecked = !UIStateChecked;
+        }
+
+
+
+        public void SetCheckState(bool newCheckStatus, int minCheck, int maxCheck)
+        {
+            if (minCheck == 1 && maxCheck == 1)
             {
-                // limit
-                Page.LimitGroupChecked(GroupName, maxCheck - 1);
-                UIStateChecked = ns;
+                foreach (SMControl scc in Page.Objects)
+                {
+                    if (scc != this && scc.GroupName.Equals(this.GroupName))
+                    {
+                        Debugger.Log(0, "", "I\n");
+                        scc.UIStateChecked = false;
+                        scc.UIStateHover = false;
+                    }
+                    else if (scc == this)
+                    {
+                        Debugger.Log(0, "", "A\n");
+                        scc.UIStateChecked = true;
+                    }
+                }
+            }
+            else if (newCheckStatus)
+            {
+                List<SMControl> controls = Page.GetGroupControlsCheckedExcept(GroupName, this);
+                if (controls.Count > maxCheck - 1 && controls.Count > 0)
+                {
+                    Debugger.Log(0, "", "F\n");
+                    controls[0].UIStateChecked = false;
+                }
+
+                Debugger.Log(0, "", "G\n");
+                UIStateChecked = newCheckStatus;
             }
             else
             {
-                UIStateChecked = ns;
+                Debugger.Log(0, "", "H\n");
+                UIStateChecked = newCheckStatus;
                 // check min
                 if (GroupName.Length > 0)
                 {
                     if (Page.CountGroupChecked(GroupName) < minCheck)
                     {
+                        Debugger.Log(0, "", "B\n");
                         UIStateChecked = true;
                     }
                 }
             }
+
+            Evaluate();
         }
 
         public void ApplyStyle(MNReferencedStyle style)
@@ -353,19 +401,6 @@ namespace Rambha.Document
             }
         }
 
-        public int IndexOfDroppedItem(string text, string tag)
-        {
-            for (int i = 0; i < DroppedItems.Count; i++)
-            {
-                SMTokenItem si = DroppedItems[i];
-                if (si.Text.Equals(text) && si.Tag.Equals(tag))
-                {
-                    return i;
-                }            
-            }
-            return -1;
-        }
-
         /// <summary>
         /// Fired when user click in the control area
         /// </summary>
@@ -442,19 +477,6 @@ namespace Rambha.Document
                 }
                 else if (resp == SMDragResponse.Drag)
                 {
-                    bool isAdded = false;
-                    foreach (SMTokenItem si in DroppedItems)
-                    {
-                        if (si.Tag.Equals(item.Tag))
-                        {
-                            isAdded = true;
-                            break;
-                        }
-                    }
-                    if (!isAdded)
-                    {
-                        DroppedItems.Add(item);
-                    }
                 }
 
                 if (Document.HasViewer)
@@ -783,11 +805,60 @@ namespace Rambha.Document
             return UIStateError;
         }
 
-        protected void PrepareBrushesAndPens()
+        public bool IsHighlighted()
         {
-            bool highState = UIStatePressed | UIStateHover | UIStateChecked;
+            if (ExpectedChecked == Bool3.Undef)
+                return UIStatePressed || UIStateHover;
+            else
+                return UIStatePressed || UIStateHover || UIStateChecked;
+        }
 
-            SMStatusLayout layout = highState ? HighlightState : NormalState;
+        public bool IsDraggable()
+        {
+            return Draggable == SMDragResponse.Drag || Draggable == SMDragResponse.Line;
+        }
+
+        protected SMStatusLayout GetFullStatusLayout()
+        {
+            bool highState = IsHighlighted();
+
+            if (Draggable == SMDragResponse.Line || Draggable == SMDragResponse.Drag)
+            {
+                return highState ? SMGraphics.draggableLayoutH : SMGraphics.draggableLayoutN;
+            }
+            else if (Cardinality == SMConnectionCardinality.One || Cardinality == SMConnectionCardinality.Many)
+            {
+                return highState ? SMGraphics.dropableLayoutH : SMGraphics.dropableLayoutN;
+            }
+            else if (Clickable)
+            {
+                return highState ? SMGraphics.clickableLayoutH : SMGraphics.clickableLayoutN;
+            }
+
+            return GetBriefStatusLayout();
+        }
+
+        protected SMStatusLayout GetBriefStatusLayout()
+        {
+            return IsHighlighted() ? HighlightState : NormalState;
+        }
+
+        protected SMStatusLayout PrepareBrushesAndPens()
+        {
+            if (StyleName.Equals("_brief"))
+                return PrepareBrushesAndPensExtra(false);
+            else if (StyleName.Equals("_clickable"))
+                return IsHighlighted() ? SMGraphics.clickableLayoutH : SMGraphics.clickableLayoutN;
+            else
+                return PrepareBrushesAndPensExtra(true);
+        }
+
+        protected SMStatusLayout PrepareBrushesAndPensExtra(bool bFull)
+        {
+            //bool highState = IsHighlighted();
+            SMStatusLayout layout = null;
+
+            layout = bFull ? GetFullStatusLayout() : GetBriefStatusLayout();
 
             tempBackBrush = SMGraphics.GetBrush(layout.BackColor);
             tempForeBrush = SMGraphics.GetBrush(layout.ForeColor);
@@ -799,11 +870,13 @@ namespace Rambha.Document
             {
                 tempBorderPen = SMGraphics.GetPen(layout.BorderColor, layout.BorderWidth);
             }
+
+            return layout;
         }
 
         protected void DrawStyledBackground(MNPageContext context, Rectangle bounds)
         {
-            bool highState = UIStatePressed || UIStateHover;
+            bool highState = IsHighlighted();
             SMStatusLayout layout = (highState ? HighlightState : NormalState);
             //Debugger.Log(0, "", "Drawing " + highState + " border for control " + Id + ", but conn is found: " + (conn != null) + "\n");
             switch (layout.BorderStyle)
@@ -826,11 +899,8 @@ namespace Rambha.Document
             }
         }
 
-        protected void DrawStyledBorder(MNPageContext context, Rectangle bounds)
+        protected void DrawStyledBorder(MNPageContext context, SMStatusLayout layout, Rectangle bounds)
         {
-            bool highState = UIStatePressed || UIStateHover;
-            SMStatusLayout layout = (highState ? HighlightState : NormalState);
-            //Debugger.Log(0, "", "Drawing " + highState + " border for control " + Id + ", but conn is found: " + (conn != null) + "\n");
             switch (layout.BorderStyle)
             {
                 case SMBorderStyle.Rectangle:
@@ -930,25 +1000,25 @@ namespace Rambha.Document
 
         public virtual void LoadStatus(RSFileReader br)
         {
-            DroppedItems.Clear();
+            // this is called only as counterpart for SaveStatusCore in subclasses 
+            //LoadStatusCore(br);
+        }
+
+        public void LoadStatusCore(RSFileReader br)
+        {
             byte b;
             while ((b = br.ReadByte()) != 0)
             {
                 switch (b)
                 {
-                    case 10:
+                    case 5:
                         UIStateEnabled = br.ReadBool();
                         break;
-                    case 13:
+                    case 6:
                         UIStateShowHint = br.ReadBool();
                         break;
-                    case 14:
+                    case 7:
                         UIStateVisible = br.ReadBool();
-                        break;
-                    case 15:
-                        SMTokenItem ti = new SMTokenItem();
-                        ti.Load(br);
-                        DroppedItems.Add(ti);
                         break;
                     default:
                         break;
@@ -958,20 +1028,20 @@ namespace Rambha.Document
 
         public virtual void SaveStatus(RSFileWriter bw)
         {
-            bw.WriteByte(10);
+            // SaveStatusCore is called only in subclasses
+            //SaveStatusCore(bw);
+        }
+
+        protected void SaveStatusCore(RSFileWriter bw)
+        {
+            bw.WriteByte(5);
             bw.WriteBool(UIStateEnabled);
 
-            bw.WriteByte(13);
+            bw.WriteByte(6);
             bw.WriteBool(UIStateShowHint);
 
-            bw.WriteByte(14);
+            bw.WriteByte(7);
             bw.WriteBool(UIStateVisible);
-
-            foreach (SMTokenItem wt in DroppedItems)
-            {
-                bw.WriteByte(15);
-                wt.Save(bw);
-            }
 
             bw.WriteByte(0);
         }
@@ -991,9 +1061,9 @@ namespace Rambha.Document
         /// <param name="bounds">Rectangle where image is to be placed</param>
         /// <param name="image"></param>
         /// <param name="scaling"></param>
-        public Rectangle DrawImage(MNPageContext context, Rectangle bounds, Image image, SMContentScaling scaling)
+        public Rectangle DrawImage(MNPageContext context, SMStatusLayout layout, Rectangle bounds, Image image, SMContentScaling scaling)
         {
-            return DrawImage(context, bounds, image, scaling, 50, 50);
+            return DrawImage(context, layout, bounds, image, scaling, 50, 50);
         }
 
         /// <summary>
@@ -1001,13 +1071,14 @@ namespace Rambha.Document
         /// </summary>
         /// <param name="context"></param>
         /// <param name="bounds">Rectangle where image is to be placed</param>
+        /// <param name="layout"></param>
         /// <param name="image"></param>
         /// <param name="scaling"></param>
         /// <param name="offsetRelX">Value from range 0..100, it is relative
         /// placement of X location source rectnagle in source image in case of Fill</param>
         /// <param name="offsetRelY">Value from range 0..100, it is relative
         /// placement of Y location source rectnagle in source image in case of Fill</param>
-        public Rectangle DrawImage(MNPageContext context, Rectangle bounds, Image image, SMContentScaling scaling, int offsetRelX, int offsetRelY)
+        public Rectangle DrawImage(MNPageContext context, SMStatusLayout layout, Rectangle bounds, Image image, SMContentScaling scaling, int offsetRelX, int offsetRelY)
         {
             if (scaling == SMContentScaling.Normal)
                 scaling = SMContentScaling.Fit;
@@ -1043,16 +1114,22 @@ namespace Rambha.Document
 
                 Rectangle currBounds = bounds;
                 currBounds.Inflate(4, 4);
-                DrawStyledBackground(context, currBounds);
-                DrawStyledBorder(context, currBounds);
+                if (layout != null)
+                {
+                    DrawStyledBackground(context, currBounds);
+                    DrawStyledBorder(context, layout, currBounds);
+                }
                 context.g.DrawImage(image, bounds);
             }
             else if (scaling == SMContentScaling.Stretch)
             {
                 Rectangle currBounds = bounds;
                 currBounds.Inflate(4, 4);
-                DrawStyledBackground(context, currBounds);
-                DrawStyledBorder(context, currBounds);
+                if (layout != null)
+                {
+                    DrawStyledBackground(context, currBounds);
+                    DrawStyledBorder(context, layout, currBounds);
+                }
                 context.g.DrawImage(image, bounds);
             }
             else if (scaling == SMContentScaling.Fill)
@@ -1128,6 +1205,36 @@ namespace Rambha.Document
                 }
             }
             return ct;
+        }
+
+        protected MNEvaluationResult GenericCheckedEvaluation()
+        {
+            if (ExpectedChecked != Bool3.Undef)
+            {
+                if (ExpectedChecked == Bool3.Both)
+                {
+                    return MNEvaluationResult.Correct;
+                }
+                else if (ExpectedChecked == Bool3.True)
+                {
+                    return UIStateChecked ? MNEvaluationResult.Correct : MNEvaluationResult.Incorrect;
+                }
+                else
+                {
+                    return UIStateChecked ? MNEvaluationResult.Incorrect : MNEvaluationResult.Correct;
+                }
+            }
+
+            return MNEvaluationResult.NotEvaluated;
+        }
+
+
+        public virtual void ResetStatus()
+        {
+            UIStateChecked = false;
+            UIStateError = MNEvaluationResult.NotEvaluated;
+            UIStateShowHint = false;
+            UIStateHover = false;
         }
     }
 

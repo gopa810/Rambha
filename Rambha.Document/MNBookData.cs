@@ -99,6 +99,7 @@ namespace Rambha.Document
                         MNPage p = new MNPage(p_document);
                         p.Index = pageIndex;
                         p.Load(br);
+                        p.ResetStatus();
                         Pages.Add(p);
                         pageIndex++;
                         break;
@@ -151,7 +152,9 @@ namespace Rambha.Document
                         mid = br.ReadInt64();
                         page = FindPage(mid);
                         if (page != null)
+                        {
                             page.LoadStatus(br);
+                        }
                         break;
                 }
             }

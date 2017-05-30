@@ -44,6 +44,8 @@ namespace SlideMaker
             autoSave.Interval = 900000;
             autoSave.Tick += new EventHandler(autoSave_Tick);
             autoSave.Start();
+
+            ViewForm.Shared.Show();
         }
 
         void autoSave_Tick(object sender, EventArgs e)
@@ -87,7 +89,7 @@ namespace SlideMaker
 
                     ApplyUpdatesAndChanges();
 
-                    MNNotificationCenter.BroadcastMessage(this, "DocumentChanged", MNNotificationCenter.CurrentDocument); 
+                    MNNotificationCenter.BroadcastMessage(this, "DocumentChanged", MNNotificationCenter.CurrentDocument);
                 }
 
                 lastSaved = DateTime.Now;
@@ -120,6 +122,7 @@ namespace SlideMaker
                     try
                     {
                         document.Book.Load(fr);
+                        document.Book.FilePath = fileName;
                         MNNotificationCenter.CurrentFileName = fileName;
                         MNNotificationCenter.CurrentDocument = document;
                     }
@@ -380,6 +383,8 @@ namespace SlideMaker
         {
             pageFlowToolStripMenuItem.Checked = false;
             pageDynamicsToolStripMenuItem.Checked = true;
+            viewerSlidesToolStripMenuItem.Enabled = !ViewForm.IsVisible();
+            reviewFrameToolStripMenuItem.Enabled = !ReviewFrame.IsVisible();
         }
 
 
@@ -405,6 +410,13 @@ namespace SlideMaker
 
         private void MainFrame_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (ViewForm.IsVisible())
+                ViewForm.Shared.SavePosition();
+            if (ReviewFrame.IsVisible())
+                ReviewFrame.Shared.SavePosition();
+
+            MNNotificationCenter.BroadcastMessage(this, "AppWillClose");
+
             if (bOmitFinalSave) return;
             autoSave.Stop();
             saveToolStripMenuItem_Click(sender, EventArgs.Empty);
@@ -675,18 +687,28 @@ namespace SlideMaker
         /// 2 - header without audio, 3 - full header</param>
         private void AddNewPage(MNDocument doc, string title, string templateName, int type)
         {
+            AddNewPage(doc, title, templateName, type, -1);
+
+        }
+
+        private MNPage AddNewPage(MNDocument doc, string title, string templateName, int type, int pageAfter)
+        {
             Debugger.Log(0, "", "AddnewPage: " + title + ", " + templateName + ", " + type + "\n");
 
             MNPage np = new MNPage(doc);
             np.Title = title;
+            np.Id = doc.Data.GetNextId();
 
             SetControlsToPage(templateName, np);
 
             SetPageHeaderControls(type, np);
 
+            if (pageAfter == -1)
+                doc.Data.Pages.Add(np);
+            else
+                doc.Data.Pages.Insert(pageAfter + 1, np);
 
-            doc.Data.Pages.Add(np);
-
+            return np;
         }
 
         private static void SetControlsToPage(string templateName, MNPage np)
@@ -738,6 +760,49 @@ namespace SlideMaker
                     np.ShowHome = true;
                     np.ShowHelp = false;
                     break;
+            }
+        }
+
+        private void viewerSlidesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ViewForm.Shared.Show();
+            ViewForm.Shared.Visible = true;
+        }
+
+        private void reviewFrameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ReviewFrame.Shared.Show();
+            ReviewFrame.Shared.Visible = true;
+        }
+
+        private void checkTransitionPagesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DialogInsertTransPages dlg = new DialogInsertTransPages();
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+            dlg.SetDocument(doc);
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                for (int i = 2; i >= 0; i--)
+                {
+                    int afterPage, pageType;
+                    dlg.GetPageToInsert(i, out afterPage, out pageType);
+                    MNPage p = null;
+                    switch(pageType)
+                    {
+                        case 1:
+                            doc.Data.Pages[afterPage].NextPage = "";
+                            p = AddNewPage(doc, "End of Book", "EOPBook", 0, afterPage);
+                            break;
+                        case 2:
+                            doc.Data.Pages[afterPage].NextPage = "";
+                            p = AddNewPage(doc, "End of Exercises Before", "EOPExBefore", 0, afterPage);
+                            break;
+                        case 3:
+                            doc.Data.Pages[afterPage].NextPage = "";
+                            p = AddNewPage(doc, "End of Exercises After", "EOPExAfter", 0, afterPage);
+                            break;
+                    }
+                }
             }
         }
 

@@ -11,27 +11,20 @@ namespace Rambha.Document
 {
     public class MNMenuItem
     {
-        public MNReferencedImage Image
+        public Image Image
         {
             get
             {
-                if (p_image == null && image_id > 0 && doc != null)
-                    p_image = doc.FindImage(image_id);
-                return p_image;
-            }
-            set
-            {
-                p_image = value;
+                if (Document.HasViewer)
+                {
+                    return Document.Viewer.GetBuiltInImage(ImageName);
+                }
+                return null;
             }
         }
-        public long ImageId
-        {
-            get { return p_image == null ? -1 : p_image.Id; }
-            set { image_id = value; }
-        }
-        private MNReferencedImage p_image = null;
-        private MNDocument doc = null;
-        private long image_id = -1;
+        public string ImageName {get;set;}
+
+        public MNDocument Document = null;
 
         public string Text { get; set; }
 
@@ -40,10 +33,11 @@ namespace Rambha.Document
 
         public Rectangle drawRect; 
 
-        public MNMenuItem()
+        public MNMenuItem(MNDocument d)
         {
-            Image = null;
-            Text = "MenuItem";
+            Document = d;
+            ImageName = "";
+            Text = "";
             ActionScript = "";
         }
 
@@ -52,16 +46,24 @@ namespace Rambha.Document
             return string.Format("MenuItem: {0}", Text);
         }
 
+        public bool IsSeparator
+        {
+            get
+            {
+                return Text.Length == 0;
+            }
+        }
+
         public void Load(MNDocument document, RSFileReader br)
         {
-            doc = document;
+            Document = document;
             byte b;
             while ((b = br.ReadByte()) != 0)
             {
                 switch (b)
                 {
                     case 10:
-                        ImageId = br.ReadInt64();
+                        ImageName = br.ReadString();
                         break;
                     case 11:
                         Text = br.ReadString();
@@ -76,7 +78,7 @@ namespace Rambha.Document
         public void Save(RSFileWriter bw)
         {
             bw.WriteByte(10);
-            bw.WriteInt64(ImageId);
+            bw.WriteString(ImageName);
 
             bw.WriteByte(11);
             bw.WriteString(Text);

@@ -104,7 +104,7 @@ namespace SlideViewer
                 RootFile = client.DownloadString(Library.RootFileLink);
             }
 
-            Debugger.Log(0, "", "File downloaded\n");
+            //Debugger.Log(0, "", "File downloaded\n");
 
         }
 

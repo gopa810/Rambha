@@ -162,13 +162,14 @@ namespace SlideMaker.Views
 
             Act(2, Keys.G, 'G', "Group...", 3);
 
-            Act(3, Keys.D0, '0', "Group selectable min 0 max 1", delegate() { editView.MakeGroup(0); });
-            Act(3, Keys.D1, '1', "Group selectable min 1 max 1", delegate() { editView.MakeGroup(1); });
-            Act(3, Keys.D2, '2', "Group selectable min 0 max N", delegate() { editView.MakeGroup(2); });
+            Act(3, Keys.D0, '0', "Group selectable min 0 max 1", delegate() { editView.MakeGroup(0, null); });
+            Act(3, Keys.D1, '1', "Group selectable min 1 max 1", delegate() { editView.MakeGroup(1, null); });
+            Act(3, Keys.D2, '2', "Group selectable min 0 max N", delegate() { editView.MakeGroup(2, null); });
 
             Act(5, Keys.C, 'C', "Expected Checked...", 4);
             Act(5, Keys.D, 'D', "Drag Effect...", 6);
             Act(5, Keys.A, 'A', "Cardinality...", 7);
+            Act(5, Keys.L, 'L', "Drag Line Align...", 9);
             Act(5, Keys.N, 'N', "Names", delegate() { editView.SetSelectionProperty("names", 0); });
             Act(5, Keys.T, 'T', "Tags", delegate() { editView.SetSelectionProperty("tags", 0); });
 
@@ -187,6 +188,10 @@ namespace SlideMaker.Views
             Act(7, Keys.D9, '9', "Many", delegate() { editView.SetSelectionProperty("cardinality", 3); });
 
             Act(8, Keys.L, 'L', "Layout (of Page)", delegate() { editView.InsertPageLayout(); });
+
+            Act(9, Keys.U, 'U', "Undef", delegate() { editView.SetSelectionProperty("dragline", 0); });
+            Act(9, Keys.T, 'T', "Top-Bottom", delegate() { editView.SetSelectionProperty("dragline", 1); });
+            Act(9, Keys.L, 'L', "Left-Right", delegate() { editView.SetSelectionProperty("dragline", 2); });
 
         }
 

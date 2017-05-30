@@ -58,6 +58,13 @@
     <Compile Include="MNDocumentExecutor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReviewBook.cs" />
+    <Compile Include="ReviewFrame.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ReviewFrame.Designer.cs">
+      <DependentUpon>ReviewFrame.cs</DependentUpon>
+    </Compile>
     <Compile Include="SVBookLibrary.cs" />
     <Compile Include="Views\UpdaterDownloader.cs">
       <SubType>UserControl</SubType>
@@ -111,6 +118,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="ReviewFrame.resx">
+      <DependentUpon>ReviewFrame.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Views\UpdaterDownloader.resx">
       <DependentUpon>UpdaterDownloader.cs</DependentUpon>
     </EmbeddedResource>
@@ -183,6 +193,48 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\SpeakerOn.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\manuItemSelLang.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconBook.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconExercA.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconExercB.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconHome.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconSelBook.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconShowHints.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuItemRestart.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuItemShowSpots.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconBack.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconFwd.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconMenu.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconParents.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconMenu.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

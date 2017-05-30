@@ -107,7 +107,6 @@ namespace SlideMaker
                     else if (sc is SMImageButton)
                     {
                         AddImageToArray(doc, (sc as SMImageButton).ImgA.Image, overwrite);
-                        AddImageToArray(doc, (sc as SMImageButton).ImgB.Image, overwrite);
                     }
                 }
             }

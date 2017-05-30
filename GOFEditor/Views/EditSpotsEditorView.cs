@@ -22,6 +22,7 @@ namespace SlideMaker.Views
         private MNReferencedSpot CurrentSpot = null;
 
         private Pen blackThickPen = null;
+        private Pen pinkThickPen = null;
         private Pen whiteThinPen = Pens.White;
 
 
@@ -42,6 +43,7 @@ namespace SlideMaker.Views
         {
             InitializeComponent();
             blackThickPen = new Pen(Color.Black, 3);
+            pinkThickPen = new Pen(Color.Pink, 3);
         }
 
         private void ImageSpotsEditorView_Paint(object sender, PaintEventArgs e)
@@ -68,7 +70,9 @@ namespace SlideMaker.Views
             {
                 foreach (MNReferencedSpot spot in p_image.SafeSpots)
                 {
-                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot), blackThickPen, whiteThinPen);
+                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot), 
+                        (spot.ContentType == SMContentType.TaggedArea ? pinkThickPen : blackThickPen),
+                        whiteThinPen);
                 }
             }
 

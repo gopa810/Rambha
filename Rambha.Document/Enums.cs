@@ -9,7 +9,8 @@ namespace Rambha.Document
     {
         False = 0,
         True = 1,
-        Undef = 2
+        Undef = 2,
+        Both = 3,
     }
 
     public enum PageEditDisplaySize
@@ -23,7 +24,8 @@ namespace Rambha.Document
     public enum MNRefSpotShape
     {
         Rectangle,
-        Circle
+        Circle,
+        Triangle
     }
 
     public enum MNFontName

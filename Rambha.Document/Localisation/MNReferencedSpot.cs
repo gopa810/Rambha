@@ -24,6 +24,8 @@ namespace Rambha.Document
         public Point AnchorA { get; set; }
         public Point AnchorB { get; set; }
 
+        public bool UIStateHighlighted = false;
+
         public MNReferencedSpot()
         {
             Name = string.Empty;
@@ -91,14 +93,17 @@ namespace Rambha.Document
         public void Paint(Graphics graphics, Rectangle showRect, bool bActive, Pen penA, Pen penB)
         {
             // draw title in the center
-            SizeF szTitle = graphics.MeasureString(ContentId, SystemFonts.MenuFont);
-            Rectangle r = new Rectangle(Convert.ToInt32(showRect.X + showRect.Width*Center.X/100 - szTitle.Width / 2 - 1),
-                Convert.ToInt32(showRect.Y + showRect.Height*Center.Y/100 - szTitle.Height/2 - 1),
-                Convert.ToInt32(szTitle.Width + 2), 
-                Convert.ToInt32(szTitle.Height + 2));
-            graphics.FillRectangle(Brushes.White, r);
-            graphics.DrawRectangle(Pens.Black, r);
-            graphics.DrawString(ContentId, SystemFonts.MenuFont, Brushes.Black, r.X + 1, r.Y + 1);
+            if (penB != null)
+            {
+                SizeF szTitle = graphics.MeasureString(ContentId, SystemFonts.MenuFont);
+                Rectangle r = new Rectangle(Convert.ToInt32(showRect.X + showRect.Width * Center.X / 100 - szTitle.Width / 2 - 1),
+                    Convert.ToInt32(showRect.Y + showRect.Height * Center.Y / 100 - szTitle.Height / 2 - 1),
+                    Convert.ToInt32(szTitle.Width + 2),
+                    Convert.ToInt32(szTitle.Height + 2));
+                graphics.FillRectangle(Brushes.White, r);
+                graphics.DrawRectangle(Pens.Black, r);
+                graphics.DrawString(ContentId, SystemFonts.MenuFont, Brushes.Black, r.X + 1, r.Y + 1);
+            }
 
             // draw points
             if (Shape == MNRefSpotShape.Circle)
@@ -110,9 +115,12 @@ namespace Rambha.Document
                         CalculateY(Math.Cos(i * Math.PI / 8), Math.Sin(i * Math.PI / 8)));
                 }
                 graphics.DrawLines(penA, pa);
-                graphics.DrawLines(penB, pa);
-                PaintPoint(graphics, showRect, CalculateX(1, 0), CalculateY(1, 0), (bActive ? Color.Red : Color.Blue));
-                PaintPoint(graphics, showRect, CalculateX(0, 1), CalculateY(0, 1), (bActive ? Color.Red : Color.Blue));
+                if (penB != null)
+                {
+                    graphics.DrawLines(penB, pa);
+                    PaintPoint(graphics, showRect, CalculateX(1, 0), CalculateY(1, 0), (bActive ? Color.Red : Color.Blue));
+                    PaintPoint(graphics, showRect, CalculateX(0, 1), CalculateY(0, 1), (bActive ? Color.Red : Color.Blue));
+                }
             }
             else if (Shape == MNRefSpotShape.Rectangle)
             {
@@ -123,30 +131,30 @@ namespace Rambha.Document
                 pa[3] = RecalcPoint(ref showRect, CalculateX(1, -1), CalculateY(1, -1));
                 pa[4] = pa[0];
                 graphics.DrawLines(penA, pa);
-                graphics.DrawLines(penB, pa);
+                if (penB != null)
+                {
+                    graphics.DrawLines(penB, pa);
+                    PaintPoint(graphics, showRect, CalculateX(1, 0), CalculateY(1, 0), (bActive ? Color.Red : Color.Blue));
+                    PaintPoint(graphics, showRect, CalculateX(0, 1), CalculateY(0, 1), (bActive ? Color.Red : Color.Blue));
+                }
+            }
+            else if (Shape == MNRefSpotShape.Triangle)
+            {
+                Point[] pa = new Point[4];
+                pa[0] = RecalcPoint(ref showRect, Center.X + AnchorA.X, Center.Y + AnchorA.Y);
+                pa[1] = RecalcPoint(ref showRect, Center.X + AnchorB.X, Center.Y + AnchorB.Y);
+                pa[2] = RecalcPoint(ref showRect, Center.X, Center.Y);
+                pa[3] = RecalcPoint(ref showRect, Center.X + AnchorA.X, Center.Y + AnchorA.Y);
 
-                PaintPoint(graphics, showRect, CalculateX(1, 0), CalculateY(1, 0), (bActive ? Color.Red : Color.Blue));
-                PaintPoint(graphics, showRect, CalculateX(0, 1), CalculateY(0, 1), (bActive ? Color.Red : Color.Blue));
-            }
-            /*if (Shape == MNRefSpotShape.Circle)
-            {
-                for (int i = 0; i < 16; i++)
+                graphics.DrawLines(penA, pa);
+                if (penB != null)
                 {
-                    PaintPoint(graphics, showRect,
-                        CalculateX(Math.Cos(i * Math.PI / 8), Math.Sin(i * Math.PI / 8)),
-                        CalculateY(Math.Cos(i * Math.PI / 8), Math.Sin(i * Math.PI / 8)),
-                        ((i == 0 || i == 4) ? (bActive ? Color.Red : Color.Blue) : (bActive ? Color.Black : Color.Gray)));
+                    graphics.DrawLines(penB, pa);
+                    PaintPoint(graphics, showRect, CalculateX(1, 0), CalculateY(1, 0), (bActive ? Color.Red : Color.Blue));
+                    PaintPoint(graphics, showRect, CalculateX(0, 1), CalculateY(0, 1), (bActive ? Color.Red : Color.Blue));
                 }
             }
-            else if (Shape == MNRefSpotShape.Rectangle)
-            {
-                for (int i = 0; i < rectBorderPoints.GetLength(0); i++)
-                {
-                    PaintPoint(graphics, showRect, CalculateX(rectBorderPoints[i, 0], rectBorderPoints[i, 1]),
-                        CalculateY(rectBorderPoints[i, 0], rectBorderPoints[i, 1]),
-                        (i < 2 ? (bActive ? Color.Red : Color.Blue) : (bActive ? Color.Black : Color.Gray)));
-                }
-            }*/
+
         }
 
 
@@ -216,6 +224,10 @@ namespace Rambha.Document
             {
                 return (M * M + N * N) <= 1.0;
             }
+            else if (Shape == MNRefSpotShape.Triangle)
+            {
+                return (M >= 0.0 && N >= 0.0 && (M + N < 1.0));
+            }
 
             return false;
         }
@@ -226,5 +238,33 @@ namespace Rambha.Document
             int ya = rect.Y + Convert.ToInt32(rect.Height * Center.Y / 100.0);
             return new Point(xa, ya);
         }
+
+
+        public void SaveStatus(RSFileWriter bw)
+        {
+            // tag and value for highlighted status 
+            bw.WriteByte(10);
+            bw.WriteBool(UIStateHighlighted);
+
+            // end for spot status info
+            bw.WriteByte(0);
+        }
+
+        public void LoadStatus(RSFileReader br)
+        {
+            byte b2;
+
+            while ((b2 = br.ReadByte()) != 0)
+            {
+                switch (b2)
+                {
+                    case 10:
+                        UIStateHighlighted = br.ReadBool();
+                        break;
+                }
+            }
+        }
+
+
     }
 }

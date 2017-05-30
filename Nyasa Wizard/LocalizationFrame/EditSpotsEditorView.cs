@@ -23,6 +23,7 @@ namespace SlideMaker.Views
 
         private Pen blackThickPen = null;
         private Pen whiteThinPen = Pens.White;
+        private Pen pinkThickPen = null;
 
         public MNReferencedImage Image 
         {
@@ -41,6 +42,7 @@ namespace SlideMaker.Views
         {
             InitializeComponent();
             blackThickPen = new Pen(Color.Black, 3);
+            pinkThickPen = new Pen(Color.Pink, 3);
         }
 
         private void ImageSpotsEditorView_Paint(object sender, PaintEventArgs e)
@@ -67,7 +69,9 @@ namespace SlideMaker.Views
             {
                 foreach (MNReferencedSpot spot in p_image.SafeSpots)
                 {
-                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot), blackThickPen, whiteThinPen);
+                    spot.Paint(e.Graphics, showRect, (spot == CurrentSpot),
+                        (spot.ContentType == SMContentType.TaggedArea ? pinkThickPen : blackThickPen),
+                        whiteThinPen);
                 }
             }
 
@@ -77,17 +81,7 @@ namespace SlideMaker.Views
         {
             if (p_image == null) return;
 
-            MNReferencedSpot spot = new MNReferencedSpot();
-            spot.Shape = MNRefSpotShape.Rectangle;
-            spot.Center = lastRelUp;
-            spot.AnchorA = new Point(10, 0);
-            spot.AnchorB = new Point(0, 10);
-
-            DialogSpotName d = new DialogSpotName();
-            d.ShowDialog();
-            spot.Name = d.SpotText;
-            spot.ContentId = d.SpotText;
-            spot.ContentType = SMContentType.Audio;
+            MNReferencedSpot spot = CreateSpot(MNRefSpotShape.Rectangle);
 
             p_image.Modified = true;
             p_image.SafeSpots.Add(spot);
@@ -98,8 +92,19 @@ namespace SlideMaker.Views
         {
             if (p_image == null) return;
 
-            MNReferencedSpot spot = new MNReferencedSpot();
-            spot.Shape = MNRefSpotShape.Circle;
+            MNReferencedSpot spot = CreateSpot(MNRefSpotShape.Circle);
+
+            p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
+
+            Invalidate();
+        }
+
+        private MNReferencedSpot CreateSpot(MNRefSpotShape shape)
+        {
+            MNReferencedSpot spot;
+            spot = new MNReferencedSpot();
+            spot.Shape = shape;
             spot.Center = lastRelUp;
             spot.AnchorA = new Point(10, 0);
             spot.AnchorB = new Point(0, 10);
@@ -109,11 +114,7 @@ namespace SlideMaker.Views
             spot.Name = d.SpotText;
             spot.ContentId = d.SpotText;
             spot.ContentType = SMContentType.Audio;
-
-            p_image.SafeSpots.Add(spot);
-            p_image.Modified = true;
-
-            Invalidate();
+            return spot;
         }
 
         private MNReferencedSpot p_movedSpot = null;
@@ -235,6 +236,61 @@ namespace SlideMaker.Views
                     Invalidate();
                 }
             }
+        }
+
+        private void addNewTriangleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (p_image == null) return;
+
+            MNReferencedSpot spot = CreateSpot(MNRefSpotShape.Triangle);
+
+            p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
+
+            Invalidate();
+        }
+
+        private void addRectangleTaggedAreaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (p_image == null) return;
+
+            MNReferencedSpot spot = CreateSpot(MNRefSpotShape.Rectangle);
+
+            spot.ContentType = SMContentType.TaggedArea;
+
+            p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
+
+            Invalidate();
+
+        }
+
+        private void addCircleTaggedAreaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (p_image == null) return;
+
+            MNReferencedSpot spot = CreateSpot(MNRefSpotShape.Circle);
+
+            spot.ContentType = SMContentType.TaggedArea;
+
+            p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
+
+            Invalidate();
+        }
+
+        private void addTriangleTaggedAreaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (p_image == null) return;
+
+            MNReferencedSpot spot = CreateSpot(MNRefSpotShape.Triangle);
+
+            spot.ContentType = SMContentType.TaggedArea;
+
+            p_image.SafeSpots.Add(spot);
+            p_image.Modified = true;
+
+            Invalidate();
         }
 
     }

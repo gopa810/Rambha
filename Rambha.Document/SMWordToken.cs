@@ -6,194 +6,10 @@ using System.Drawing;
 
 namespace Rambha.Document
 {
-    public class SMWordBase
-    {
-        public SMStatusLayout NormalState = null;
-        public SMStatusLayout HighlightState = null;
-        public SMFont Font = null;
-        public int LineNo = 0;
-        public int ColumnNo = 0;
-        public int PageNo = 0;
-        public RectangleF rect = RectangleF.Empty;
-        public string tag = string.Empty;
-        public MNEvaluationType Evaluation = MNEvaluationType.Lazy;
-        private SMDragResponse draggable = SMDragResponse.Undef;
-        public int lineOffset = 0;
-
-        public SMWordBase(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
-        {
-            NormalState = pn;
-            HighlightState = hn;
-            Font = f;
-        }
-
-        public virtual SMTokenItem GetDraggableItem()
-        {
-            return null;
-        }
-
-        public virtual bool IsSpace()
-        {
-            return false;
-        }
-
-        public virtual void Paint(MNPageContext context, int X, int Y)
-        {
-        }
-    
-        public SMDragResponse Draggable
-        {
-            get { return draggable; }
-            set { draggable = value; }
-        }
-    
-        public bool IsDraggable
-        {
-            get
-            {
-                return Draggable == SMDragResponse.Drag || Draggable == SMDragResponse.Line;
-            }
-        }
-
-        public virtual void HoverPoint(Point p)
-        {
-        }
-    }
-
-    public enum SMWordSpecialType
-    {
-        Newline = 0,
-        HorizontalLine = 1,
-        NewColumn = 2,
-        NewPage = 3
-    }
-
-    public class SMWordSpecial : SMWordBase
-    {
-        public SMWordSpecial(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
-            : base(pn,hn,f)
-        {
-        }
-
-        public SMWordSpecialType Type {get;set;}
-
-        public override void Paint(MNPageContext context, int X, int Y)
-        {
-            if (Type == SMWordSpecialType.HorizontalLine)
-            {
-                context.g.DrawLine(Pens.Black, rect.X + X, rect.Y + Y + rect.Height / 2, rect.Right + X, rect.Y + Y + rect.Height / 2);
-            }
-            base.Paint(context, X, Y);
-        }
-    }
-
-    public class SMWordText: SMWordTextBase
-    {
-        public string text = string.Empty;
-        public SMWordText(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
-            : base(pn, hn, f)
-        {
-        }
-
-        public SMWordText(SMStatusLayout pn, SMStatusLayout hn, SMFont f, SMTokenItem item)
-            : base(pn, hn, f)
-        {
-            text = item.Text ?? text;
-            tag = item.Tag;
-        }
-
-        public override void Paint(MNPageContext context, int X, int Y)
-        {
-            //context.g.FillRectangle(Brushes.LightGreen, rect);
-            context.g.DrawString(this.text, this.WinFont, this.TextBrush, rect.X + X, rect.Y + Y + this.lineOffset*rect.Height/100);
-        }
-
-        public override bool IsSpace()
-        {
-            return text.Equals(" ");
-        }
-
-        public override SMTokenItem GetDraggableItem()
-        {
-            SMTokenItem item = new SMTokenItem();
-            item.Tag = tag;
-            item.Text = text;
-            item.ContentSize = Size.Empty;
-            return item;
-        }
-
-    }
-
-    public class SMWordImage : SMWordBase
-    {
-        public Image image = null;
-        public Size imageSize = Size.Empty;
-
-        public override SMTokenItem GetDraggableItem()
-        {
-            SMTokenItem item = new SMTokenItem();
-            item.Tag = tag;
-            item.Image = image;
-            item.ContentSize = Size.Empty;
-            return item;
-        }
-
-        public SMWordImage(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
-            : base(pn, hn, f)
-        {
-        }
-
-        public SMWordImage(SMStatusLayout pn, SMStatusLayout hn, SMFont f, SMTokenItem item)
-            : base(pn, hn, f)
-        {
-            tag = item.Tag;
-            image = item.Image;
-        }
-
-        public override void Paint(MNPageContext context, int X, int Y)
-        {
-            context.g.DrawImage(image, rect.X + X, rect.Y + Y, rect.Width, rect.Height);
-        }
-    }
-
-    public class SMWordTextBase: SMWordBase
-    {
-        private Brush textBrush = Brushes.Black;
-
-        public Font WinFont
-        {
-            get
-            {
-                Font f = Font.Font;
-                return f;
-            }
-        }
-
-        public Brush TextBrush
-        {
-            get
-            {
-                if (textBrush == null)
-                    textBrush = SMGraphics.GetBrush(NormalState.ForeColor);
-                return textBrush;
-            }
-            set
-            {
-                textBrush = value;
-            }
-        }
-
-        public SMWordTextBase(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
-            : base(pn, hn, f)
-        {
-        }
-    }
-
     public class SMWordToken: SMWordTextBase
     {
         private SMConnectionCardinality droppable = SMConnectionCardinality.Undef;
         public SMTokenItem droppedItem = null;
-        public bool UIStateHover = false;
         public MNEvaluationResult UIStateError = MNEvaluationResult.NotEvaluated;
         public string text = string.Empty;
         public bool Editable = false;
@@ -207,8 +23,8 @@ namespace Rambha.Document
             set { droppable = value; }
         }
 
-        public SMWordToken(SMStatusLayout pn, SMStatusLayout hn, SMFont f)
-            : base(pn, hn, f)
+        public SMWordToken(SMFont f)
+            : base(f)
         {
         }
 
@@ -231,25 +47,67 @@ namespace Rambha.Document
             }
         }
 
-        public override void Paint(MNPageContext context, int X, int Y)
+        public override Brush GetCurrentTextBrush(SMStatusLayout layout)
+        {
+            if (Editable)
+            {
+                if (tag != null && editedText != null)
+                {
+                    int a = tag.Length;
+                    int b = editedText.Length;
+                    int c = Math.Min(a, b);
+                    if (c > 0)
+                    {
+                        if (tag.Substring(0, c).Equals(editedText.Substring(0, c), StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            return SMGraphics.GetBrush(Color.DarkGreen);
+                        }
+                        else
+                        {
+                            return SMGraphics.GetBrush(Color.Red);
+                        }
+                    }
+
+
+                }
+
+                return SMGraphics.GetBrush(Color.DarkGreen);
+            }
+            else
+            {
+                if (droppedItem != null)
+                {
+                    return SMGraphics.GetBrush(Color.MediumBlue);
+                }
+                else
+                {
+                    return base.GetCurrentTextBrush(layout);
+                }
+            }
+        }
+
+        public override void Paint(MNPageContext context, SMStatusLayout layout, int X, int Y)
         {
             string s = GetCurrentText();
 
-            Brush b = SMGraphics.GetBrush(HighlightState.BackColor);
+            //Brush b = SMGraphics.GetBrush(layout.BackColor);
 
             if (UIStateHover)
             {
-                context.g.FillRectangle(b, rect.X + X, rect.Y + Y, rect.Width, rect.Height);
+                context.g.DrawRectangle(SMGraphics.GetPen(SMGraphics.dropableLayoutH.BorderColor, 4), rect.X + X, rect.Y + Y, rect.Width, rect.Height);
+            }
+            else
+            {
+                context.g.DrawRectangle(SMGraphics.GetPen(SMGraphics.dropableLayoutN.BorderColor, 2), rect.X + X, rect.Y + Y, rect.Width, rect.Height);
             }
 
             if (Editable && Focused)
             {
-                context.g.DrawRectangle(SMGraphics.GetPen(HighlightState.BackColor, 2), rect.X + X, rect.Y + Y, rect.Width, rect.Height);
                 SizeF sz = context.g.MeasureString(editedText, this.Font.Font);
-                context.g.FillRectangle(Brushes.Blue, rect.X + X + (int)sz.Width, rect.Y + Y + 1, 10, rect.Height - 2);
+                context.g.FillRectangle(Brushes.LightBlue, rect.X + X + (int)sz.Width, rect.Y + Y + 1, 10, rect.Height - 2);
             }
 
-            context.g.DrawString(s, this.Font.Font, this.TextBrush, rect.Location.X + X, rect.Location.Y + Y);
+            context.g.DrawString(s, this.Font.Font, GetCurrentTextBrush(layout), rect.Location.X + X, rect.Location.Y + Y);
         }
 
         /// <summary>
@@ -339,7 +197,7 @@ namespace Rambha.Document
                     {
                         ClearWordBuffer(list, word, control, fmt);
                         if (readedChar == '\n')
-                            list.Add(new SMWordSpecial(control.NormalState, control.HighlightState, control.Font) { Type = SMWordSpecialType.Newline });
+                            list.Add(new SMWordSpecial(control.Font) { Type = SMWordSpecialType.Newline });
                         else
                             AppendWord(list, " ", control, fmt);
                     }
@@ -662,6 +520,8 @@ namespace Rambha.Document
                 Underline = ((fontStyle & FontStyle.Underline) != 0);
                 Strikeout = ((fontStyle & FontStyle.Strikeout) != 0);
             }
+
+            public string selectForReplacementTarget = null;
         }
 
         private static void AppendTag(List<SMWordBase> list, StringBuilder word, TextTag tt, SMControl control, RunningFormat fmt)
@@ -678,7 +538,7 @@ namespace Rambha.Document
                     break;
                 case "drop":
                     {
-                        SMWordToken wt = new SMWordToken(control.NormalState, control.HighlightState, control.Font);
+                        SMWordToken wt = new SMWordToken(control.Font);
                         wt.text = tt.attrs.ContainsKey("text") ? tt.attrs["text"] : "_____";
                         wt.tag = tt.attrs.ContainsKey("tag") ? tt.attrs["tag"] : "";
                         wt.Draggable = SMDragResponse.None;
@@ -689,7 +549,7 @@ namespace Rambha.Document
                     break;
                 case "edit":
                     {
-                        SMWordToken wt = new SMWordToken(control.NormalState, control.HighlightState, control.Font);
+                        SMWordToken wt = new SMWordToken(control.Font);
                         wt.text = tt.attrs.ContainsKey("text") ? tt.attrs["text"] : "_____";
                         wt.tag = tt.attrs.ContainsKey("tag") ? tt.attrs["tag"] : "";
                         wt.Draggable = SMDragResponse.None;
@@ -699,18 +559,24 @@ namespace Rambha.Document
                         list.Add(wt);
                     }
                     break;
+                case "seltorepl":
+                    fmt.selectForReplacementTarget = tt.attrs.ContainsKey("target") ? tt.attrs["target"] : null;
+                    break;
+                case "/seltorepl":
+                    fmt.selectForReplacementTarget = null;
+                    break;
                 case "page":
-                    list.Add(new SMWordSpecial(control.NormalState, control.NormalState, control.Font) { Type = SMWordSpecialType.NewPage });
+                    list.Add(new SMWordSpecial(control.Font) { Type = SMWordSpecialType.NewPage });
                     break;
                 case "hr":
-                    list.Add(new SMWordSpecial(control.NormalState, control.NormalState, control.Font) { Type = SMWordSpecialType.HorizontalLine });
+                    list.Add(new SMWordSpecial(control.Font) { Type = SMWordSpecialType.HorizontalLine });
                     break;
                 case "br":
-                    list.Add(new SMWordSpecial(control.NormalState, control.HighlightState, control.Font) { Type = SMWordSpecialType.Newline });
+                    list.Add(new SMWordSpecial(control.Font) { Type = SMWordSpecialType.Newline });
                     AppendWord(list, "\n", control, fmt);
                     break;
                 case "col":
-                    list.Add(new SMWordSpecial(control.NormalState, control.HighlightState, control.Font) { Type = SMWordSpecialType.NewColumn });
+                    list.Add(new SMWordSpecial(control.Font) { Type = SMWordSpecialType.NewColumn });
                     //AppendWord(list, "\n", control, fmt);
                     break;
                 case "r":
@@ -795,13 +661,13 @@ namespace Rambha.Document
         {
             // TODO
 
-            SMWordText wt = new SMWordText(control.NormalState, control.HighlightState, control.Font);
+            SMWordText wt = new SMWordText(control.Font);
             wt.text = text;
-            wt.tag = text.Trim().ToLower();
-            wt.TextBrush = SMGraphics.GetBrush(control.NormalState.ForeColor);
+            wt.tag = text.Trim();
             wt.Draggable = fmt.dragResponse;
             wt.Evaluation = MNEvaluationType.None;
             wt.Font = fmt.GetFont();
+            wt.replacementTarget = fmt.selectForReplacementTarget;
             list.Add(wt);
         }
 
@@ -823,15 +689,6 @@ namespace Rambha.Document
         }
     }
 
-    public class SMWordLine: List<SMWordBase>
-    {
-    }
 
-    public class SMRichLayout
-    {
-        public List<SMWordLine> Lines = null;
-        public int Pages = 0;
-        public int bottomY = 0;
-        public int rightX = 0;
-    }
+
 }

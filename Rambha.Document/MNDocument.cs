@@ -13,7 +13,6 @@ using System.Xml;
 using Rambha.Script;
 using Rambha.Serializer;
 using Rambha.Document;
-using Rambha.Document.Views;
 
 namespace Rambha.Document
 {
@@ -325,16 +324,16 @@ namespace Rambha.Document
 
         public MNReferencedImage FindImage(long imageId)
         {
-            Debugger.Log(0, "", "FindImage: " + imageId + "\n");
+            //Debugger.Log(0, "", "FindImage: " + imageId + "\n");
             foreach (MNReferencedImage img in DefaultLanguage.Images)
             {
                 if (img.Id == imageId)
                 {
-                    Debugger.Log(0, "", "FindImage: " + imageId + " - found\n");
+                    //Debugger.Log(0, "", "FindImage: " + imageId + " - found\n");
                     return img;
                 }
             }
-            Debugger.Log(0, "", "FindImage: " + imageId + " - not found\n");
+            //Debugger.Log(0, "", "FindImage: " + imageId + " - not found\n");
             return null;
         }
 
@@ -575,6 +574,9 @@ namespace Rambha.Document
         public void SaveBookStatus()
         {
             string fileName = Book.FilePath.Replace(".smb", ".sms");
+            if (fileName.Equals(""))
+                return;
+
             using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(fileName)))
             {
                 RSFileWriter fw = new RSFileWriter(bw);
@@ -657,6 +659,8 @@ namespace Rambha.Document
 
             Book.Version = Math.Max(2, Book.Version);
         }
+
+
     }
 
     public enum MNEvaluationType

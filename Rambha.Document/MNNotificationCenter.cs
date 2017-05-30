@@ -11,6 +11,7 @@ namespace Rambha.Document
         /// <summary>
         /// Currently edited document
         /// </summary>
+        /// 
         private static MNDocument p_document = null;
         public static MNDocument CurrentDocument 
         {
@@ -24,6 +25,8 @@ namespace Rambha.Document
                 BroadcastMessage(null, "DocumentChanged", value);
             }
         }
+
+        public static int RectifyDelay = 1000;
 
         public static MNPage CurrentPage { get; set; }
 

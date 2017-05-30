@@ -99,7 +99,7 @@ namespace Rambha.Document
         {
             Rectangle bounds = Area.GetBounds(context);
 
-            PrepareBrushesAndPens();
+            SMStatusLayout layout = PrepareBrushesAndPens();
 
             if (p_format == null)
             {
@@ -499,7 +499,7 @@ namespace Rambha.Document
 
         public override void LoadStatus(RSFileReader br)
         {
-            base.LoadStatus(br);
+            base.LoadStatusCore(br);
             byte b;
             int p_zmax;
             while ((b = br.ReadByte()) != 0)
@@ -529,7 +529,7 @@ namespace Rambha.Document
 
         public override void SaveStatus(RSFileWriter bw)
         {
-            base.SaveStatus(bw);
+            base.SaveStatusCore(bw);
 
             if (p_array != null)
             {
@@ -551,6 +551,13 @@ namespace Rambha.Document
 
             bw.WriteByte(0);
         }
+
+        public override void ResetStatus()
+        {
+            p_prevContent = "";
+            base.ResetStatus();
+        }
+
 
     }
 }

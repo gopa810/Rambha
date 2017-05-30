@@ -302,6 +302,7 @@ namespace SlideMaker.Views
             int i = 0;
             foreach (MNPage page in document.Data.Pages)
             {
+                page.Index = i;
                 if (page == MNNotificationCenter.CurrentPage)
                     selid = i;
                 listBoxPages.Items.Add(page);
@@ -324,6 +325,8 @@ namespace SlideMaker.Views
 
         void INotificationTarget.OnNotificationReceived(object sender, string msg, params object[] args)
         {
+            if (sender == this) return;
+
             switch (msg)
             {
                 case "FilesAdded":
@@ -428,11 +431,6 @@ namespace SlideMaker.Views
                     eri.SetImage(smib.ImgA);
                     eri.HeaderText = "Normal State Image";
                     containerA.AddPanel("", eri);
-                    eri = EVStorage.EvReferencedImageB.Instance;
-                    eri.SetDocument(smib.Document);
-                    eri.SetImage(smib.ImgB);
-                    eri.HeaderText = "Pressed State Image";
-                    containerA.AddPanel("", eri);
                 }
 
                 if (obj is SMMemoryGame)
@@ -470,19 +468,6 @@ namespace SlideMaker.Views
                 propertyGrid1.SelectedObject = (obj as MNDocument).Book;
                 ShowTab(0);
             }
-            else if (obj is MNReferencedText)
-            {
-                ShowTab(1);
-                p_editedRefText = obj as MNReferencedText;
-                textPanel_name.Text = p_editedRefText.Name;
-                textPanel_text.Text = p_editedRefText.Text;
-            }
-            else if (obj is MNMenu)
-            {
-                ShowTab(2);
-                p_editedMenu = obj as MNMenu;
-                docMenuEditView1.Menu = p_editedMenu;
-            }
 
             if (area != null)
             {
@@ -505,20 +490,9 @@ namespace SlideMaker.Views
         }
 
         private TVItem p_action_item = null;
-        private MNReferencedText p_editedRefText = null;
-        private MNMenu p_editedMenu = null;
 
         public void ShowTab(int i)
         {
-            if (p_editedRefText != null)
-            {
-                p_editedRefText.Name = textPanel_name.Text;
-                p_editedRefText.Text = textPanel_text.Text;
-                p_editedRefText = null;
-                textPanel_name.Text = "";
-                textPanel_text.Text = "";
-            }
-
             tabControl2.SelectedIndex = i;
         }
 
@@ -1278,6 +1252,417 @@ namespace SlideMaker.Views
         private void label12_Click(object sender, EventArgs e)
         {
             SetFontSizeForSelection(12);
+        }
+
+        private void button15_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.Font.Bold = true;
+                        c.NormalState.ForeColor = Color.White;
+                        c.NormalState.BackColor = Color.Black;
+                        c.NormalState.CornerRadius = 30;
+                        c.NormalState.BorderColor = Color.Black;
+                        c.NormalState.BorderStyle = SMBorderStyle.RoundRectangle;
+                        c.HighlightState.ForeColor = Color.White;
+                        c.HighlightState.BackColor = Color.DarkBlue;
+                        c.HighlightState.CornerRadius = 30;
+                        c.HighlightState.BorderStyle = SMBorderStyle.RoundRectangle;
+                        c.HighlightState.BorderColor = Color.DarkBlue;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        private void button16_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.NormalState.ForeColor = Color.Black;
+                        c.NormalState.BackColor = Color.AntiqueWhite;
+                        c.NormalState.BorderStyle = SMBorderStyle.None;
+                        c.NormalState.CornerRadius = 0;
+                        c.HighlightState.ForeColor = Color.Black;
+                        c.HighlightState.BackColor = Color.NavajoWhite;
+                        c.HighlightState.CornerRadius = 0;
+                        c.HighlightState.BorderStyle = SMBorderStyle.None;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        private void button17_Click(object sender, EventArgs e)
+        {
+            SetSelectionBorderWidth(1);
+        }
+
+        private void SetSelectionBorderWidth(int w)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.NormalState.BorderWidth = w;
+                        c.HighlightState.BorderWidth = w;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        private void SetSelectionBorderType(SMBorderStyle bs)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.NormalState.BorderStyle = bs;
+                        c.HighlightState.BorderStyle = bs;
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        private void button18_Click(object sender, EventArgs e)
+        {
+            SetSelectionBorderWidth(2);
+        }
+
+        private void button19_Click(object sender, EventArgs e)
+        {
+            SetSelectionBorderWidth(4);
+        }
+
+        private void button20_Click(object sender, EventArgs e)
+        {
+            SetSelectionBorderType(SMBorderStyle.None);
+        }
+
+        private void button21_Click(object sender, EventArgs e)
+        {
+            SetSelectionBorderType(SMBorderStyle.Rectangle);
+        }
+
+        private void button22_Click(object sender, EventArgs e)
+        {
+            SetSelectionBorderType(SMBorderStyle.RoundRectangle);
+        }
+
+        private void SetSelectionPadding(SMControlSelection cs, int value)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        switch (cs)
+                        {
+                            case SMControlSelection.Left:
+                                c.ContentPadding.Left = value;
+                                break;
+                            case SMControlSelection.Right:
+                                c.ContentPadding.Right = value;
+                                break;
+                            case SMControlSelection.Top:
+                                c.ContentPadding.Top = value;
+                                break;
+                            case SMControlSelection.Bottom:
+                                c.ContentPadding.Bottom = value;
+                                break;
+                        }
+                        c.StyleDidChange();
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+        }
+
+        private void button23_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Left, 4);
+        }
+
+        private void button24_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Left, 8);
+        }
+
+        private void button25_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Left, 16);
+        }
+
+        private void button28_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Top, 4);
+        }
+
+        private void button27_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Top, 8);
+        }
+
+        private void button26_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Top, 16);
+        }
+
+        private void button34_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Right, 4);
+        }
+
+        private void button33_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Right, 8);
+        }
+
+        private void button32_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Right, 16);
+        }
+
+        private void button31_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Bottom, 4);
+        }
+
+        private void button30_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Bottom, 8);
+        }
+
+        private void button29_Click(object sender, EventArgs e)
+        {
+            SetSelectionPadding(SMControlSelection.Bottom, 16);
+        }
+
+        private void toolStripButton8_Click(object sender, EventArgs e)
+        {
+            // go down
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+
+            int i = listBoxPages.SelectedIndex;
+            if (i >= 0 && i < doc.Data.Pages.Count - 1)
+            {
+                MNPage p = doc.Data.Pages[i];
+                doc.Data.Pages.RemoveAt(i);
+                doc.Data.Pages.Insert(i + 1, p);
+
+                listBoxPages.Items.RemoveAt(i);
+                listBoxPages.Items.Insert(i + 1, p);
+                listBoxPages.SelectedIndex = i + 1;
+            }
+        }
+
+        private void toolStripButton9_Click(object sender, EventArgs e)
+        {
+            // go up
+            // go down
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+
+            int i = listBoxPages.SelectedIndex;
+            if (i > 0 && i < doc.Data.Pages.Count)
+            {
+                MNPage p = doc.Data.Pages[i];
+                doc.Data.Pages.RemoveAt(i);
+                doc.Data.Pages.Insert(i - 1, p);
+
+                listBoxPages.Items.RemoveAt(i);
+                listBoxPages.Items.Insert(i - 1, p);
+                listBoxPages.SelectedIndex = i - 1;
+            }
+        }
+
+
+        public void SetSelectionExpChecked(Bool3 expStatus)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.ExpectedChecked = expStatus;
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        public void SetSelectionImgScalling(SMContentScaling expStatus)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected && c is SMImage)
+                    {
+                        SMImage si = (SMImage)c;
+                        si.ContentScaling = expStatus;
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        public void SetContentToTags()
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        if (c is SMTextContainer)
+                        {
+                            (c as SMTextContainer).ContentToTags();
+                        }
+                        else if (c is SMTextView)
+                        {
+                            (c as SMTextView).ContentToTags();
+                        }
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        private void button35_Click(object sender, EventArgs e)
+        {
+            SetSelectionExpChecked(Bool3.False);
+        }
+
+        private void button36_Click(object sender, EventArgs e)
+        {
+            SetSelectionExpChecked(Bool3.True);
+        }
+
+        private void button37_Click(object sender, EventArgs e)
+        {
+            SetSelectionImgScalling(SMContentScaling.Fit);
+        }
+
+        private void button38_Click(object sender, EventArgs e)
+        {
+            SetSelectionImgScalling(SMContentScaling.Fill);
+        }
+
+        private void button39_Click(object sender, EventArgs e)
+        {
+            if (!bStyle_OmitSetting)
+            {
+                MNPage p = MNNotificationCenter.CurrentPage;
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c.Area.Selected)
+                    {
+                        c.HighlightState.BackColor = Color.DarkTurquoise;
+                    }
+                }
+                pageScrollArea1.InvalidateClient();
+            }
+
+        }
+
+        private void button40_Click(object sender, EventArgs e)
+        {
+            SetSelectionExpChecked(Bool3.Both);
+        }
+
+        private void button41_Click(object sender, EventArgs e)
+        {
+            MNPage p = MNNotificationCenter.CurrentPage;
+
+            for (int i = 1; i < 10; i++)
+            {
+                string groupName = string.Format("g{0}", i);
+                if (!p.HasGroup(groupName))
+                {
+                    PageEditView pev = pageScrollArea1.GetPageEditView();
+                    pev.MakeGroup(1, groupName);
+                    break;
+                }
+            }
+        }
+
+        private void button42_Click(object sender, EventArgs e)
+        {
+            SetContentToTags();
+        }
+
+        private void button43_Click(object sender, EventArgs e)
+        {
+            MNPage p = MNNotificationCenter.CurrentPage;
+            foreach (SMControl c in p.Objects)
+            {
+                if (c.Area.Selected)
+                {
+                    c.ScriptOnClick = "(control toogleCheck)";
+                    c.Clickable = true;
+                }
+            }
+            pageScrollArea1.InvalidateClient();
+        }
+
+        private void button44_Click(object sender, EventArgs e)
+        {
+            MNPage p = MNNotificationCenter.CurrentPage;
+            foreach (SMControl c in p.Objects)
+            {
+                if (c.Area.Selected)
+                {
+                    c.ScriptOnClick = "";
+                    c.Clickable = true;
+                }
+            }
+            pageScrollArea1.InvalidateClient();
+        }
+
+        private void button45_Click(object sender, EventArgs e)
+        {
+            MNPage p = MNNotificationCenter.CurrentPage;
+            foreach (SMControl c in p.Objects)
+            {
+                if (c.Area.Selected)
+                {
+                    c.StyleName = "_brief";
+                    c.StyleDidChange();
+                }
+            }
+            pageScrollArea1.InvalidateClient();
         }
 
 

@@ -49,16 +49,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioPlayer.cs" />
+    <Compile Include="Controls\SMTextViewBase.cs" />
     <Compile Include="Controls\SMTitledMessage.cs" />
     <Compile Include="Controls\SMImageButton.cs" />
     <Compile Include="Controls\SMOrderedList.cs" />
     <Compile Include="Controls\SMSelection.cs" />
-    <Compile Include="Dialogs\DialogNextPageConnection.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Dialogs\DialogNextPageConnection.Designer.cs">
-      <DependentUpon>DialogNextPageConnection.cs</DependentUpon>
-    </Compile>
     <Compile Include="ExtensionGraphics.cs" />
     <Compile Include="Localisation\MNLocalisation.cs" />
     <Compile Include="MNBookData.cs" />
@@ -93,22 +88,16 @@
     <Compile Include="SMConnection.cs" />
     <Compile Include="Controls\SMKeyboard.cs" />
     <Compile Include="Controls\SMMemoryGame.cs" />
+    <Compile Include="SMRichLayout.cs" />
     <Compile Include="SMRichText.cs" />
     <Compile Include="SMTokenItem.cs" />
     <Compile Include="MNReferencedStyle.cs" />
+    <Compile Include="SMWordBase.cs" />
+    <Compile Include="SMWordImage.cs" />
+    <Compile Include="SMWordSpecial.cs" />
+    <Compile Include="SMWordText.cs" />
+    <Compile Include="SMWordTextBase.cs" />
     <Compile Include="SMWordToken.cs" />
-    <Compile Include="Views\FontSizePropertyEditor.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Views\FontSizePropertyEditor.Designer.cs">
-      <DependentUpon>FontSizePropertyEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Views\ImageSelectionPropertyControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Views\ImageSelectionPropertyControl.Designer.cs">
-      <DependentUpon>ImageSelectionPropertyControl.cs</DependentUpon>
-    </Compile>
     <Compile Include="MNDocument.cs" />
     <Compile Include="MNNotificationCenter.cs" />
     <Compile Include="Interfaces.cs" />
@@ -132,17 +121,8 @@
     <Compile Include="Controls\SMTextEdit.cs" />
     <Compile Include="Controls\SMTextPuzzle.cs" />
     <Compile Include="Controls\SMTextView.cs" />
-    <Compile Include="Views\TemplateSelection.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Views\TemplateSelection.Designer.cs">
-      <DependentUpon>TemplateSelection.cs</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Dialogs\DialogNextPageConnection.resx">
-      <DependentUpon>DialogNextPageConnection.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\DocumentResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>DocumentResources.Designer.cs</LastGenOutput>
@@ -150,15 +130,6 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Views\FontSizePropertyEditor.resx">
-      <DependentUpon>FontSizePropertyEditor.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Views\ImageSelectionPropertyControl.resx">
-      <DependentUpon>ImageSelectionPropertyControl.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Views\TemplateSelection.resx">
-      <DependentUpon>TemplateSelection.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

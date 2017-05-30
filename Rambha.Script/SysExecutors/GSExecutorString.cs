@@ -89,8 +89,6 @@ namespace Rambha.Script
             StringBuilder sb = new StringBuilder();
             foreach (string s in arr)
             {
-                if (sb.Length > 0)
-                    sb.Append(' ');
                 sb.Append(s);
             }
             return new GSString() { Value = sb.ToString() };

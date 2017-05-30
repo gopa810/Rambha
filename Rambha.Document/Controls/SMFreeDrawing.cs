@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-using Rambha.Document.Views;
 using Rambha.Serializer;
 
 namespace Rambha.Document
@@ -24,7 +23,6 @@ namespace Rambha.Document
         private TempPoints tempPoints = new TempPoints();
         private List<DrawPoints> drawPoints = new List<DrawPoints>();
 
-        [Editor(typeof(ImageSelectionPropertyEditor), typeof(UITypeEditor))]
         [Browsable(true), Category("Content")]
         public MNReferencedImage BackgroundImage
         {
@@ -171,7 +169,7 @@ namespace Rambha.Document
 
         public override void LoadStatus(RSFileReader br)
         {
-            base.LoadStatus(br);
+            base.LoadStatusCore(br);
             byte b;
             drawPoints.Clear();
             while ((b = br.ReadByte()) != 0)
@@ -200,7 +198,7 @@ namespace Rambha.Document
 
         public override void SaveStatus(RSFileWriter bw)
         {
-            base.SaveStatus(bw);
+            base.SaveStatusCore(bw);
 
             foreach (DrawPoints dp in drawPoints)
             {
@@ -217,6 +215,13 @@ namespace Rambha.Document
 
             bw.WriteByte(0);
         }
+
+        public override void ResetStatus()
+        {
+            drawPoints.Clear();
+            base.ResetStatus();
+        }
+
 
         private class TempPoints
         {

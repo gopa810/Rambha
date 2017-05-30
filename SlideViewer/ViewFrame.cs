@@ -64,6 +64,8 @@ namespace SlideViewer
             Library.GetCurrentBookDatabase(dir);
             Library.CalculateDatabaseStatus();
             Library.FetchRemote(null);
+
+            ReviewFrame.DisplayWindow();
         }
 
         public MNDocument Document
@@ -378,6 +380,8 @@ namespace SlideViewer
                     CurrentBook = bh;
                     pageView1.CurrentBook = bh;
                     pageView1.SetDocument(bh.LoadFull());
+
+                    MNNotificationCenter.BroadcastMessage(this, "StartDocumentReview", pageView1.CurrentDocument, bh.FilePath);
                     // this is default loading of language file
                     if (bh.Languages != null && bh.Languages.Count > 0)
                     {
@@ -426,14 +430,14 @@ namespace SlideViewer
                     if (lang.Text.Equals("Default"))
                     {
                         pageView1.CurrentDocument.CurrentLanguage = null;
-                        pageView1.ReloadPage();
+                        pageView1.ReloadPage(false);
                     }
                     else
                     {
                         MNLocalisation file = new MNLocalisation();
                         file.Load(Library.GetLocalFile(lang.FileName), true);
                         pageView1.CurrentDocument.CurrentLanguage = file;
-                        pageView1.ReloadPage();
+                        pageView1.ReloadPage(false);
                     }
                     SetShowPanel("book");
                 }
@@ -462,7 +466,7 @@ namespace SlideViewer
             MNLocalisation file = new MNLocalisation();
             file.Load(Library.GetLocalFile(p_fileDown), true);
             pageView1.CurrentDocument.CurrentLanguage = file;
-            pageView1.ReloadPage();
+            pageView1.ReloadPage(false);
             SetShowPanel("book");
         }
 
@@ -523,11 +527,35 @@ namespace SlideViewer
                 string str = SVBookLibrary.DBToString(Library.GetLocalFileDatabase());
                 File.WriteAllText(d.FileName, str);
             }
+     
         }
+
+        public void SavePosition()
+        {
+            Rectangle r = this.DesktopBounds;
+            Properties.Settings.Default.MainFramePosition = r.Location;
+            Properties.Settings.Default.MainFrameSize = r.Size;
+            Properties.Settings.Default.Save();
+        }
+
 
         private void ViewFrame_FormClosing(object sender, FormClosingEventArgs e)
         {
+            ReviewFrame.Shared.OnNotificationReceived(this, "StopDocumentReview");
+            ReviewFrame.Shared.SavePosition();
+            this.SavePosition();
+
             ErrorCatcher.Save();
+        }
+
+        private void ViewFrame_Load(object sender, EventArgs e)
+        {
+            if (!Properties.Settings.Default.MainFrameSize.IsEmpty)
+            {
+                this.DesktopBounds =
+                    new Rectangle(Properties.Settings.Default.MainFramePosition,
+                        Properties.Settings.Default.MainFrameSize);
+            }
         }
     }
 }

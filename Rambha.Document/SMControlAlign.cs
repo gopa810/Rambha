@@ -336,6 +336,9 @@ namespace Rambha.Document
         public int Left { get; set; }
         public int Right { get; set; }
 
+        public int TopBottom { get { return Top + Bottom; } }
+        public int LeftRight { get { return Left + Right; } }
+
         public string All
         {
             get
@@ -474,7 +477,8 @@ namespace Rambha.Document
         Text = 1,
         Audio = 2,
         AudioText = 3,
-        Image = 4
+        Image = 4,
+        TaggedArea = 5
     }
 
     public enum SMDragResponse
@@ -483,6 +487,13 @@ namespace Rambha.Document
         None = 1,
         Drag = 2,
         Line = 3
+    }
+
+    public enum SMDragLineAlign
+    {
+        Undef = 0,
+        TopBottom = 1,
+        LeftRight = 2
     }
 
     public enum SMConnectionCardinality

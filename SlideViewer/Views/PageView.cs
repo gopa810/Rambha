@@ -20,7 +20,7 @@ namespace SlideViewer.Views
 
         private MNPage p_current_page = null;
 
-        public PageViewController ViewController { get; set; }
+        public PageViewController ViewController = null;
 
         private MNDocumentExecutor p_docexec = null;
 
@@ -54,7 +54,7 @@ namespace SlideViewer.Views
             }
         }
 
-        public MNPageContext Context { get; set; }
+        public MNPageContext Context = null;
         private PVDragContext MouseContext = new PVDragContext();
 
 
@@ -72,12 +72,30 @@ namespace SlideViewer.Views
 
         }
 
+        public void OnNotificationReceived(object sender, string message, params object[] args)
+        {
+            if (sender == this)
+                return;
+
+            switch (message)
+            {
+                case "ObjectSelected":
+                    if (args != null && args.Length > 0 && args[0] is MNPage)
+                    {
+                        MNPage p = (MNPage)args[0];
+                        if (p != CurrentPage)
+                            CurrentPage = p;
+                    }
+                    break;
+            }
+        }
+
         public void InitBitmaps()
         {
             Context.navigIconBack = Properties.Resources.navigIconBack;
             Context.navigIconFwd = Properties.Resources.navigIconFwd;
             Context.navigIconHelp = Properties.Resources.navigIconHelp;
-            Context.navigIconHome = Properties.Resources.navigIconHome;
+            Context.navigIconMenu = Properties.Resources.navigIconHome;
             Context.navigArrowBack = Properties.Resources.navigArrowLeft;
             Context.navigArrowFwd = Properties.Resources.navigArrowRight;
             Context.navigSpeakerOn = Properties.Resources.SpeakerOn;
@@ -119,13 +137,26 @@ namespace SlideViewer.Views
                     value.OnPageEvent("OnPageWillAppear");
                 p_current_page = value;
                 DocExec.CurrentPage = value;
+
+                if (p_current_page != null && Document != p_current_page.Document)
+                {
+                    SetDocument(p_current_page.Document);
+                }
+
                 MNNotificationCenter.AudioOn = p_current_page != null ? p_current_page.DefaultAudioState : false;
-                ReloadPage();
+                if (p_current_page != null)
+                    p_current_page.ShowHints(false);
+                ReloadPage(false);
+
+                // repainting
                 Invalidate();
                 if (value != null)
                     value.OnPageEvent("OnPageDidAppear");
                 if (oldPage != null)
                     value.OnPageEvent("OnPageDidDisappear");
+                if (oldPage != value)
+                    MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", p_current_page);
+                MNNotificationCenter.BroadcastMessage(this, "PageDidAppear", p_current_page);
 
             }
         }
@@ -135,6 +166,9 @@ namespace SlideViewer.Views
             // calculate new size of this control
             Size viewSize = this.Size;
             Size pageSize = Context.PageSize;
+
+           if (viewSize.Height == 0 || pageSize.Height == 0)
+                return;
 
             float zoom_ratio = (float)viewSize.Height / pageSize.Height;
 
@@ -209,20 +243,21 @@ namespace SlideViewer.Views
                     if (ti.ContentSize.Width == 0)
                     {
                         SizeF sf = context.g.MeasureString(ti.Text, context.DragItemFont);
-                        ti.ContentSize = new Size(Convert.ToInt32(sf.Width),Convert.ToInt32(sf.Height));
+                        ti.ContentSize = new Size(Convert.ToInt32(sf.Width), Convert.ToInt32(sf.Height));
                     }
-                    Rectangle rc = new Rectangle(mouseContext.lastPoint.X - ti.ContentSize.Width/2, mouseContext.lastPoint.Y - ti.ContentSize.Height,
+                    Rectangle rc = new Rectangle(mouseContext.lastPoint.X - ti.ContentSize.Width / 2, 
+                        mouseContext.lastPoint.Y - ti.ContentSize.Height/2,
                         ti.ContentSize.Width + 2, ti.ContentSize.Height + 2);
-                    context.g.FillRectangle(Brushes.LightPink, rc);
-                    context.g.DrawString(ti.Text, context.DragItemFont, Brushes.Black, rc);
+                    //context.g.FillRectangle(Brushes.LightPink, rc);
+                    context.g.DrawString(ti.Text, context.DragItemFont, Brushes.Red, rc);
                 }
                 else if (ti.Image != null)
                 {
                     if (ti.ContentSize.Width == 0)
                     {
                         Size sf = ti.Image.Size;
-                        double d = 64.0 / (Math.Max(sf.Width,sf.Height) + 1);
-                        ti.ContentSize = new Size(Convert.ToInt32(d*sf.Width), Convert.ToInt32(d*sf.Height));
+                        double d = 64.0 / (Math.Max(sf.Width, sf.Height) + 1);
+                        ti.ContentSize = new Size(Convert.ToInt32(d * sf.Width), Convert.ToInt32(d * sf.Height));
                     }
                     Rectangle rc = new Rectangle(mouseContext.lastPoint.X - ti.ContentSize.Width / 2, 
                         mouseContext.lastPoint.Y - ti.ContentSize.Height / 2,
@@ -293,44 +328,59 @@ namespace SlideViewer.Views
             if (CurrentPage == null || MouseContext.State == PVDragContext.Status.RefusingDrop)
                 return;
 
-            Context.hitHeaderButton = TestHitHeaderButton(Context.PhysicalToLogical(new Point(e.X, e.Y)));
-
-            if (Context.hitHeaderButton > 0)
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-            }
-            else if (p_displayedMenu == null)
-            {
-                MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
-                MouseContext.startPoint = MouseContext.lastPoint;
-                MouseContext.startControl = CurrentPage.FindObjectContainingPoint(Context, MouseContext.lastPoint);
-                MouseContext.endControl = null;
-                MouseContext.State = PVDragContext.Status.ClickDown;
-                MouseContext.DragType = SMDragResponse.None;
-                MouseContext.context = Context;
+                ReviewFrame.Shared.SetPageTab();
 
-                if (MouseContext.startControl != null)
-                    MouseContext.startControl.OnTapBegin(MouseContext);
-                MouseContext.StartClicked = true;
+                if (!TemporaryMessageBoxVisible)
+                    Context.hitHeaderButton = TestHitHeaderButton(Context.PhysicalToLogical(new Point(e.X, e.Y)));
 
-                timerLongClick.Start();
-            }
-            else if (Context.messageBox.Visible)
-            {
-            }
-            else
-            {
-                MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
-                MouseContext.startPoint = MouseContext.lastPoint;
-                MouseContext.startControl = null;
-                MouseContext.endControl = null;
-                MouseContext.State = PVDragContext.Status.ClickDown;
-                MouseContext.DragType = SMDragResponse.None;
-                MouseContext.context = Context;
-                MouseContext.StartClicked = true;
-                Context.selectedMenuItem = p_displayedMenu.TestHit(MouseContext);
-            }
+                if (TemporaryMessageBoxVisible)
+                {
+                }
+                else if (p_displayedMenu != null)
+                {
+                    MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                    MouseContext.startPoint = MouseContext.lastPoint;
+                    MouseContext.startControl = null;
+                    MouseContext.endControl = null;
+                    MouseContext.State = PVDragContext.Status.ClickDown;
+                    MouseContext.DragType = SMDragResponse.None;
+                    MouseContext.context = Context;
+                    MouseContext.StartClicked = true;
+                    Context.selectedMenuItem = p_displayedMenu.TestHit(MouseContext);
+                }
+                else if (Context.hitHeaderButton > 0)
+                {
+                }
+                else if (p_displayedMenu == null)
+                {
+                    MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                    MouseContext.startPoint = MouseContext.lastPoint;
+                    MouseContext.startControl = CurrentPage.FindObjectContainingPoint(Context, MouseContext.lastPoint);
+                    MouseContext.endControl = null;
+                    MouseContext.State = PVDragContext.Status.ClickDown;
+                    MouseContext.DragType = SMDragResponse.None;
+                    MouseContext.context = Context;
 
-            Invalidate();
+                    if (MouseContext.startControl != null)
+                        MouseContext.startControl.OnTapBegin(MouseContext);
+                    MouseContext.StartClicked = true;
+
+                    timerLongClick.Start();
+                }
+
+                Invalidate();
+            }
+            else if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                Point p = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                SMControl sControl = CurrentPage.FindObjectContainingPoint(Context, p);
+                if (sControl != null)
+                {
+                    MNNotificationCenter.BroadcastMessage(this, "ObjectForReview", sControl);
+                }
+            }
         }
 
         /// <summary>
@@ -342,94 +392,111 @@ namespace SlideViewer.Views
         {
             if (CurrentPage == null || MouseContext.State == PVDragContext.Status.RefusingDrop)
                 return;
-
-            if (Context.hitHeaderButton > 0)
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                int test = TestHitHeaderButton(Context.PhysicalToLogical(new Point(e.X, e.Y)));
-                if (test == Context.hitHeaderButton)
-                    ActivateHeaderButton(test);
-                Context.hitHeaderButton = 0;
-            }
-            else if (p_displayedMenu != null)
-            {
-                MouseContext.context = Context;
-                MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
-                MouseContext.endControl = null;
-
-                if (Context.selectedMenuItem == p_displayedMenu.TestHit(MouseContext)
-                    && Context.selectedMenuItem >= 0 && Context.selectedMenuItem < p_displayedMenu.Items.Count)
+                if (TemporaryMessageBoxVisible)
                 {
-                    if (p_docexec != null)
-                    {
-                        MNMenuItem mi = p_displayedMenu.Items[Context.selectedMenuItem];
-                        p_docexec.OnMenuItem(mi, CurrentPage);
-                    }
+                        Context.messageBox.Visible = false;
                 }
-
-                p_displayedMenu = null;
-                Context.selectedMenuItem = -1;
-            }
-            else if (Context.messageBox.Visible)
-            {
-                Context.messageBox.Visible = false;
-            }
-            else
-            {
-                MouseContext.context = Context;
-                MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
-                MouseContext.endControl = CurrentPage.FindObjectContainingPoint(Context, MouseContext.lastPoint);
-
-                /*if (MouseContext.startControl != null)
-                    MouseContext.startControl.OnTapEnd(MouseContext);*/
-                bool dropResult = true;
-
-                if (MouseContext.State == PVDragContext.Status.Dragging)
+                else if (p_displayedMenu != null)
                 {
-                    if (MouseContext.trackedControl != null)
+                    MouseContext.context = Context;
+                    MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                    MouseContext.endControl = null;
+
+                    if (Context.selectedMenuItem == p_displayedMenu.TestHit(MouseContext)
+                        && Context.selectedMenuItem >= 0 && Context.selectedMenuItem < p_displayedMenu.Items.Count)
                     {
-                        dropResult = MouseContext.trackedControl.OnDropFinished(MouseContext);
-                        MouseContext.trackedControl.OnDragHotTrackEnded(MouseContext.draggedItem, MouseContext);
-                        Debugger.Log(0, "", "Dropping into control\n");
+                        if (p_docexec != null)
+                        {
+                            MNMenuItem mi = p_displayedMenu.Items[Context.selectedMenuItem];
+                            p_docexec.OnMenuItem(mi, CurrentPage);
+                        }
                     }
-                    if (MouseContext.startControl != null)
-                    {
-                        MouseContext.startControl.OnDragFinished(MouseContext);
-                    }
+
+                    p_displayedMenu = null;
+                    Context.selectedMenuItem = -1;
                 }
-                else if (MouseContext.State == PVDragContext.Status.ClickDown)
+                else if (Context.hitHeaderButton > 0)
                 {
-                    if (MouseContext.startControl != null)
-                    {
-                        MouseContext.startControl.OnClick(MouseContext);
-                        MouseContext.startControl.OnTapEnd(MouseContext);
-                    }
-                    MouseContext.StartClicked = false;
+                    int test = TestHitHeaderButton(Context.PhysicalToLogical(new Point(e.X, e.Y)));
+                    if (test == Context.hitHeaderButton)
+                        ActivateHeaderButton(test);
+                    Context.hitHeaderButton = 0;
                 }
                 else
                 {
-                    if (MouseContext.startControl != null)
-                        MouseContext.startControl.OnTapEnd(MouseContext);
-                    MouseContext.StartClicked = false;
+                    MouseContext.context = Context;
+                    MouseContext.lastPoint = Context.PhysicalToLogical(new Point(e.X, e.Y));
+                    MouseContext.endControl = CurrentPage.FindObjectContainingPoint(Context, MouseContext.lastPoint);
+
+                    /*if (MouseContext.startControl != null)
+                        MouseContext.startControl.OnTapEnd(MouseContext);*/
+                    bool dropResult = true;
+
+                    if (MouseContext.State == PVDragContext.Status.Dragging)
+                    {
+                        SenseTracking(true);
+
+                        if (MouseContext.trackedControl != null)
+                        {
+                            dropResult = MouseContext.trackedControl.OnDropFinished(MouseContext);
+                            //MouseContext.trackedControl.OnDragHotTrackEnded(MouseContext.draggedItem, MouseContext);
+                            //Debugger.Log(0, "", "Dropping into control\n");
+                        }
+                        if (dropResult && MouseContext.startControl != null)
+                        {
+                            MouseContext.startControl.OnDragFinished(MouseContext);
+                        }
+                    }
+                    else if (MouseContext.State == PVDragContext.Status.ClickDown)
+                    {
+                        if (MouseContext.startControl != null)
+                        {
+                            MouseContext.startControl.OnClick(MouseContext);
+                            MouseContext.startControl.OnTapEnd(MouseContext);
+                        }
+                        MouseContext.StartClicked = false;
+                    }
+                    else
+                    {
+                        if (MouseContext.startControl != null)
+                            MouseContext.startControl.OnTapEnd(MouseContext);
+                        MouseContext.StartClicked = false;
+                    }
+
+                    if (dropResult)
+                    {
+                        MouseContext.State = PVDragContext.Status.None;
+                        MouseContext.DragType = SMDragResponse.None;
+                        MouseContext.draggedItem = null;
+                    }
+                    else
+                    {
+                        MouseContext.State = PVDragContext.Status.RefusingDrop;
+                        refusal_index = 0;
+                        refusal_step = new Point((MouseContext.lastPoint.X - MouseContext.startPoint.X) / refusal_maximum,
+                            (MouseContext.lastPoint.Y - MouseContext.startPoint.Y) / refusal_maximum);
+                        refusal_timer.Interval = 30;
+                        refusal_timer.Start();
+                    }
                 }
 
-                if (dropResult)
-                {
-                    MouseContext.State = PVDragContext.Status.None;
-                    MouseContext.DragType = SMDragResponse.None;
-                    MouseContext.draggedItem = null;
-                }
-                else
-                {
-                    MouseContext.State = PVDragContext.Status.RefusingDrop;
-                    refusal_index = 0;
-                    refusal_step = new Point((MouseContext.lastPoint.X - MouseContext.startPoint.X) / refusal_maximum,
-                        (MouseContext.lastPoint.Y - MouseContext.startPoint.Y) / refusal_maximum);
-                    refusal_timer.Interval = 30;
-                    refusal_timer.Start();
-                }
+                Invalidate();
             }
+            else if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+            }
+        }
 
-            Invalidate();
+        public bool TemporaryMessageBoxVisible
+        {
+            get
+            {
+                return Context.messageBox.Visible
+                    && CurrentPage != null
+                    && !CurrentPage.ShowMessageAlways;
+            }
         }
 
         public void ActivateHeaderButton(int test)
@@ -440,7 +507,8 @@ namespace SlideViewer.Views
                     ViewController.GoBack();
                     break;
                 case 2:
-                    ViewController.ShowPage(CurrentPage.Document.Book.HomePage);
+                    InitializePageMenu();
+                    //ViewController.ShowPage(CurrentPage.Document.Book.HomePage);
                     break;
                 case 3:
                     Context.ShowMessageBox();
@@ -452,10 +520,67 @@ namespace SlideViewer.Views
                 case 5:
                     MNNotificationCenter.AudioOn = !MNNotificationCenter.AudioOn;
                     if (MNNotificationCenter.AudioOn)
-                        ReloadPage();
+                        ReloadPage(false);
                     break;
             }
         }
+
+        public void InitializePageMenu()
+        {
+            p_displayedMenu = new MNMenu();
+
+            int itemsInSection = 0;
+
+            if (!CurrentDocument.Book.HomePage.Equals(CurrentPage.Title))
+            {
+                p_displayedMenu.Items.Add(new MNMenuItem(CurrentDocument) { Text = "Goto home page", ActionScript = "(view homePage)", ImageName = "menuIconHome" });
+                itemsInSection++;
+            }
+            if (!CurrentDocument.Book.HomePage.Equals(CurrentPage.Title))
+            {
+                p_displayedMenu.Items.Add(new MNMenuItem(CurrentDocument) { Text = "Restart/clear page", ActionScript = "(view reload)", ImageName = "menuItemRestart" });
+                itemsInSection++;
+            }
+            if (itemsInSection > 0)
+            {
+                p_displayedMenu.Items.Add(new MNMenuItem(CurrentDocument) { Text = "" });
+                itemsInSection = 0;
+            }
+
+            // new section
+
+            if (CurrentPage.HasControlsWithHints)
+            {
+                p_displayedMenu.Items.Add(new MNMenuItem(CurrentDocument) { Text = "Show hints", ActionScript = "(page showHints)", ImageName = "menuIconShowHints" });
+                itemsInSection++;
+            }
+
+            if (CurrentPage.HasControlsWithSpots)
+            {
+                p_displayedMenu.Items.Add(new MNMenuItem(CurrentDocument) { Text = "Show sound spots", ActionScript = "(page showSoundSpots)", ImageName = "menuItemShowSpots" });
+                itemsInSection++;
+            }
+
+            if (itemsInSection > 0)
+            {
+                p_displayedMenu.Items.Add(new MNMenuItem(CurrentDocument) { Text = "" });
+                itemsInSection = 0;
+            }
+
+            // new section
+
+            if (CurrentDocument.Book.Languages.Count > 1)
+            {
+                p_displayedMenu.Items.Add(new MNMenuItem(CurrentDocument) { Text = "Select Language", ActionScript = "(view changeLanguage)", ImageName = "menuIconSelLang" });
+                itemsInSection++;
+            }
+
+            p_displayedMenu.Items.Add(new MNMenuItem(CurrentDocument) { Text = "Select Book", ActionScript = "(view selectBook)", ImageName = "menuIconSelBook" });
+            itemsInSection++;
+
+
+        }
+
 
         private int refusal_maximum = 10;
         private int refusal_index = 0;
@@ -502,71 +627,109 @@ namespace SlideViewer.Views
             if (CurrentPage == null || MouseContext.State == PVDragContext.Status.RefusingDrop)
                 return;
 
-
-            MouseContext.context.lastClientPoint = new Point(e.X, e.Y);
-            MouseContext.lastPoint = Context.PhysicalToLogical(MouseContext.context.lastClientPoint);
-            MouseContext.endControl = CurrentPage.FindObjectContainingPoint(Context, MouseContext.lastPoint);
-
-            // if menu is displayed, we dont need movements of mouse
-            if (Context.hitHeaderButton > 0)
-                return;
-            if (p_displayedMenu != null)
-                return;
-            if (Context.messageBox.Visible)
-                return;
-
-            if (MouseContext.endControl != null)
-                MouseContext.endControl.OnDropMove(MouseContext);
-            if (MouseContext.State == PVDragContext.Status.Dragging)
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                if (MouseContext.startControl != null)
-                {
-                    MouseContext.startControl.OnTapMove(MouseContext);
-                }
+                MouseContext.context.lastClientPoint = new Point(e.X, e.Y);
+                MouseContext.lastPoint = Context.PhysicalToLogical(MouseContext.context.lastClientPoint);
+                MouseContext.endControl = CurrentPage.FindObjectContainingPoint(Context, MouseContext.lastPoint);
 
-                if (MouseContext.trackedControl == null && MouseContext.endControl != null && MouseContext.endControl != MouseContext.startControl
-                    && MouseContext.endControl.Cardinality != SMConnectionCardinality.None)
-                {
-                    MouseContext.endControl.OnDragHotTrackStarted(MouseContext.draggedItem, MouseContext);
-                }
-                else if (MouseContext.trackedControl != null && MouseContext.endControl == null
-                    && MouseContext.trackedControl.Cardinality != SMConnectionCardinality.None)
-                {
-                    MouseContext.trackedControl.OnDragHotTrackEnded(MouseContext.draggedItem, MouseContext);
-                }
-                MouseContext.trackedControl = MouseContext.endControl;
-                Invalidate();
-            }
-            else if (MouseContext.State == PVDragContext.Status.ClickDown)
-            {
-                if (MouseContext.startControl != null)
-                    MouseContext.startControl.OnTapMove(MouseContext);
+                // if menu is displayed, we dont need movements of mouse
+                if (Context.hitHeaderButton > 0)
+                    return;
+                if (TemporaryMessageBoxVisible)
+                    return;
 
-                if (PointDistance(MouseContext.lastPoint, MouseContext.startPoint) > 10)
+                if (MouseContext.endControl != null)
+                    MouseContext.endControl.OnDropMove(MouseContext);
+                if (MouseContext.State == PVDragContext.Status.Dragging)
                 {
-                    if (timerLongClick.Enabled)
-                        timerLongClick.Stop();
-                    if (MouseContext.startControl != null && MouseContext.startControl.Draggable != SMDragResponse.None)
+                    if (MouseContext.startControl != null)
                     {
-                        MouseContext.startControl.OnTapCancel(MouseContext);
-                        MouseContext.StartClicked = false;
-                        MouseContext.State = PVDragContext.Status.Dragging;
-                        MouseContext.DragType = MouseContext.startControl.Draggable;
-                        if (MouseContext.DragType == SMDragResponse.Drag || MouseContext.DragType == SMDragResponse.Line)
-                            MouseContext.draggedItem = MouseContext.startControl.GetDraggableItem(MouseContext.lastPoint);
-                        MouseContext.startControl.OnDragStarted(MouseContext);
-                        MouseContext.startControl.OnDragMove(MouseContext);
+                        MouseContext.startControl.OnTapMove(MouseContext);
                     }
+
+                    SenseTracking(false);
+
+                    /*if (MouseContext.trackedControl == null && MouseContext.endControl != null 
+                        && MouseContext.endControl != MouseContext.startControl
+                        && MouseContext.endControl.Cardinality != SMConnectionCardinality.None)
+                    {
+                        MouseContext.endControl.OnDragHotTrackStarted(MouseContext.draggedItem, MouseContext);
+                    }
+                    else if (MouseContext.trackedControl != null && MouseContext.endControl != null
+                        && MouseContext.trackedControl.Cardinality != SMConnectionCardinality.None)
+                    {
+                        MouseContext.trackedControl.OnDragHotTrackEnded(MouseContext.draggedItem, MouseContext);
+                    }*/
+                    MouseContext.trackedControl = MouseContext.endControl;
                     Invalidate();
                 }
+                else if (MouseContext.State == PVDragContext.Status.ClickDown)
+                {
+                    if (MouseContext.startControl != null)
+                        MouseContext.startControl.OnTapMove(MouseContext);
+
+                    if (PointDistance(MouseContext.lastPoint, MouseContext.startPoint) > 10)
+                    {
+                        if (timerLongClick.Enabled)
+                            timerLongClick.Stop();
+                        if (MouseContext.startControl != null && MouseContext.startControl.Draggable != SMDragResponse.None)
+                        {
+                            MouseContext.startControl.OnTapCancel(MouseContext);
+                            MouseContext.StartClicked = false;
+                            if (MouseContext.startControl.Draggable == SMDragResponse.Drag
+                                || MouseContext.startControl.Draggable == SMDragResponse.Line)
+                                MouseContext.draggedItem = MouseContext.startControl.GetDraggableItem(MouseContext.lastPoint);
+                            if (MouseContext.draggedItem != null)
+                            {
+                            MouseContext.startControl.OnDragStarted(MouseContext);
+                            MouseContext.startControl.OnDragMove(MouseContext);
+                                MouseContext.State = PVDragContext.Status.Dragging;
+                                MouseContext.DragType = MouseContext.startControl.Draggable;
+                            }
+                        }
+                        Invalidate();
+                    }
+                }
+            }
+            else if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+            }
+            //Debugger.Log(0, "", "MouseState: " + MouseContext.State.ToString() + "\n");
+        }
+
+        private void SenseTracking(bool endOfTracking)
+        {
+            SMControl prevTracked = null;
+            foreach (SMControl sc in CurrentPage.Objects)
+            {
+                if (sc.UIStateHover)
+                {
+                    prevTracked = sc;
+                    if (endOfTracking)
+                        sc.UIStateHover = false;
+                    break;
+                }
             }
 
-            //Debugger.Log(0, "", "MouseState: " + MouseContext.State.ToString() + "\n");
+            if (MouseContext.endControl != prevTracked)
+            {
+                foreach (SMControl sc in CurrentPage.Objects)
+                {
+                    sc.UIStateHover = false;
+                }
+
+                if (!endOfTracking && MouseContext.endControl != null)
+                    MouseContext.endControl.OnDragHotTrackStarted(MouseContext.draggedItem, MouseContext);
+                if (prevTracked != null)
+                    prevTracked.OnDragHotTrackEnded(MouseContext.draggedItem, MouseContext);
+            }
+
         }
 
         private double PointDistance(Point a, Point b)
         {
-            return Math.Sqrt(Convert.ToDouble((a.X - b.X)*(a.X - b.X)) + Convert.ToDouble((b.Y - a.Y)*(b.Y - a.Y)));
+            return Math.Sqrt(Convert.ToDouble((a.X - b.X) * (a.X - b.X)) + Convert.ToDouble((b.Y - a.Y) * (b.Y - a.Y)));
         }
 
         private void timerLongClick_Tick(object sender, EventArgs e)
@@ -605,18 +768,29 @@ namespace SlideViewer.Views
         /// <summary>
         /// Reloading language localizations for all controls
         /// </summary>
-        public void ReloadPage()
+        public void ReloadPage(bool resetStatus)
         {
-            if (CurrentDocument != null)
+            if (CurrentDocument != null && p_current_page != null)
             {
                 Context.messageBox.Visible = p_current_page.ShowMessageAlways;
+
+                if (resetStatus)
+                {
+                    p_current_page.ResetStatus();
+                }
+
+                    // reinitialize status
+                    if (p_current_page.InitialStatus == null)
+                {
+                        p_current_page.StoreStatus();
+                }
 
                 // load content for all controls
                 foreach (SMControl control in p_current_page.Objects)
                 {
                     if (control.ContentId != null && control.ContentId.Length > 0)
                     {
-                        Debugger.Log(0,"", "NEED LOAD CONTENT: " + control.ContentId + "\n");
+                        //Debugger.Log(0,"", "NEED LOAD CONTENT: " + control.ContentId + "\n");
                         MNReferencedCore value = FindContentObject(control.ContentType, control.ContentId);
                         control.Content = value;
                         if (value != null && value is MNReferencedAudioText)
@@ -650,10 +824,10 @@ namespace SlideViewer.Views
         {
             MNReferencedCore value = null;
 
-            Debugger.Log(0, "", "--FindContentObject: A\n");
+            //Debugger.Log(0, "", "--FindContentObject: A\n");
             if (CurrentDocument.CurrentLanguage != null)
             {
-                Debugger.Log(0, "", "--FindContentObject: B\n");
+                //Debugger.Log(0, "", "--FindContentObject: B\n");
                 value = CurrentDocument.CurrentLanguage.FindObject(contentId);
             }
 
@@ -661,18 +835,18 @@ namespace SlideViewer.Views
             {
                 if (CurrentDocument.DefaultLanguage != null)
                 {
-                    Debugger.Log(0, "", "--FindContentObject: DEFAULT B\n");
+                    //Debugger.Log(0, "", "--FindContentObject: DEFAULT B\n");
                     value = CurrentDocument.DefaultLanguage.FindObject(contentId);
                 }
             }
             
             if (value == null && type == SMContentType.Text)
             {
-                Debugger.Log(0, "", "--FindContentObject: C\n");
+                //Debugger.Log(0, "", "--FindContentObject: C\n");
                 MNReferencedText rt = CurrentDocument.FindText(contentId);
                 if (rt != null)
                 {
-                    Debugger.Log(0, "", "--FindContentObject: D\n");
+                    //Debugger.Log(0, "", "--FindContentObject: D\n");
                     MNReferencedText str = new MNReferencedText();
                     str.Text = rt.Text;
                     value = str;
@@ -725,6 +899,7 @@ namespace SlideViewer.Views
 
         public PageViewController()
         {
+            Debugger.Log(0,"","Instance of controller\n");
             t.Tick += new EventHandler(t_Tick);
         }
 
@@ -748,6 +923,10 @@ namespace SlideViewer.Views
                 case "invalidate":
                     View.Invalidate();
                     break;
+                case "reload":
+                    //View.CurrentPage.RestoreStatus();
+                    View.ReloadPage(true);
+                    break;
                 case "restart":
                     View.Start();
                     break;
@@ -770,6 +949,10 @@ namespace SlideViewer.Views
                     {
                         ShowPage(arg1);
                     }
+                    break;
+                case "showPageMenu":
+                    View.InitializePageMenu();
+                    View.Invalidate();
                     break;
                 case "showmenu":
                     MNMenu m = View.CurrentDocument.FindMenu(args.getSafe(0).getStringValue());
@@ -817,6 +1000,9 @@ namespace SlideViewer.Views
                         }
                     }
                     break;
+                case "homePage":
+                    ShowPage(View.CurrentPage.Document.Book.HomePage);
+                    break;
                 default:
                     base.ExecuteMessage(token, args);
                     break;
@@ -835,7 +1021,11 @@ namespace SlideViewer.Views
             if (p != null)
             {
                 if (View.CurrentPage != null)
+                {
                     PageHistory.Add(View.CurrentPage.Index);
+                    Debugger.Log(0, "", "ADD HISTORY " + View.CurrentPage.Index.ToString() + "\n");
+                    LogHistory();
+                }
                 View.CurrentPage = p;
             }
         }
@@ -856,7 +1046,11 @@ namespace SlideViewer.Views
             if (p != null)
             {
                 if (View.CurrentPage != null)
+                {
                     PageHistory.Add(View.CurrentPage.Index);
+                    Debugger.Log(0, "", "ADD HISTORY " + View.CurrentPage.Index.ToString() + "\n");
+                    LogHistory();
+                }
                 View.CurrentPage = p;
             }
         }
@@ -869,11 +1063,24 @@ namespace SlideViewer.Views
             // take index of that page from page history
             if (PageHistory.Count > 0)
             {
-                p = View.CurrentDocument.FindPageWithIndex(PageHistory[PageHistory.Count - 1]);
+                int pageIndex = PageHistory[PageHistory.Count - 1];
+                Debugger.Log(0, "", "RESTORE HISTORY " + pageIndex.ToString() +"\n");
+                LogHistory();
+                p = View.CurrentDocument.FindPageWithIndex(pageIndex);
                 PageHistory.RemoveAt(PageHistory.Count - 1);
             }
             if (p != null)
                 View.CurrentPage = p;
+        }
+
+        public void LogHistory()
+        {
+            Debugger.Log(0, "", "HISTORY: ");
+            foreach (int i in PageHistory)
+            {
+                Debugger.Log(0, "", i.ToString() + ", ");
+            }
+            Debugger.Log(0, "", "\n");
         }
 
         public override GSCore GetPropertyValue(string s)

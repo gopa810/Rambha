@@ -35,7 +35,7 @@ namespace SlideViewer
             timer1.Stop();
             if (p_waveOut != null)
             {
-                Debugger.Log(0, "", "Audio Player stoped.\n");
+                //Debugger.Log(0, "", "Audio Player stoped.\n");
                 DisposeAll();
             }
             Playing = false;

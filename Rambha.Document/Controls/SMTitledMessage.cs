@@ -28,7 +28,6 @@ namespace Rambha.Document
             titleRichText = new SMRichText();
             titleRichText.Font.Size = 17;
             titleRichText.Font.Name = MNFontName.ChaparralPro;
-            titleRichText.NormalState.ForeColor = Color.White;
 
             messageRichText = new SMRichText(this);
             messageRichText.Font.Name = MNFontName.ChaparralPro;
@@ -53,6 +52,7 @@ namespace Rambha.Document
             string plainText = context.CurrentPage.MessageText;
             string titleText = context.CurrentPage.MessageTitle;
 
+            SMStatusLayout layout = GetFullStatusLayout();
             Font usedFont = GetUsedFont();
             int titleHeight = 0;
             int textHeight = 0;
@@ -77,7 +77,7 @@ namespace Rambha.Document
                 context.g.FillRectangle(Brushes.LightBlue, 0, cy, context.PageWidth, textHeight + 32);
                 textBounds.Y = cy;
                 textBounds.Height = textHeight + 32;
-                messageRichText.DrawString(context, plainText, textBounds);
+                messageRichText.DrawString(context, layout, plainText, textBounds);
             }
 
             if (titleHeight > 0)
@@ -86,7 +86,7 @@ namespace Rambha.Document
                 context.g.FillRectangle(Brushes.CadetBlue, 0, cy, context.PageWidth, titleHeight + 16);
                 textBounds.Y = cy;
                 textBounds.Height = titleHeight + 16;
-                titleRichText.DrawString(context, titleText, textBounds);
+                titleRichText.DrawString(context, layout, titleText, textBounds);
             }
 
             if (titleHeight + textHeight > 0)

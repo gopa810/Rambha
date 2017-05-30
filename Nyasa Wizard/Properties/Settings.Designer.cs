@@ -70,5 +70,53 @@ namespace SlideMaker.Properties {
                 this["Pairs"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0, 0")]
+        public global::System.Drawing.Size ViewFrameSize {
+            get {
+                return ((global::System.Drawing.Size)(this["ViewFrameSize"]));
+            }
+            set {
+                this["ViewFrameSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0, 0")]
+        public global::System.Drawing.Point ViewFrameLocation {
+            get {
+                return ((global::System.Drawing.Point)(this["ViewFrameLocation"]));
+            }
+            set {
+                this["ViewFrameLocation"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0, 0")]
+        public global::System.Drawing.Size ReviewFrameSize {
+            get {
+                return ((global::System.Drawing.Size)(this["ReviewFrameSize"]));
+            }
+            set {
+                this["ReviewFrameSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0, 0")]
+        public global::System.Drawing.Point ReviewFrameLocation {
+            get {
+                return ((global::System.Drawing.Point)(this["ReviewFrameLocation"]));
+            }
+            set {
+                this["ReviewFrameLocation"] = value;
+            }
+        }
     }
 }

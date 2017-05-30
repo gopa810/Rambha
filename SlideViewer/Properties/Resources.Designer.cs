@@ -85,6 +85,136 @@ namespace SlideViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap menuIconBack {
+            get {
+                object obj = ResourceManager.GetObject("menuIconBack", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconBook {
+            get {
+                object obj = ResourceManager.GetObject("menuIconBook", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconExercA {
+            get {
+                object obj = ResourceManager.GetObject("menuIconExercA", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconExercB {
+            get {
+                object obj = ResourceManager.GetObject("menuIconExercB", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconFwd {
+            get {
+                object obj = ResourceManager.GetObject("menuIconFwd", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconHome {
+            get {
+                object obj = ResourceManager.GetObject("menuIconHome", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconMenu {
+            get {
+                object obj = ResourceManager.GetObject("menuIconMenu", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconParents {
+            get {
+                object obj = ResourceManager.GetObject("menuIconParents", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconSelBook {
+            get {
+                object obj = ResourceManager.GetObject("menuIconSelBook", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconSelLang {
+            get {
+                object obj = ResourceManager.GetObject("menuIconSelLang", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuIconShowHints {
+            get {
+                object obj = ResourceManager.GetObject("menuIconShowHints", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuItemRestart {
+            get {
+                object obj = ResourceManager.GetObject("menuItemRestart", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap menuItemShowSpots {
+            get {
+                object obj = ResourceManager.GetObject("menuItemShowSpots", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap navigArrowLeft {
             get {
                 object obj = ResourceManager.GetObject("navigArrowLeft", resourceCulture);
@@ -138,6 +268,16 @@ namespace SlideViewer.Properties {
         internal static System.Drawing.Bitmap navigIconHome {
             get {
                 object obj = ResourceManager.GetObject("navigIconHome", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap navigIconMenu {
+            get {
+                object obj = ResourceManager.GetObject("navigIconMenu", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

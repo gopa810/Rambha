@@ -544,8 +544,31 @@ namespace Rambha.Script
         private GSCore execRandom(GSCoreCollection args)
         {
             int count = args.Count;
+            string exceptValue = "";
+            for (int i = 0; i < count; i++)
+            {
+                if (args[i].getStringValue().Equals("#"))
+                {
+                    if (i < count - 1)
+                    {
+                        exceptValue = args[i + 1].getStringValue();
+                    }
+                    count = i;
+                    break;
+                }
+            }
             Random rnd = new Random(DateTime.Now.Millisecond);
-            return args.getSafe(rnd.Next(count));
+            GSCore rv = null;
+            for (int i = 0; i < 20; i++)
+            {
+                rv = args.getSafe(rnd.Next(count));
+                if (exceptValue.Equals("") || !rv.getStringValue().Equals(exceptValue))
+                {
+                    return rv;
+                }
+            }
+
+            return rv;
         }
 
         private GSCore execPrint(GSCoreCollection arg, bool newLine)
@@ -633,7 +656,7 @@ namespace Rambha.Script
 
         public void ClearVariables()
         {
-            for (int i = stackVars.Count - 1; i >= 0; i--)
+            for (int i = stackVars.Count - 1; i > 0; i--)
             {
                 stackVars[i].Clear();
             }

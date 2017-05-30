@@ -21,6 +21,7 @@ namespace Rambha.Document
 
         protected StringBuilder TextBuilder = new StringBuilder();
         protected List<string> Lines = new List<string>();
+        protected bool wordsModified = false;
 
         public SMTextEdit(MNPage page)
             : base(page)
@@ -78,21 +79,8 @@ namespace Rambha.Document
         {
             Rectangle bounds = Area.GetBounds(context);
 
-            PrepareBrushesAndPens();
-            /*
-            if (tempBackBrush == null || tempBackBrush.Color != Style.BackColor)
-            {
-                tempBackBrush = new SolidBrush(Style.BackColor);
-            }
-            if (tempForeBrush == null || tempForeBrush.Color != Style.ForeColor)
-            {
-                tempForeBrush = new SolidBrush(Style.ForeColor);
-            }
-            if (tempForePen == null || tempForePen.Color != Style.ForeColor)
-            {
-                tempForePen = new Pen(Style.ForeColor);
-            }
-*/
+            SMStatusLayout layout = PrepareBrushesAndPens();
+
             Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
 
             // size of one cell
@@ -105,14 +93,15 @@ namespace Rambha.Document
             format.Alignment = StringAlignment.Center;
             format.LineAlignment = StringAlignment.Center;
 
-            if (stringReadyToAdd.Length != 0)
+            if (wordsModified)
             {
-                foreach (char c in stringReadyToAdd)
+                RecalculateWords(context, textBounds.Width);
+                while (Lines.Count > LinesCount && LinesCount > 0)
                 {
-                    if (ProcessChar(context, textBounds.Width, c))
-                        break;
+                    TextBuilder.Remove(TextBuilder.Length - 1, 1);
+                    RecalculateWords(context, textBounds.Width);
                 }
-                stringReadyToAdd = "";
+                wordsModified = false;
             }
 
             Brush textB = (UIStateError == MNEvaluationResult.Incorrect ? Brushes.Red : tempForeBrush);
@@ -125,15 +114,16 @@ namespace Rambha.Document
                 int y = cellSize * (i + 1) + textBounds.Y;
                 context.g.DrawLine(Pens.Gray, textBounds.Left, y, textBounds.Right, y);
                 // draws cursor only if control is focused
-                if ((i == Lines.Count - 1) && (UIStateError == MNEvaluationResult.Focused))
+                if (i < Lines.Count)
                 {
                     SizeF ll = context.g.MeasureString(Lines[i], usedFont);
-                    context.g.DrawString(Lines[i], usedFont, textB, 0, cellSize * i);
-                    context.g.FillRectangle(cursB, ll.Width + 2, cellSize * i, cellSize * 2 / 3, cellSize);
-                }
-                else if (i < Lines.Count)
-                {
-                    context.g.DrawString(Lines[i], usedFont, textB, 0, cellSize * i);
+                    int y2 = y - (int)ll.Height - 3;
+                    context.g.DrawString(Lines[i], usedFont, textB, textBounds.X, y2);
+
+                    if (i == Lines.Count - 1)
+                    {
+                        context.g.FillRectangle(cursB, textBounds.X + ll.Width + 2, y2, cellSize * 2 / 3, cellSize);
+                    }
                 }
             }
 
@@ -183,7 +173,7 @@ namespace Rambha.Document
             return refused;
         }
 
-        public void RecalculateWords(MNPageContext context, float width)
+        public int RecalculateWords(MNPageContext context, float width)
         {
             string[] p = TextBuilder.ToString().Split(' ');
             Font font = Font.Font;
@@ -197,7 +187,7 @@ namespace Rambha.Document
 
             foreach (string s in p)
             {
-                if (counter > 0)
+                /*if (counter > 0)
                 {
                     ts = g.MeasureString(" ", font);
                     if (ts.Width + currWidth > width)
@@ -211,7 +201,7 @@ namespace Rambha.Document
                         currLine.Append(" ");
                         currWidth += ts.Width;
                     }
-                }
+                }*/
 
                 ts = g.MeasureString(s, font);
                 if (ts.Width + currWidth > width)
@@ -221,11 +211,24 @@ namespace Rambha.Document
                     currWidth = 0;
                 }
 
+                if (currLine.Length > 0)
+                    currLine.Append(" ");
                 currLine.Append(s);
                 currWidth += ts.Width;
 
                 counter++;
             }
+
+            if (currLine.Length > 0)
+            {
+                Lines.Add(currLine.ToString());
+            }
+
+            if (Lines.Count == 0)
+            {
+                Lines.Add("");
+            }
+            return -1;
         }
 
         public override MNEvaluationResult Evaluate()
@@ -264,20 +267,30 @@ namespace Rambha.Document
 
         public override GSCore ExecuteMessage(string token, GSCoreCollection args)
         {
-            if (token == "acceptString")
+            if (token.Equals("acceptString"))
             {
-                if (args.Count > 0)
+                TextBuilder.Append(args.getSafe(0).getStringValue());
+                wordsModified = true;
+                return this;
+            }
+            else if (token.Equals("acceptBack"))
+            {
+                if (TextBuilder.Length > 0)
                 {
-                    AcceptString(args[0].getStringValue());
-                    return args[0];
+                    TextBuilder.Remove(TextBuilder.Length - 1, 1);
+                    wordsModified = true;
                 }
+                return this;
+            }
 
-                return GSVoid.Void;
-            }
-            else
-            {
-                return base.ExecuteMessage(token, args);
-            }
+            return base.ExecuteMessage(token, args);
+        }
+
+        public override void ResetStatus()
+        {
+            Text = "";
+            Lines.Clear();
+            base.ResetStatus();
         }
     }
 }

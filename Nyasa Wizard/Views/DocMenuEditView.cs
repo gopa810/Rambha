@@ -54,7 +54,7 @@ namespace SlideMaker
             if (mi != null)
             {
                 if (mi.Image != null)
-                    pictureBox1.Image = mi.Image.ImageData;
+                    pictureBox1.Image = mi.Image;
                 textBox3.Text = mi.Text;
                 richTextBox1.Text = mi.ActionScript;
             }
@@ -79,7 +79,7 @@ namespace SlideMaker
                 MNReferencedImage ri = (MNReferencedImage)e.Data.GetData(typeof(MNReferencedImage));
                 if (ri != null)
                 {
-                    p_editedItem.Image = ri;
+                    p_editedItem.ImageName = ri.Name;
                     pictureBox1.Image = ri.ImageData;
                 }
             }
@@ -138,7 +138,7 @@ namespace SlideMaker
         {
             if (p_editedMenu != null)
             {
-                MNMenuItem mi = new MNMenuItem();
+                MNMenuItem mi = new MNMenuItem(MNNotificationCenter.CurrentDocument);
                 p_editedMenu.Items.Add(mi);
                 listBox1.Items.Add(mi);
                 listBox1.SelectedIndex = listBox1.Items.Count - 1;
@@ -178,7 +178,7 @@ namespace SlideMaker
                 MNReferencedImage ri = (MNReferencedImage)e.Data.GetData(typeof(MNReferencedImage));
                 if (ri != null)
                 {
-                    p_editedItem.Image = ri;
+                    p_editedItem.ImageName = ri.Name;
                     pictureBox1.Image = ri.ImageData;
                 }
             }

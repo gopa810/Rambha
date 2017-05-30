@@ -28,10 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            Rambha.Document.MNPageContext mnPageContext1 = new Rambha.Document.MNPageContext();
-            System.Drawing.Drawing2D.Matrix matrix1 = new System.Drawing.Drawing2D.Matrix();
-            System.Drawing.Drawing2D.Matrix matrix2 = new System.Drawing.Drawing2D.Matrix();
-            SlideViewer.Views.PageViewController pageViewController1 = new SlideViewer.Views.PageViewController();
             this.pageView1 = new SlideViewer.Views.PageView();
             this.panelBook = new System.Windows.Forms.Panel();
             this.panelSelectLanguage = new SlideViewer.SelectLanguageView();
@@ -50,13 +46,6 @@
             // 
             this.pageView1.BackColor = System.Drawing.SystemColors.Window;
             this.pageView1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            mnPageContext1.CurrentPage = null;
-            mnPageContext1.DisplaySize = Rambha.Document.PageEditDisplaySize.LandscapeBig;
-            mnPageContext1.hitHeaderButton = 0;
-            mnPageContext1.isMovingTag = false;
-            mnPageContext1.LastInvertMatrix = matrix1;
-            mnPageContext1.LastMatrix = matrix2;
-            this.pageView1.Context = mnPageContext1;
             this.pageView1.CurrentDocument = null;
             this.pageView1.CurrentPage = null;
             this.pageView1.DisplayedMenu = null;
@@ -64,8 +53,6 @@
             this.pageView1.Name = "pageView1";
             this.pageView1.Size = new System.Drawing.Size(303, 290);
             this.pageView1.TabIndex = 0;
-            pageViewController1.View = this.pageView1;
-            this.pageView1.ViewController = pageViewController1;
             // 
             // panelBook
             // 
@@ -183,6 +170,7 @@
             this.Name = "ViewFrame";
             this.Text = "Page Views";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ViewFrame_FormClosing);
+            this.Load += new System.EventHandler(this.ViewFrame_Load);
             this.Shown += new System.EventHandler(this.ViewFrame_Shown);
             this.panelBook.ResumeLayout(false);
             this.panelFiles.ResumeLayout(false);

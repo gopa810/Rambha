@@ -283,7 +283,7 @@ namespace Rambha.Document
         {
             foreach (MNReferencedSound at in Sounds)
             {
-                Debugger.Log(0,"", "--Looking in sound: " + at.Name + "\n");
+                //Debugger.Log(0,"", "--Looking in sound: " + at.Name + "\n");
                 if (at.Name.Equals(p))
                     return at;
             }

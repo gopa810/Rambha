@@ -11,7 +11,7 @@ using Rambha.Serializer;
 
 namespace Rambha.Document
 {
-    public class SMTextView: SMTextContainer
+    public class SMTextView: SMTextViewBase
     {
         private Size p_textSize = Size.Empty;
 
@@ -45,6 +45,25 @@ namespace Rambha.Document
             base.Save(bw);
 
             bw.WriteByte(0);
+        }
+
+        public void ContentToTags()
+        {
+
+        }
+
+        public override void ResetStatus()
+        {
+            foreach (SMWordBase wb in drawWords)
+            {
+                if (wb is SMWordToken)
+                {
+                    SMWordToken wt = (SMWordToken)wb;
+                    wt.droppedItem = null;
+                    wt.editedText = "";
+                }
+            }
+            base.ResetStatus();
         }
     }
 }

@@ -87,7 +87,7 @@ namespace Rambha.Document
             Rectangle rect = Area.GetBounds(context);
             SizeF offset = SizeF.Empty;
 
-            PrepareBrushesAndPens();
+            SMStatusLayout layout = PrepareBrushesAndPens();
 
             CalcCells(ref rect, ref offset);
 
@@ -122,17 +122,7 @@ namespace Rambha.Document
                 showRect.Inflate(-3, -3);
 
                 int objectIndex = drw[i];
-                if (objectIndex == i && enabledBorder && startTapIndex < 0)
-                {
-                    context.g.FillRectangle(Brushes.Green, r.X, r.Y, 3, r.Height);
-                    context.g.FillRectangle(Brushes.Green, r.X, r.Y, r.Width, 3);
-                    context.g.FillRectangle(Brushes.Green, r.Right - 3, r.Y, 3, r.Height);
-                    context.g.FillRectangle(Brushes.Green, r.X, r.Bottom - 3, r.Width, 3);
-                }
-                else
-                {
-                    enabledBorder = false;
-                }
+
 
                 object obj = Objects[objectIndex];
                 // draw moved item near the cursor
@@ -147,12 +137,35 @@ namespace Rambha.Document
                 {
                     string plainText = obj as string;
                     StringFormat format = Paragraph.GetAlignmentStringFormat();
+                    if (Orientation == SMTextDirection.Horizontal)
+                    {
+                        format.Trimming = StringTrimming.None;
+                        format.FormatFlags |= StringFormatFlags.NoClip | StringFormatFlags.NoWrap;
+                    }
                     context.g.DrawString(plainText, usedFont, tempForeBrush, showRect, format);
                 }
                 else if (obj is MNLazyImage)
                 {
-                    DrawImage(context, showRect, (obj as MNLazyImage).ImageData, SMContentScaling.Fit);
+                    DrawImage(context, layout, showRect, (obj as MNLazyImage).ImageData, SMContentScaling.Fit);
                 }
+
+                // draw a border
+                Brush br;
+
+                if (objectIndex == i && enabledBorder && startTapIndex < 0)
+                {
+                    br = Brushes.Green;
+                }
+                else
+                {
+                    br = Brushes.Gainsboro;
+                    enabledBorder = false;
+                }
+
+                context.g.FillRectangle(br, r.X, r.Y, 3, r.Height);
+                context.g.FillRectangle(br, r.X, r.Y, r.Width, 3);
+                context.g.FillRectangle(br, r.Right - 3, r.Y, 3, r.Height);
+                context.g.FillRectangle(br, r.X, r.Bottom - 3, r.Width, 3);
             }
 
             base.Paint(context);
@@ -287,6 +300,13 @@ namespace Rambha.Document
             MNLazyImage li = new MNLazyImage(Document);
             li.Image = ri;
             Objects.Add(li);
+        }
+
+        public override void ResetStatus()
+        {
+            MixObjects(false);
+
+            base.ResetStatus();
         }
     }
 }

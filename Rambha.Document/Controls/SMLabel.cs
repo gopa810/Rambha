@@ -20,6 +20,7 @@ namespace Rambha.Document
         [Browsable(true), Category("Layout")]
         public SMRunningLine RunningLine { get; set; }
 
+        public bool SwitchStatus = false;
 
         public SMLabel(MNPage p)
             : base(p)
@@ -29,6 +30,15 @@ namespace Rambha.Document
             RunningLine = SMRunningLine.Natural;
             richText = new SMRichText(this);
             BackType = SMBackgroundType.None;
+        }
+
+        public override GSCore ExecuteMessage(string token, GSCoreCollection args)
+        {
+            if (token.Equals("toogleCheck"))
+            {
+                SwitchStatus = !SwitchStatus;
+            }
+            return base.ExecuteMessage(token, args);
         }
 
         protected override GSCore ExecuteMessageSet(GSCore a1, GSCore a2, GSCoreCollection args)
@@ -76,9 +86,25 @@ namespace Rambha.Document
             SMRectangleArea area = this.Area;
             Rectangle bounds = area.GetBounds(context);
 
-            PrepareBrushesAndPens();
+            SMConnection conn = context.CurrentPage.FindConnection(this);
+            if (conn != null)
+                UIStateHover = true;
 
-            Rectangle textBounds = ContentPadding.ApplyPadding(bounds);
+
+            bool b = UIStateHover;
+            UIStateHover |= SwitchStatus;
+            SMStatusLayout layout = PrepareBrushesAndPens();
+            UIStateHover = b;
+
+            Rectangle boundsA = bounds;
+            boundsA.Y = Math.Max(0, bounds.Top);
+            boundsA.X = Math.Max(0, bounds.Left);
+            boundsA.Width = Math.Min(1024,bounds.Right);
+            boundsA.Height = Math.Min(768,bounds.Bottom);
+            boundsA.Width -= boundsA.X;
+            boundsA.Height -= boundsA.Y;
+
+            Rectangle textBounds = ContentPadding.ApplyPadding(boundsA);
 
             if (Text != null && Text.Contains("\\n"))
                 Text = Text.Replace("\\n", "\n");
@@ -126,7 +152,7 @@ namespace Rambha.Document
                             textBounds.Y + BackgroundImageOffset.Y);
                     }
                     richText.Paragraph.VertAlign = SMVerticalAlign.Top;
-                    richText.DrawString(context, textBounds);
+                    richText.DrawString(context, layout, textBounds);
                     Area.RelativeArea = r;
                 }
                 else if (Dock == SMControlSelection.Bottom)
@@ -148,7 +174,7 @@ namespace Rambha.Document
                             textBounds.Y + BackgroundImageOffset.Y);
                     }
                     richText.Paragraph.VertAlign = SMVerticalAlign.Top;
-                    richText.DrawString(context, textBounds);
+                    richText.DrawString(context, layout, textBounds);
                     Area.RelativeArea = r;
                 }
                 else if (Dock == SMControlSelection.Right)
@@ -170,7 +196,7 @@ namespace Rambha.Document
                             textBounds.Y + BackgroundImageOffset.Y);
                     }
                     richText.Paragraph.VertAlign = SMVerticalAlign.Top;
-                    richText.DrawString(context, textBounds);
+                    richText.DrawString(context, layout, textBounds);
                     Area.RelativeArea = r;
                 }
                 else if (Dock == SMControlSelection.Left)
@@ -192,7 +218,7 @@ namespace Rambha.Document
                             textBounds.Y + BackgroundImageOffset.Y);
                     }
                     richText.Paragraph.VertAlign = SMVerticalAlign.Top;
-                    richText.DrawString(context, textBounds);
+                    richText.DrawString(context, layout, textBounds);
                     Area.RelativeArea = r;
                 }
                 else
@@ -207,9 +233,9 @@ namespace Rambha.Document
                     {
                         DrawStyledBackground(context, bounds);
                     }
-                    DrawStyledBorder(context, bounds);
+                    DrawStyledBorder(context, layout, bounds);
 
-                    richText.DrawString(context, textBounds);
+                    richText.DrawString(context, layout, textBounds);
                 }
 
                 /*if (RichContent)
@@ -245,7 +271,7 @@ namespace Rambha.Document
             else if (runningText != null)
             {
                 DrawStyledBackground(context, bounds);
-                DrawStyledBorder(context, bounds);
+                DrawStyledBorder(context, layout, bounds);
 
                 Point curr = new Point(textBounds.Left, textBounds.Top);
                 int index = 0;
@@ -275,22 +301,17 @@ namespace Rambha.Document
                     index++;
                 }
             }
-
-            // draw selection marks
-            base.Paint(context);
-        }
-
-        public override bool OnDropFinished(PVDragContext dc)
-        {
-            if (HasImmediateEvaluation)
+            
+            if (UIStateError == MNEvaluationResult.Incorrect && UIStateChecked)
             {
-                if (!SafeTag.Equals(dc.draggedItem.Tag.ToLower()))
+                if (Document.HasViewer)
                 {
-                    return false;
+                    Document.Viewer.ScheduleCall(MNNotificationCenter.RectifyDelay, this, "clearCheck");
                 }
             }
-
-            return base.OnDropFinished(dc);
+            
+            // draw selection marks
+            base.Paint(context);
         }
 
         public override bool Load(RSFileReader br)
@@ -334,5 +355,30 @@ namespace Rambha.Document
             bw.WriteByte(0);
         }
 
+        public override MNEvaluationResult Evaluate()
+        {
+            UIStateError = GenericCheckedEvaluation();
+
+            return UIStateError; 
+        }
+
+        public override bool OnDropFinished(PVDragContext dc)
+        {
+            if (HasImmediateEvaluation)
+            {
+                string tag = SafeTag;
+                if (tag.Length > 0 && !tag.Equals(dc.draggedItem.Tag, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return false;
+                }
+
+                // if text is only ____, then replace text with dragged content
+                if (Text != null && Text.Replace("_","").Length == 0 && dc.draggedItem.Text != null && dc.draggedItem.Text.Length > 0)
+                    Text = dc.draggedItem.Text;
+            }
+
+
+            return base.OnDropFinished(dc);
+        }
     }
 }

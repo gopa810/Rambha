@@ -349,7 +349,7 @@ namespace Rambha.Document
 
         public override void LoadStatus(RSFileReader br)
         {
-            base.LoadStatus(br);
+            base.LoadStatusCore(br);
             byte b;
             while ((b = br.ReadByte()) != 0)
             {
@@ -375,7 +375,7 @@ namespace Rambha.Document
 
         public override void SaveStatus(RSFileWriter bw)
         {
-            base.SaveStatus(bw);
+            base.SaveStatusCore(bw);
 
             if (p_cellStatus != null && p_cellExpectedStatus != null)
             {
@@ -394,6 +394,12 @@ namespace Rambha.Document
 
 
             bw.WriteByte(0);
+        }
+
+        public override void ResetStatus()
+        {
+            p_prevText = "<to reset>";
+            base.ResetStatus();
         }
     }
 }

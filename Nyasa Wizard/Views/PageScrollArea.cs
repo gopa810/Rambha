@@ -379,6 +379,11 @@ namespace SlideMaker.Views
             if (NextPageRequested != null)
                 NextPageRequested(this, new PageEditViewArguments());
         }
+
+        private void clearAllConnnectionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pageEditView1.ClearAllConnections();
+        }
     }
 
     public interface IPageScrollArea

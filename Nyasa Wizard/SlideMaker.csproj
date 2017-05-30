@@ -142,6 +142,12 @@
     <Compile Include="Controls\DialogEditOrderedListTexts.Designer.cs">
       <DependentUpon>DialogEditOrderedListTexts.cs</DependentUpon>
     </Compile>
+    <Compile Include="DialogInsertTransPages.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogInsertTransPages.Designer.cs">
+      <DependentUpon>DialogInsertTransPages.cs</DependentUpon>
+    </Compile>
     <Compile Include="DialogNewName.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -267,11 +273,26 @@
       <DependentUpon>EVControlName.cs</DependentUpon>
     </Compile>
     <Compile Include="ShadowPainter.cs" />
+    <Compile Include="SlideViewer\ErrorCatcher.cs" />
+    <Compile Include="SlideViewer\MNDocumentExecutor.cs" />
+    <Compile Include="SlideViewer\ReviewBook.cs" />
+    <Compile Include="SlideViewer\ReviewFrame.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SlideViewer\ReviewFrame.Designer.cs">
+      <DependentUpon>ReviewFrame.cs</DependentUpon>
+    </Compile>
     <Compile Include="ToolWindowInsertPageLayout.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ToolWindowInsertPageLayout.Designer.cs">
       <DependentUpon>ToolWindowInsertPageLayout.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ViewForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ViewForm.Designer.cs">
+      <DependentUpon>ViewForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\DialogEnterPageNames.cs">
       <SubType>Form</SubType>
@@ -305,12 +326,6 @@
     </Compile>
     <Compile Include="Views\EditStyleName.Designer.cs">
       <DependentUpon>EditStyleName.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Views\ImageSpotsEditorView.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Views\ImageSpotsEditorView.Designer.cs">
-      <DependentUpon>ImageSpotsEditorView.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\KeyPageActions.cs" />
     <Compile Include="Views\PageDetailPanel.cs">
@@ -365,6 +380,12 @@
     <Compile Include="TreeObjectView\TreeObjectView.Designer.cs">
       <DependentUpon>TreeObjectView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Views\PageView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\PageView.Designer.cs">
+      <DependentUpon>PageView.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="Controls\EVLabel.resx">
       <DependentUpon>EVLabel.cs</DependentUpon>
     </EmbeddedResource>
@@ -394,6 +415,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="DialogGenerateLangFile.resx">
       <DependentUpon>DialogGenerateLangFile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogInsertTransPages.resx">
+      <DependentUpon>DialogInsertTransPages.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DialogNewName.resx">
       <DependentUpon>DialogNewName.cs</DependentUpon>
@@ -452,8 +476,14 @@
     <EmbeddedResource Include="Controls\EVControlName.resx">
       <DependentUpon>EVControlName.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="SlideViewer\ReviewFrame.resx">
+      <DependentUpon>ReviewFrame.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ToolWindowInsertPageLayout.resx">
       <DependentUpon>ToolWindowInsertPageLayout.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ViewForm.resx">
+      <DependentUpon>ViewForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Views\DialogEnterPageNames.resx">
       <DependentUpon>DialogEnterPageNames.cs</DependentUpon>
@@ -463,9 +493,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Views\EditStyleName.resx">
       <DependentUpon>EditStyleName.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Views\ImageSpotsEditorView.resx">
-      <DependentUpon>ImageSpotsEditorView.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Views\PageDetailPanel.resx">
       <DependentUpon>PageDetailPanel.cs</DependentUpon>
@@ -500,6 +527,9 @@
     </Compile>
     <EmbeddedResource Include="TreeObjectView\TreeObjectView.resx">
       <DependentUpon>TreeObjectView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\PageView.resx">
+      <DependentUpon>PageView.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
     <None Include="packages.config" />
@@ -592,6 +622,51 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\SpeakerOn.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\manuItemSelLang.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconBook.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconExercA.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconExercB.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconHome.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconSelBook.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconShowHints.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuItemRestart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuItemShowSpots.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuItemRestart.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconBack.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconFwd.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\navigIconMenu.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconParents.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menuIconMenu.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" />

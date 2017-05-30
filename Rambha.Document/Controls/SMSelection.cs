@@ -52,7 +52,7 @@ namespace Rambha.Document
         public override void Paint(MNPageContext context)
         {
             //Debugger.Log(0, "", "-- paint selection control -- Horizontal:" + bHorizontal + "\n");
-            PrepareBrushesAndPens();
+            SMStatusLayout layout = PrepareBrushesAndPens();
 
             PrepareContent(context);
 
@@ -76,7 +76,7 @@ namespace Rambha.Document
                 foreach (SelText st in texts)
                 {
                     int thisWidth = r.Width * st.size.Width / width;
-                    SMStatusLayout layout = (p_currSelection == index ? HighlightState : NormalState);
+                    layout = (p_currSelection == index ? SMGraphics.clickableLayoutH : SMGraphics.clickableLayoutN);
                     backBrush = SMGraphics.GetBrush(layout.BackColor);
                     foreBrush = SMGraphics.GetBrush(layout.ForeColor);
                     
@@ -95,7 +95,8 @@ namespace Rambha.Document
                     {
                         context.g.FillEllipse(backBrush, r.Right - radius*2, r.Top, radius * 2, radius * 2);
                         context.g.FillEllipse(backBrush, r.Right - radius*2, r.Bottom - radius * 2, radius * 2, radius * 2);
-                        context.g.FillRectangle(backBrush, r.Right - radius, r.Top + radius, radius, r.Height - 2 * radius);
+                        context.g.FillRectangle(backBrush, currPos + thisWidth - radius, r.Top + radius, 
+                            r.Right - (currPos + thisWidth - radius), r.Height - 2 * radius);
                     }
                     else
                     {
@@ -112,7 +113,7 @@ namespace Rambha.Document
                     rt.Y = r.Top;
                     rt.Width = thisWidth;
                     rt.Height = r.Height;
-                    context.g.DrawString(st.text, font, tempForeBrush, rt, SMGraphics.StrFormatCenter);
+                    context.g.DrawString(st.text, font, foreBrush, rt, SMGraphics.StrFormatCenter);
                     st.drawRect = rt;
 
                     currPos += thisWidth;
@@ -133,7 +134,7 @@ namespace Rambha.Document
                 foreach (SelText st in texts)
                 {
                     int thisHeight = r.Height * st.size.Height / height;
-                    SMStatusLayout layout = (p_currSelection == index ? HighlightState : NormalState);
+                    layout = (p_currSelection == index ? SMGraphics.clickableLayoutH : SMGraphics.clickableLayoutN);
                     backBrush = SMGraphics.GetBrush(layout.BackColor);
                     foreBrush = SMGraphics.GetBrush(layout.ForeColor);
 
@@ -152,7 +153,8 @@ namespace Rambha.Document
                     {
                         context.g.FillEllipse(backBrush, r.Left, r.Bottom - radius * 2, radius * 2, radius * 2);
                         context.g.FillEllipse(backBrush, r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2);
-                        context.g.FillRectangle(backBrush, r.Left + radius, r.Bottom - radius, r.Width - 2 * radius, radius);
+                        context.g.FillRectangle(backBrush, r.Left + radius, currPos + thisHeight - radius, 
+                            r.Width - 2 * radius, r.Bottom - (currPos + thisHeight - radius));
                     }
                     else
                     {
@@ -169,7 +171,7 @@ namespace Rambha.Document
                     rt.Y = currPos;
                     rt.Width = r.Width;
                     rt.Height = thisHeight;
-                    context.g.DrawString(st.text, font, tempForeBrush, rt, SMGraphics.StrFormatCenter);
+                    context.g.DrawString(st.text, font, foreBrush, rt, SMGraphics.StrFormatCenter);
                     st.drawRect = rt;
 
                     currPos += thisHeight;
@@ -179,6 +181,14 @@ namespace Rambha.Document
 
             context.g.DrawRoundedRectangle(tempForePen, r, radius);
 
+            // in case this is wrongly checked, run clearing the state in 2 secs
+            if (UIStateError == MNEvaluationResult.Incorrect && HasImmediateEvaluation)
+            {
+                if (Document.HasViewer)
+                {
+                    Document.Viewer.ScheduleCall(MNNotificationCenter.RectifyDelay, this, "clearCheck");
+                }
+            }
 
             base.Paint(context);
         }
@@ -260,7 +270,21 @@ namespace Rambha.Document
                 index++;
             }
 
+            Evaluate();
+
             base.OnTapEnd(dc);
+        }
+
+        public override MNEvaluationResult Evaluate()
+        {
+            UIStateError = MNEvaluationResult.NotEvaluated;
+
+            if (p_currSelection >= 0 && p_expectedSelection >= 0)
+            {
+                UIStateError = (p_currSelection == p_expectedSelection) ? MNEvaluationResult.Correct : MNEvaluationResult.Incorrect;
+            }
+
+            return UIStateError;
         }
 
         public void PrepareContent(MNPageContext context)
@@ -310,6 +334,22 @@ namespace Rambha.Document
                     st.size.Height = (int)sf.Height;
                 }
             }
+        }
+
+        public override Script.GSCore ExecuteMessage(string token, Script.GSCoreCollection args)
+        {
+            if (token.Equals("clearCheck"))
+            {
+                ResetStatus();
+            }
+
+            return base.ExecuteMessage(token, args);
+        }
+
+        public override void ResetStatus()
+        {
+            p_currSelection = -1;
+            base.ResetStatus();
         }
     }
 }

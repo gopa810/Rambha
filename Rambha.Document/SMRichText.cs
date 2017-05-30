@@ -35,8 +35,6 @@ namespace Rambha.Document
 
         public SMFont Font = new SMFont();
         public SMParaFormat Paragraph = new SMParaFormat();
-        public SMStatusLayout NormalState = new SMStatusLayout();
-        public SMStatusLayout HighlightState = new SMStatusLayout();
         public MNEvaluationType EvaluationType = MNEvaluationType.None;
         public bool Autosize = false;
 
@@ -44,8 +42,6 @@ namespace Rambha.Document
         {
             Font = parent.Font;
             Paragraph = parent.Paragraph;
-            NormalState = parent.NormalState;
-            HighlightState = parent.HighlightState;
             Columns = -1;
             ColumnSeparatorWidth = 20;
         }
@@ -79,17 +75,17 @@ namespace Rambha.Document
             return new Size(richLayout.rightX, richLayout.bottomY);
         }
 
-        public void DrawString(MNPageContext context, Rectangle textBounds)
+        public void DrawString(MNPageContext context, SMStatusLayout layout, Rectangle textBounds)
         {
-            DrawString(context, p_prevText, textBounds, 0);
+            DrawString(context, layout, p_prevText, textBounds, 0);
         }
 
-        public void DrawString(MNPageContext context, string plainText, Rectangle textBounds)
+        public void DrawString(MNPageContext context, SMStatusLayout layout, string plainText, Rectangle textBounds)
         {
-            DrawString(context, plainText, textBounds, 0);
+            DrawString(context, layout, plainText, textBounds, 0);
         }
 
-        public void DrawString(MNPageContext context, string plainText, Rectangle textBounds, int nPage)
+        public void DrawString(MNPageContext context, SMStatusLayout layout, string plainText, Rectangle textBounds, int nPage)
         {
             if (!p_prevText.Equals(plainText) || (p_prevWidth != textBounds.Width) || drawWords == null)
             {
@@ -101,7 +97,7 @@ namespace Rambha.Document
             foreach (SMWordBase wt in drawWords)
             {
                 if (wt.PageNo == nPage)
-                    wt.Paint(context, textBounds.X, textBounds.Y);
+                    wt.Paint(context, layout, textBounds.X, textBounds.Y);
             }
         }
 
@@ -159,7 +155,7 @@ namespace Rambha.Document
                     {
                         ClearWordBuffer(list, word, fmt);
                         if (readedChar == '\n')
-                            list.Add(new SMWordSpecial(NormalState, NormalState, Font) { Type = SMWordSpecialType.Newline });
+                            list.Add(new SMWordSpecial(Font) { Type = SMWordSpecialType.Newline });
                         else if (readedChar == '\r')
                         {
                         }
@@ -501,7 +497,7 @@ namespace Rambha.Document
                     break;
                 case "drop":
                     {
-                        SMWordToken wt = new SMWordToken(NormalState, NormalState, Font);
+                        SMWordToken wt = new SMWordToken(Font);
                         wt.text = tt.attrs.ContainsKey("text") ? tt.attrs["text"] : "_____";
                         wt.tag = tt.attrs.ContainsKey("tag") ? tt.attrs["tag"] : "";
                         wt.Draggable = SMDragResponse.None;
@@ -512,7 +508,7 @@ namespace Rambha.Document
                     break;
                 case "edit":
                     {
-                        SMWordToken wt = new SMWordToken(NormalState, NormalState, Font);
+                        SMWordToken wt = new SMWordToken(Font);
                         wt.text = tt.attrs.ContainsKey("text") ? tt.attrs["text"] : "_____";
                         wt.tag = tt.attrs.ContainsKey("tag") ? tt.attrs["tag"] : "";
                         wt.Draggable = SMDragResponse.None;
@@ -524,20 +520,20 @@ namespace Rambha.Document
                     break;
                 case "page":
                     ClearWordBuffer(list, word, fmt);
-                    list.Add(new SMWordSpecial(NormalState, NormalState, Font) { Type = SMWordSpecialType.NewPage });
+                    list.Add(new SMWordSpecial(Font) { Type = SMWordSpecialType.NewPage });
                     break;
                 case "hr":
                     ClearWordBuffer(list, word, fmt);
-                    list.Add(new SMWordSpecial(NormalState, NormalState, Font) { Type = SMWordSpecialType.HorizontalLine });
+                    list.Add(new SMWordSpecial(Font) { Type = SMWordSpecialType.HorizontalLine });
                     break;
                 case "br":
                     ClearWordBuffer(list, word, fmt);
-                    list.Add(new SMWordSpecial(NormalState, NormalState, Font) { Type = SMWordSpecialType.Newline });
+                    list.Add(new SMWordSpecial(Font) { Type = SMWordSpecialType.Newline });
                     AppendWord(list, "\n", fmt);
                     break;
                 case "col":
                     ClearWordBuffer(list, word, fmt);
-                    list.Add(new SMWordSpecial(NormalState, NormalState, Font) { Type = SMWordSpecialType.NewColumn });
+                    list.Add(new SMWordSpecial(Font) { Type = SMWordSpecialType.NewColumn });
                     //AppendWord(list, "\n", control, fmt);
                     break;
                 case "r":
@@ -623,10 +619,9 @@ namespace Rambha.Document
         {
             // TODO
 
-            SMWordText wt = new SMWordText(NormalState, NormalState, Font);
+            SMWordText wt = new SMWordText(Font);
             wt.text = text;
-            wt.tag = text.Trim().ToLower();
-            wt.TextBrush = SMGraphics.GetBrush(NormalState.ForeColor);
+            wt.tag = text.Trim();
             wt.Draggable = fmt.dragResponse;
             wt.Evaluation = MNEvaluationType.None;
             wt.Font = fmt.GetFont();
@@ -706,6 +701,13 @@ namespace Rambha.Document
                 lineWidth = textBounds.Width / Columns - ColumnSeparatorWidth;
                 columnWidth = textBounds.Width / Columns;
                 lineX = textBounds.X + columnNo * columnWidth + ColumnSeparatorWidth / 2;
+                lineEnd = lineX + lineWidth;
+            }
+            else
+            {
+                lineWidth = textBounds.Width;
+                columnWidth = textBounds.Width;
+                lineX = textBounds.X;
                 lineEnd = lineX + lineWidth;
             }
 
@@ -831,7 +833,10 @@ namespace Rambha.Document
 
                 if (isNewLine || isNewColumn || isNewPage)
                 {
-                    lineX = textBounds.X + columnNo * columnWidth + ColumnSeparatorWidth / 2;
+                    if (Columns > 1)
+                        lineX = textBounds.X + columnNo * columnWidth + ColumnSeparatorWidth / 2;
+                    else
+                        lineX = textBounds.X;
                     lineEnd = lineX + lineWidth;
                 }
 

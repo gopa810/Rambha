@@ -7,8 +7,8 @@ using System.Drawing;
 using System.Drawing.Design;
 using System.Xml;
 using System.IO;
+using System.Diagnostics;
 
-using Rambha.Document.Views;
 using Rambha.Serializer;
 
 namespace Rambha.Document
@@ -28,14 +28,21 @@ namespace Rambha.Document
         [Browsable(true), Category("Source Offset Fill")]
         public int SourceOffsetY { get; set; }
 
+        [Browsable(true), Category("Content")]
+        public string BuiltInImage { get; set; }
+
         public MNLazyImage Img = null;
 
         public string DroppedTag { get; set; }
+        public string DroppedText { get; set; }
+        public Image DroppedImage { get; set; }
 
         private Rectangle sourceRect = Rectangle.Empty;
         private Rectangle showRect = Rectangle.Empty;
 
         private SMRichText rt = null;
+
+        public MNReferencedSpot HoverSpot = null;
 
         public SMImage(MNPage p): base(p)
         {
@@ -43,6 +50,8 @@ namespace Rambha.Document
             ContentScaling = SMContentScaling.Fit;
             Evaluation = MNEvaluationType.Inherited;
             DroppedTag = "";
+            DroppedImage = null;
+            DroppedText = "";
             ContentArangement = SMContentArangement.ImageOnly;
             SourceOffsetX = 50;
             SourceOffsetY = 50;
@@ -64,19 +73,27 @@ namespace Rambha.Document
             if (conn != null)
                 UIStateHover = true;
 
-            PrepareBrushesAndPens();
+            SMStatusLayout layout = PrepareBrushesAndPens();
 
+            Debugger.Log(0, "", "State of " + Text + " Image is " + UIStateChecked.ToString() + "\n");
             Rectangle bounds = ContentPadding.ApplyPadding(rect);
             SMContentArangement argm = this.ContentArangement;
+            MNReferencedImage refImage = null;
+            Rectangle imgRect = bounds;
 
-            Image image = GetContentImage();
+            Image image = GetContentImage(out refImage);
             if (image == null)
                 argm = SMContentArangement.TextOnly;
+
+            if (ExpectedChecked != Bool3.Undef)
+            {
+                DrawStyledBackground(context, bounds);
+            }
 
             if (argm == SMContentArangement.ImageOnly)
             {
                 SMContentScaling scaling = ContentScaling;
-                Rectangle rc = DrawImage(context, bounds, image, scaling, SourceOffsetX, SourceOffsetY);
+                Rectangle rc = DrawImage(context, layout, bounds, image, scaling, SourceOffsetX, SourceOffsetY);
                 if (ContentScaling == SMContentScaling.Fill)
                 {
                     showRect = bounds;
@@ -90,11 +107,10 @@ namespace Rambha.Document
             }
             else
             {
-                Rectangle imgRect = bounds;
                 Size textSize = Size.Empty;
                 Font usedFont = GetUsedFont();
-                string plainText = Text;
-                if (plainText.IndexOf("_") > 0 && DroppedTag.Length > 0)
+                string plainText = Text.Length > 0 ? Text : DroppedText;
+                if (plainText.IndexOf("_") >= 0 && DroppedTag.Length > 0)
                     plainText = plainText.Replace("_", DroppedTag);
                 if (plainText.Length != 0)
                 {
@@ -143,7 +159,7 @@ namespace Rambha.Document
 
                 if (!imgRect.IsEmpty)
                 {
-                    Rectangle rc = DrawImage(context, imgRect, image, ContentScaling, SourceOffsetX, SourceOffsetY);
+                    Rectangle rc = DrawImage(context, layout, imgRect, image, ContentScaling, SourceOffsetX, SourceOffsetY);
                     if (ContentScaling == SMContentScaling.Fill)
                     {
                         showRect = imgRect;
@@ -154,23 +170,61 @@ namespace Rambha.Document
                         showRect = rc;
                         sourceRect = new Rectangle(0, 0, image.Width, image.Height);
                     }
+
                 }
 
                 if (!textRect.IsEmpty)
                 {
-                    textRect.Inflate(1, 1);
-                    rt.DrawString(context, plainText, textRect);
+                    if (argm == SMContentArangement.TextOnly)
+                    {
+                        DrawStyledBorder(context, layout, bounds);
+                    }
+                    textRect.Inflate(2, 2);
+                    rt.DrawString(context, layout, plainText, textRect);
+                }
+            }
+
+            if (!imgRect.IsEmpty && refImage != null && refImage.HasSpots())
+            {
+                foreach (MNReferencedSpot rs in refImage.SafeSpots)
+                {
+                    if (rs.ContentType != SMContentType.TaggedArea) continue;
+                    if (rs.UIStateHighlighted || (HoverSpot == rs))
+                    {
+                        rs.Paint(context.g, showRect, false, context.SpotAreaBorderPen, null);
+                    }
+                }
+            }
+
+            if (UIStateError == MNEvaluationResult.Incorrect && UIStateChecked)
+            {
+                if (Document.HasViewer)
+                {
+                    Document.Viewer.ScheduleCall(MNNotificationCenter.RectifyDelay, this, "clearCheck");
                 }
             }
 
             base.Paint(context);
         }
 
-
-
-
-        private System.Drawing.Image GetContentImage()
+        private System.Drawing.Image GetContentImage(out MNReferencedImage refImage)
         {
+            if (DroppedImage != null)
+            {
+                refImage = null;
+                return DroppedImage;
+            }
+
+            if (BuiltInImage != null && Document != null)
+            {
+                if (BuiltInImage.Length > 0 && Document.HasViewer)
+                {
+                    refImage = null;
+                    return Document.Viewer.GetBuiltInImage(BuiltInImage);
+                }
+            }
+
+            refImage = Img.Image;
             return Img.ImageData;
         }
 
@@ -195,6 +249,9 @@ namespace Rambha.Document
                             SourceOffsetX = br.ReadInt32();
                             SourceOffsetY = br.ReadInt32();
                             break;
+                        case 15:
+                            BuiltInImage = br.ReadString();
+                            break;
                         default: 
                             return false;
                     }
@@ -212,10 +269,18 @@ namespace Rambha.Document
             if (Img.ImageData != null)
             {
                 SMTokenItem item = new SMTokenItem();
-                item.Tag = Tag;
-                item.Text = "";
-                item.ContentSize = RestrictSize(Img.ImageData.Size, 32);
+                item.Tag = SafeTag;
                 item.Image = Img.ImageData;
+                if (Text != null && Text.Length > 0)
+                {
+                    item.Text = Text;
+                    item.ContentSize = Size.Empty;
+                }
+                else
+                {
+                    item.Text = "";
+                    item.ContentSize = RestrictSize(Img.ImageData.Size, 32);
+                }
                 return item;
             }
             else
@@ -227,16 +292,22 @@ namespace Rambha.Document
         public override void OnTapEnd(PVDragContext dc)
         {
             base.OnTapEnd(dc);
+            MNReferencedImage img = Img.Image;
+            if (img == null)
+                return;
 
-            MNReferencedSpot spot = Img.Image.FindSpot(showRect, sourceRect, dc.lastPoint);
+            MNReferencedSpot spot = img.FindSpot(showRect, sourceRect, dc.lastPoint);
             if (spot != null)
             {
-                MNReferencedCore obj = Document.FindContentObject(spot.ContentType, spot.ContentId);
-
-                if (obj != null && (obj is MNReferencedSound) && Document.HasViewer)
+                if (spot.ContentType != SMContentType.TaggedArea)
                 {
-                    Document.Viewer.OnEvent("OnPlaySound", obj as MNReferencedSound);
-                } 
+                    MNReferencedCore obj = Document.FindContentObject(spot.ContentType, spot.ContentId);
+
+                    if (obj != null && (obj is MNReferencedSound) && Document.HasViewer)
+                    {
+                        Document.Viewer.OnEvent("OnPlaySound", obj as MNReferencedSound);
+                    }
+                }
             }
         }
 
@@ -263,34 +334,50 @@ namespace Rambha.Document
             return new Size(dim, dim);
         }
 
+        public override void OnDropMove(PVDragContext dc)
+        {
+            HoverSpot = null;
+            if (Img != null && Img.Image != null)
+            {
+                Debugger.Log(0, "", string.Format("Finding spot {0} :: {1} :: {2}\n", showRect, sourceRect, dc.lastPoint));
+                MNReferencedSpot spot = Img.Image.FindSpot(showRect, sourceRect, dc.lastPoint);
+                if (spot != null && spot.ContentType == SMContentType.TaggedArea)
+                {
+                    HoverSpot = spot;
+                }
+            }
+
+            base.OnDropMove(dc);
+        }
+
         public override bool OnDropFinished(PVDragContext dc)
         {
-
+            HoverSpot = null;
             if (HasImmediateEvaluation)
             {
-                if (!Tag.ToLower().Equals(dc.draggedItem.Tag.ToLower()))
+                if (Img != null && Img.Image != null)
+                {
+                    MNReferencedImage img = Img.Image;
+                    MNReferencedSpot spot = img.FindSpot(showRect, sourceRect, dc.lastPoint);
+                    if (spot != null && spot.ContentType == SMContentType.TaggedArea
+                        && dc.draggedItem.Tag.Equals(spot.Name, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        spot.UIStateHighlighted = true;
+                        return base.OnDropFinished(dc);
+                    }
+                }
+
+                if (!Tag.Equals(dc.draggedItem.Tag, StringComparison.CurrentCultureIgnoreCase))
                 {
                     return false;
                 }
             }
 
+            DroppedImage = dc.draggedItem.Image;
             DroppedTag = dc.draggedItem.Tag;
-            DroppedItems.Clear();
+            DroppedText = dc.draggedItem.Text;
 
-            if (base.OnDropFinished(dc))
-            {
-                if (dc.draggedItem.Image != null)
-                {
-                    MNReferencedImage mri = new MNReferencedImage();
-                    mri.ImageData = dc.draggedItem.Image;
-                    DroppedTag = dc.draggedItem.Tag;
-                    Img.Image = mri;
-                }
-
-                return true;
-            }
-
-            return false;
+            return base.OnDropFinished(dc);
         }
 
         public override void Save(RSFileWriter bw)
@@ -309,11 +396,19 @@ namespace Rambha.Document
             bw.WriteInt32(SourceOffsetX);
             bw.WriteInt32(SourceOffsetY);
 
+            if (BuiltInImage != null)
+            {
+                bw.WriteByte(15);
+                bw.WriteString(BuiltInImage);
+            }
+
             bw.WriteByte(0);
         }
 
         public override MNEvaluationResult Evaluate()
         {
+            UIStateError = GenericCheckedEvaluation();
+
             if (HasLazyEvaluation)
             {
                 if (DroppedTag.ToLower().Equals(Tag.ToLower()))
@@ -324,5 +419,54 @@ namespace Rambha.Document
 
             return UIStateError;
         }
+
+        public override void SaveStatus(RSFileWriter bw)
+        {
+            base.SaveStatusCore(bw);
+
+            if (Img != null && Img.Image != null && Img.Image.HasSpots())
+            {
+                foreach (MNReferencedSpot rs in Img.Image.SafeSpots)
+                {
+                    // tag for spot status info
+                    bw.WriteByte(15);
+                    rs.SaveStatus(bw);
+                }
+            }
+            bw.WriteByte(0);
+        }
+
+        public override void LoadStatus(RSFileReader br)
+        {
+            base.LoadStatusCore(br);
+            byte b;
+            byte b2;
+            int currentSpotIndex = 0;
+            List<MNReferencedSpot> spots = null;
+            if (Img != null && Img.Image != null && Img.Image.HasSpots())
+                spots = Img.Image.SafeSpots;
+
+            while ((b = br.ReadByte()) != 0)
+            {
+                switch (b)
+                {
+                    case 15:
+                        if (spots != null && currentSpotIndex < spots.Count)
+                        {
+                            spots[currentSpotIndex].LoadStatus(br);
+                        }
+                        break;
+                }
+            }
+        }
+
+        public override void ResetStatus()
+        {
+            DroppedTag = "";
+            DroppedText = "";
+            DroppedImage = null;
+            base.ResetStatus();
+        }
+
     }
 }

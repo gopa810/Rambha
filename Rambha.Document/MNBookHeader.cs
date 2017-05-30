@@ -8,7 +8,6 @@ using System.Drawing.Design;
 using System.IO;
 
 using Rambha.Serializer;
-using Rambha.Document.Views;
 
 
 namespace Rambha.Document
@@ -52,7 +51,6 @@ namespace Rambha.Document
         [Browsable(true), Category("Presentation")]
         public MNFontName DefaultFontName { get; set; }
 
-        [Editor(typeof(ImageSelectionPropertyEditor), typeof(UITypeEditor))]
         [Browsable(true), DisplayName("Book Icon"), Category("Document")]
         public MNReferencedImage BookImageRef { get; set; }
 

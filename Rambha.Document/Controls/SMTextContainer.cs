@@ -120,7 +120,7 @@ namespace Rambha.Document
                 layout = PrepareBrushesAndPens();
             }
 
-            DrawStyledBackground(context, bounds);
+            DrawStyledBackground(context, layout, bounds);
             DrawStyledBorder(context, layout, bounds);
 
             string stext = Text;

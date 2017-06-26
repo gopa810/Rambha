@@ -30,10 +30,10 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.updaterDownloader1 = new SlideViewer.UpdaterDownloader();
             this.updaterSelectFiles1 = new SlideViewer.UpdaterSelectFiles();
             this.updaterGetStatus1 = new SlideViewer.UpdaterGetStatus();
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -63,25 +63,21 @@
             this.panel1.Size = new System.Drawing.Size(460, 373);
             this.panel1.TabIndex = 1;
             // 
-            // backgroundWorker1
-            // 
-            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
-            // 
             // updaterDownloader1
             // 
             this.updaterDownloader1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.updaterDownloader1.Location = new System.Drawing.Point(5, 205);
+            this.updaterDownloader1.Location = new System.Drawing.Point(5, 253);
             this.updaterDownloader1.Name = "updaterDownloader1";
-            this.updaterDownloader1.Size = new System.Drawing.Size(196, 151);
+            this.updaterDownloader1.Size = new System.Drawing.Size(242, 103);
             this.updaterDownloader1.TabIndex = 2;
             this.updaterDownloader1.OnDownloadComplete += new SlideViewer.GeneralArgsEvent(this.updaterDownloader1_OnDownloadComplete);
             // 
             // updaterSelectFiles1
             // 
             this.updaterSelectFiles1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.updaterSelectFiles1.Location = new System.Drawing.Point(370, 228);
+            this.updaterSelectFiles1.Location = new System.Drawing.Point(240, 166);
             this.updaterSelectFiles1.Name = "updaterSelectFiles1";
-            this.updaterSelectFiles1.Size = new System.Drawing.Size(87, 142);
+            this.updaterSelectFiles1.Size = new System.Drawing.Size(217, 204);
             this.updaterSelectFiles1.TabIndex = 1;
             this.updaterSelectFiles1.OnApplyChanges += new SlideViewer.GeneralArgsEvent(this.updaterSelectFiles1_OnApplyChanges);
             this.updaterSelectFiles1.OnDiscardChanges += new SlideViewer.GeneralArgsEvent(this.updaterSelectFiles1_OnDiscardChanges);
@@ -91,10 +87,14 @@
             this.updaterGetStatus1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.updaterGetStatus1.Location = new System.Drawing.Point(5, 3);
             this.updaterGetStatus1.Name = "updaterGetStatus1";
-            this.updaterGetStatus1.Size = new System.Drawing.Size(231, 196);
+            this.updaterGetStatus1.Size = new System.Drawing.Size(365, 314);
             this.updaterGetStatus1.TabIndex = 0;
             this.updaterGetStatus1.OnShowManagerButtonPressed += new SlideViewer.GeneralArgsEvent(this.updaterGetStatus1_OnShowManagerButtonPressed);
             this.updaterGetStatus1.OnRetryFetchRemote += new SlideViewer.GeneralArgsEvent(this.updaterGetStatus1_OnRetryFetchRemote);
+            // 
+            // backgroundWorker1
+            // 
+            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
             // 
             // UpdaterView
             // 

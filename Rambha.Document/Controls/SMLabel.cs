@@ -231,7 +231,7 @@ namespace Rambha.Document
                     }
                     else
                     {
-                        DrawStyledBackground(context, bounds);
+                        DrawStyledBackground(context, layout, bounds);
                     }
                     DrawStyledBorder(context, layout, bounds);
 
@@ -270,7 +270,7 @@ namespace Rambha.Document
             }
             else if (runningText != null)
             {
-                DrawStyledBackground(context, bounds);
+                DrawStyledBackground(context, layout, bounds);
                 DrawStyledBorder(context, layout, bounds);
 
                 Point curr = new Point(textBounds.Left, textBounds.Top);

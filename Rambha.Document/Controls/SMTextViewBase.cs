@@ -143,7 +143,7 @@ namespace Rambha.Document
             layout = PrepareBrushesAndPens();
             Cardinality = scard;
 
-            DrawStyledBackground(context, bounds);
+            DrawStyledBackground(context, layout, bounds);
             DrawStyledBorder(context, layout, bounds);
 
             string stext = Text;

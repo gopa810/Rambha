@@ -870,7 +870,7 @@ namespace Rambha.Document
             AdjustVerticaly(textBounds, richLayout.Lines, Paragraph.VertAlign);
 
             // horizontal aligment
-            AdjustLinesHorizontaly((int)(lineWidth - ColumnSeparatorWidth), Paragraph.Align, richLayout.Lines);
+            AdjustLinesHorizontaly((int)lineWidth, Paragraph.Align, richLayout.Lines);
 
             richLayout.Pages = pageNo + 1;
             richLayout.bottomY = (int)lineY + 1;

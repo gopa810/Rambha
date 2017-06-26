@@ -92,7 +92,7 @@ namespace Rambha.Document
             {
                 bool b = UIStatePressed;
                 UIStatePressed |= UIStateChecked;
-                DrawStyledBackground(context, textBounds);
+                DrawStyledBackground(context, layout, textBounds);
                 DrawStyledBorder(context, layout, textBounds);
                 UIStatePressed = b;
             }

@@ -874,10 +874,10 @@ namespace Rambha.Document
             return layout;
         }
 
-        protected void DrawStyledBackground(MNPageContext context, Rectangle bounds)
+        protected void DrawStyledBackground(MNPageContext context, SMStatusLayout layout, Rectangle bounds)
         {
-            bool highState = IsHighlighted();
-            SMStatusLayout layout = (highState ? HighlightState : NormalState);
+            //bool highState = IsHighlighted();
+            //SMStatusLayout layout = (highState ? HighlightState : NormalState);
             //Debugger.Log(0, "", "Drawing " + highState + " border for control " + Id + ", but conn is found: " + (conn != null) + "\n");
             switch (layout.BorderStyle)
             {
@@ -1116,7 +1116,7 @@ namespace Rambha.Document
                 currBounds.Inflate(4, 4);
                 if (layout != null)
                 {
-                    DrawStyledBackground(context, currBounds);
+                    DrawStyledBackground(context, layout, currBounds);
                     DrawStyledBorder(context, layout, currBounds);
                 }
                 context.g.DrawImage(image, bounds);
@@ -1127,7 +1127,7 @@ namespace Rambha.Document
                 currBounds.Inflate(4, 4);
                 if (layout != null)
                 {
-                    DrawStyledBackground(context, currBounds);
+                    DrawStyledBackground(context, layout, currBounds);
                     DrawStyledBorder(context, layout, currBounds);
                 }
                 context.g.DrawImage(image, bounds);

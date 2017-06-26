@@ -60,6 +60,7 @@ namespace SlideViewer
                     }
                 }
             }
+
             Library.LastDirectory = dir;
             Library.GetCurrentBookDatabase(dir);
             Library.CalculateDatabaseStatus();

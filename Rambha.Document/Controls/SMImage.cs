@@ -87,7 +87,7 @@ namespace Rambha.Document
 
             if (ExpectedChecked != Bool3.Undef)
             {
-                DrawStyledBackground(context, bounds);
+                DrawStyledBackground(context, layout, bounds);
             }
 
             if (argm == SMContentArangement.ImageOnly)

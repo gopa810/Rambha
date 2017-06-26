@@ -50,7 +50,7 @@ namespace Rambha.Document
 
             SMStatusLayout layout = PrepareBrushesAndPens();
 
-            DrawStyledBackground(context, rect);
+            DrawStyledBackground(context, layout, rect);
             DrawStyledBorder(context, layout, rect);
 
             Rectangle bounds = ContentPadding.ApplyPadding(rect);

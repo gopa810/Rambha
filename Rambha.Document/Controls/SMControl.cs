@@ -104,23 +104,91 @@ namespace Rambha.Document
         [Browsable(true), Category("Scripts")]
         public string ScriptOnClick { get; set; }
 
-        [Browsable(true), Category("Layout")]
-        public SMControlSelection Dock { get; set; }
-
-        [Browsable(true), Category("Layout")]
-        public SMBackgroundType BackType { get; set; }
-
-        public Image BackgroundImage = null;
-        public Point BackgroundImageOffset = Point.Empty;
-
-
         [Browsable(false)]
         public SMRectangleArea Area
         {
-            get { return _area; }
-            set { _area = value; }
+            get 
+            {
+                if (Page == null)
+                    return _area_4_3;
+                SMRectangleArea ra = FindAreaIndex(Page.CurrentScreenDimension);
+                if (ra == null)
+                {
+                    ra = ProduceArea(Page.CurrentScreenDimension);
+                }
+                return ra;
+            }
+            set
+            {
+                switch (Page.CurrentScreenDimension)
+                {
+                    case SMScreen.Screen_1024_768__4_3:
+                        _area_4_3 = value;
+                        break;
+                    case SMScreen.Screen_1152_768__3_2:
+                        _area_3_2 = value;
+                        break;
+                    case SMScreen.Screen_1376_774__16_9:
+                        _area_16_9 = value;
+                        break;
+                }
+            }
         }
-        private SMRectangleArea _area = new SMRectangleArea();
+
+        public void SetArea(SMScreen targetScreen, SMRectangleArea ra)
+        {
+            switch (targetScreen)
+            {
+                case SMScreen.Screen_1024_768__4_3:
+                    _area_4_3 = ra;
+                    break;
+                case SMScreen.Screen_1152_768__3_2:
+                    _area_3_2 = ra;
+                    break;
+                case SMScreen.Screen_1376_774__16_9:
+                    _area_16_9 = ra;
+                    break;
+            }
+        }
+
+        public SMRectangleArea ProduceArea(SMScreen targetScreen)
+        {
+            SMRectangleArea src = _area_4_3;
+            SMRectangleArea newArea = new SMRectangleArea(src);
+
+            switch (targetScreen)
+            {
+                case SMScreen.Screen_1152_768__3_2:
+                    newArea.CenterX = newArea.CenterX * 1152 / 1024;
+                    break;
+                case SMScreen.Screen_1376_774__16_9:
+                    newArea.CenterX = newArea.CenterX * 1376 / 1024;
+                    newArea.CenterY = newArea.CenterY * 774 / 768;
+                    break;
+            }
+
+            newArea.Screen = targetScreen;
+            newArea.BackgroundImage = null;
+
+            SetArea(targetScreen, newArea);
+
+            return newArea;
+        }
+
+        public SMRectangleArea FindAreaIndex(SMScreen scr)
+        {
+            if (scr == SMScreen.Screen_1024_768__4_3)
+                return _area_4_3;
+            if (scr == SMScreen.Screen_1152_768__3_2)
+                return _area_3_2;
+            if (scr == SMScreen.Screen_1376_774__16_9)
+                return _area_16_9;
+            return null;
+        }
+
+        private SMRectangleArea _area_4_3 = new SMRectangleArea();
+        private SMRectangleArea _area_3_2 = null;
+        private SMRectangleArea _area_16_9 = null;
 
         public List<MNReferencedText> Scripts = new List<MNReferencedText>();
 
@@ -153,7 +221,6 @@ namespace Rambha.Document
             Paragraph = new SMParaFormat();
             HighlightState = new SMStatusLayout();
             NormalState = new SMStatusLayout();
-            Dock = SMControlSelection.None;
 
             Autosize = false;
             Text = "";
@@ -592,9 +659,6 @@ namespace Rambha.Document
             bw.WriteByte(240);
             bw.WriteBool(Selectable);
 
-            bw.WriteByte(239);
-            Area.Save(bw);
-
             bw.WriteByte(238);
             bw.WriteString(ScriptOnClick);
 
@@ -613,21 +677,20 @@ namespace Rambha.Document
             bw.WriteByte(233);
             Font.Save(bw);
 
-            bw.WriteByte(232);
-            bw.WriteInt32((int)Dock);
+            bw.WriteByte(228);
+            _area_4_3.Save(bw);
 
-            bw.WriteByte(231);
-            bw.WriteInt32((int)BackType);
-
-            if (BackgroundImage != null)
+            if (_area_3_2 != null)
             {
-                bw.WriteByte(230);
-                bw.WriteImage(BackgroundImage);
+                bw.WriteByte(228);
+                _area_3_2.Save(bw);
             }
 
-            bw.WriteByte(229);
-            bw.WriteInt32(BackgroundImageOffset.X);
-            bw.WriteInt32(BackgroundImageOffset.Y);
+            if (_area_16_9 != null)
+            {
+                bw.WriteByte(228);
+                _area_16_9.Save(bw);
+            }
 
             // end-of-object
             bw.WriteByte(0);
@@ -708,10 +771,6 @@ namespace Rambha.Document
                     case 240:
                         Selectable = br.ReadBool();
                         break;
-                    case 239:
-                        Area = new SMRectangleArea();
-                        Area.Load(br);
-                        break;
                     case 238:
                         ScriptOnClick = br.ReadString();
                         break;
@@ -730,19 +789,32 @@ namespace Rambha.Document
                     case 233:
                         Font.Load(br);
                         break;
+
+//region Will be deleted after all files will be converted to new version
+                    case 239:
+                        Area = new SMRectangleArea();
+                        Area.Load(br);
+                        break;
                     case 232:
-                        Dock = (SMControlSelection)br.ReadInt32();
-                        if (Dock != SMControlSelection.None)
-                            BackType = SMBackgroundType.Solid;
+                        Area.Dock = (SMControlSelection)br.ReadInt32();
+                        if (Area.Dock != SMControlSelection.None)
+                            Area.BackType = SMBackgroundType.Solid;
                         break;
                     case 231:
-                        BackType = (SMBackgroundType)br.ReadInt32();
+                        Area.BackType = (SMBackgroundType)br.ReadInt32();
                         break;
                     case 230:
-                        BackgroundImage = br.ReadImage();
+                        Area.BackgroundImage = br.ReadImage();
                         break;
                     case 229:
-                        BackgroundImageOffset = new Point(br.ReadInt32(), br.ReadInt32());
+                        Area.BackgroundImageOffset = new Point(br.ReadInt32(), br.ReadInt32());
+                        break;
+//endregion Will be deleted
+
+                    case 228:
+                        SMRectangleArea rca = new SMRectangleArea();
+                        rca.Load(br);
+                        SetArea(rca.Screen, rca);
                         break;
                     default:
                         return false;
@@ -782,10 +854,10 @@ namespace Rambha.Document
             }
             if (bb != null)
             {
-                context.g.FillRectangle(bb, area.LastBounds[0].X - 3, area.LastBounds[0].Y - 3, 3, area.LastBounds[0].Height + 6);
-                context.g.FillRectangle(bb, area.LastBounds[0].X, area.LastBounds[0].Y - 3, area.LastBounds[0].Width + 3, 3);
-                context.g.FillRectangle(bb, area.LastBounds[0].X, area.LastBounds[0].Bottom, area.LastBounds[0].Width + 3, 3);
-                context.g.FillRectangle(bb, area.LastBounds[0].Right, area.LastBounds[0].Y, 3, area.LastBounds[0].Height);
+                context.g.FillRectangle(bb, area.RelativeArea.X - 3, area.RelativeArea.Y - 3, 3, area.RelativeArea.Height + 6);
+                context.g.FillRectangle(bb, area.RelativeArea.X, area.RelativeArea.Y - 3, area.RelativeArea.Width + 3, 3);
+                context.g.FillRectangle(bb, area.RelativeArea.X, area.RelativeArea.Bottom, area.RelativeArea.Width + 3, 3);
+                context.g.FillRectangle(bb, area.RelativeArea.Right, area.RelativeArea.Y, 3, area.RelativeArea.Height);
             }
         }
 
@@ -1235,6 +1307,15 @@ namespace Rambha.Document
             UIStateError = MNEvaluationResult.NotEvaluated;
             UIStateShowHint = false;
             UIStateHover = false;
+        }
+
+        public void ClearSelection()
+        {
+            _area_4_3.Selected = false;
+            if (_area_3_2 != null)
+                _area_3_2.Selected = false;
+            if (_area_16_9 != null)
+                _area_16_9.Selected = false;
         }
     }
 

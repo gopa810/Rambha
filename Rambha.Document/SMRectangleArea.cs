@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
+using System.Diagnostics;
 using System.ComponentModel;
 using System.IO;
 
@@ -13,11 +14,37 @@ namespace Rambha.Document
 {
     public class SMRectangleArea: GSCore
     {
+        public SMScreen Screen = SMScreen.Screen_1024_768__4_3;
+
         /// <summary>
         /// Relative area means that coordinates of rectangle are as if from 
         /// screen of size 1024x768 points
         /// </summary>
         public Rectangle RelativeArea = Rectangle.Empty;
+
+        [Browsable(true), Category("Layout")]
+        public SMControlSelection Dock 
+        {
+            get
+            {
+                return p_dock;
+            }
+            set
+            {
+                p_dock = value;
+                DockModified = false;
+            }
+        }
+        private SMControlSelection p_dock = SMControlSelection.None;
+
+        public bool DockModified { get; set; }
+
+        [Browsable(true), Category("Layout")]
+        public SMBackgroundType BackType { get; set; }
+
+        public Image BackgroundImage = null;
+        public Point BackgroundImageOffset = Point.Empty;
+
 
         [Browsable(false)]
         public bool Selected { get; set; }
@@ -25,6 +52,7 @@ namespace Rambha.Document
         public void Clear()
         {
             RelativeArea = Rectangle.Empty;
+            Dock = SMControlSelection.None;
         }
 
         public void Save(RSFileWriter bw)
@@ -38,6 +66,28 @@ namespace Rambha.Document
             bw.WriteInt32(RelativeArea.Y);
             bw.WriteInt32(RelativeArea.Width);
             bw.WriteInt32(RelativeArea.Height);
+
+            bw.WriteByte(13);
+            bw.WriteInt32((int)Dock);
+
+            bw.WriteByte(14);
+            bw.WriteInt32((int)BackType);
+
+            if (BackgroundImage != null)
+            {
+                bw.WriteByte(15);
+                bw.WriteImage(BackgroundImage);
+            }
+
+            bw.WriteByte(16);
+            bw.WriteInt32(BackgroundImageOffset.X);
+            bw.WriteInt32(BackgroundImageOffset.Y);
+
+            bw.WriteByte(17);
+            bw.WriteInt32((int)Screen);
+
+            bw.WriteByte(18);
+            bw.WriteBool(DockModified);
 
             // end of object
             bw.WriteByte(0);
@@ -69,6 +119,26 @@ namespace Rambha.Document
                         RelativeArea.Y = br.ReadInt32();
                         RelativeArea.Width = br.ReadInt32();
                         RelativeArea.Height = br.ReadInt32();
+                        break;
+                    case 13:
+                        Dock = (SMControlSelection)br.ReadInt32();
+                        if (Dock != SMControlSelection.None)
+                            BackType = SMBackgroundType.Solid;
+                        break;
+                    case 14:
+                        BackType = (SMBackgroundType)br.ReadInt32();
+                        break;
+                    case 15:
+                        BackgroundImage = br.ReadImage();
+                        break;
+                    case 16:
+                        BackgroundImageOffset = new Point(br.ReadInt32(), br.ReadInt32());
+                        break;
+                    case 17:
+                        Screen = (SMScreen)br.ReadInt32();
+                        break;
+                    case 18:
+                        DockModified = br.ReadBool();
                         break;
                 }
             }
@@ -103,13 +173,12 @@ namespace Rambha.Document
             return Convert.ToInt32(d * dim);
         }
 
-
-        public Rectangle[] LastBounds = new Rectangle[9];
-
         public SMRectangleArea()
         {
             Selected = false;
             RelativeArea = Rectangle.Empty;
+            Dock = SMControlSelection.None;
+            DockModified = false;
         }
 
         public SMRectangleArea(SMRectangleArea source)
@@ -118,6 +187,8 @@ namespace Rambha.Document
             {
                 RelativeArea = Rectangle.Empty;
                 Selected = false;
+                Dock = SMControlSelection.None;
+                DockModified = false;
             }
             else
             {
@@ -129,6 +200,12 @@ namespace Rambha.Document
         {
             target.RelativeArea = source.RelativeArea;
             target.Selected = source.Selected;
+            target.Dock = source.Dock;
+            target.BackType = source.BackType;
+            target.BackgroundImage = source.BackgroundImage;
+            target.BackgroundImageOffset = source.BackgroundImageOffset;
+            target.Screen = source.Screen;
+            target.DockModified = source.DockModified;
         }
 
         public virtual void MoveRaw(int rx, int ry)
@@ -222,15 +299,6 @@ namespace Rambha.Document
             return RelativeArea;
         }
 
-        public void RecalcAllBounds(MNPageContext ctx)
-        {
-        }
-
-        public Rectangle GetRawRectangle(PageEditDisplaySize ds)
-        {
-            return RelativeArea;
-        }
-
         public void SetRawRectangle(PageEditDisplaySize ds, Rectangle r)
         {
             RelativeArea = r;
@@ -281,14 +349,94 @@ namespace Rambha.Document
             int b = RelativeArea.Bottom;
 
             int markWidth = context.PhysicalToLogical(3);
-            context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
-            context.g.FillRectangle(Brushes.DarkBlue, (x + r) / 2 - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
-            context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
-            context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, (y + b) / 2 - markWidth, 2 * markWidth, 2 * markWidth);
-            context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, (y + b) / 2 - markWidth, 2 * markWidth, 2 * markWidth);
-            context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
-            context.g.FillRectangle(Brushes.DarkBlue, (x + r) / 2 - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
-            context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
+            if (Dock == SMControlSelection.None || Dock == SMControlSelection.Bottom)
+                context.g.FillRectangle(Brushes.DarkBlue, (x + r) / 2 - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
+            if (Dock == SMControlSelection.None || Dock == SMControlSelection.Top)
+                context.g.FillRectangle(Brushes.DarkBlue, (x + r) / 2 - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
+            if (Dock == SMControlSelection.None || Dock == SMControlSelection.Right)
+                context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, (y + b) / 2 - markWidth, 2 * markWidth, 2 * markWidth);
+            if (Dock == SMControlSelection.None || Dock == SMControlSelection.Left)
+                context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, (y + b) / 2 - markWidth, 2 * markWidth, 2 * markWidth);
+
+            if (Dock == SMControlSelection.None)
+            {
+                context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
+                context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, y - markWidth, 2 * markWidth, 2 * markWidth);
+                context.g.FillRectangle(Brushes.DarkBlue, x - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
+                context.g.FillRectangle(Brushes.DarkBlue, r - markWidth, b - markWidth, 2 * markWidth, 2 * markWidth);
+            }
+        }
+
+        public static Size _size_4_3 = new Size(1024, 768);
+        public static Size _size_3_2 = new Size(1152, 768);
+        public static Size _size_16_9 = new Size(1376, 774);
+
+        public static Size GetPageSize(SMScreen screen)
+        {
+            switch (screen)
+            {
+                case SMScreen.Screen_1152_768__3_2:
+                    return _size_3_2;
+                case SMScreen.Screen_1376_774__16_9:
+                    return _size_16_9;
+                default:
+                    return _size_4_3;
+            }
+        }
+
+        public const int PADDING_DOCK_TOP = 33;
+        public const int PADDING_DOCK_BOTTOM = 44;
+        public const int PADDING_DOCK_LEFT = 66;
+        public const int PADDING_DOCK_RIGHT = 88;
+
+        public Rectangle GetDockedRectangle(Size screenSize, Size contentSize)
+        {
+            if (Dock == SMControlSelection.Top)
+            {
+                RelativeArea.X = 0;
+                RelativeArea.Y = MNPage.HEADER_HEIGHT;
+                if (!DockModified)
+                    RelativeArea.Height = contentSize.Height + PADDING_DOCK_BOTTOM + PADDING_DOCK_TOP;
+                RelativeArea.Width = screenSize.Width;
+            }
+            else if (Dock == SMControlSelection.Bottom)
+            {
+                if (!DockModified)
+                {
+                    RelativeArea.Y = screenSize.Height - contentSize.Height - PADDING_DOCK_TOP - PADDING_DOCK_BOTTOM;
+                    RelativeArea.Height = screenSize.Height - RelativeArea.Y;
+                }
+                else
+                {
+                    RelativeArea.Y = screenSize.Height - RelativeArea.Height;
+                }
+                RelativeArea.X = 0;
+                RelativeArea.Width = screenSize.Width;
+            }
+            else if (Dock == SMControlSelection.Right)
+            {
+                if (!DockModified)
+                {
+                    RelativeArea.X = screenSize.Width - contentSize.Width - PADDING_DOCK_LEFT - PADDING_DOCK_RIGHT;
+                    RelativeArea.Width = screenSize.Width - RelativeArea.X;
+                }
+                else
+                {
+                    RelativeArea.X = screenSize.Width - RelativeArea.Width;
+                }
+                RelativeArea.Y = MNPage.HEADER_HEIGHT;
+                RelativeArea.Height = screenSize.Height - MNPage.HEADER_HEIGHT;
+            }
+            else if (Dock == SMControlSelection.Left)
+            {
+                RelativeArea.X = 0;
+                RelativeArea.Y = MNPage.HEADER_HEIGHT;
+                RelativeArea.Height = screenSize.Height - MNPage.HEADER_HEIGHT;
+                if (!DockModified)
+                    RelativeArea.Width = contentSize.Width + PADDING_DOCK_RIGHT + PADDING_DOCK_LEFT;
+            }
+
+            return RelativeArea;
         }
     }
 }

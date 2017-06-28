@@ -30,7 +30,7 @@ namespace SlideMaker.Views
 
         public Point LastUserPoint { get; set; }
 
-        public PageEditDisplaySize DisplaySize { get; set; }
+        public SMScreen DisplaySize { get; set; }
 
         // this is normalized to page size 1000 x 1000 points
         public Point LastRelativePoint { get; set; }
@@ -289,8 +289,7 @@ namespace SlideMaker.Views
             origAreas.Clear();
             foreach (SMControl c in PageData.SelectedObjects)
             {
-                SMRectangleArea area = c.Area;
-                origAreas[c.Id] = area.GetRawRectangle(Context.DisplaySize);
+                origAreas[c.Id] = c.Area.RelativeArea;
             }
         }
 
@@ -367,7 +366,7 @@ namespace SlideMaker.Views
                         SelectObjectsContainingPoint(Context, logPoint);
                     }
 
-                    if (Context.isTracking)
+                    if (Context.isTracking && PageData.SelectedObjects.Count > 0)
                     {
                         MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", PageData.SelectedObjects[0]);
                         Context.TrackedStartLogical = logPoint;
@@ -387,6 +386,7 @@ namespace SlideMaker.Views
         public void SelectObjectsContainingPoint(MNPageContext Context, Point logPoint)
         {
             SelectionArea.RelativeArea = Rectangle.Empty;
+            SelectionArea.Dock = SMControlSelection.None;
             bool hit = false;
             for (int i = PageData.Objects.Count - 1; i >= 0; i--)
             {
@@ -394,13 +394,19 @@ namespace SlideMaker.Views
                 if (po.Area.TestHitLogical(Context, logPoint))
                 {
                     hit = true;
-                    //Debugger.Log(0, "", "Object hit" + po.Text + " : " + po.Area.Selected + "\n");
                     po.Area.Selected = !po.Area.Selected;
 
                     if (po.Area.Selected)
                     {
-                        //Debugger.Log(0, "", " - merging rect\n");
-                        MNPage.MergeRectangles(ref SelectionArea.RelativeArea, po.Area.GetRawRectangle(PageEditDisplaySize.LandscapeBig));
+                        MNPage.MergeRectangles(ref SelectionArea.RelativeArea, po.Area.RelativeArea);
+                        if (SelectionArea.Dock == SMControlSelection.None)
+                        {
+                            SelectionArea.Dock = po.Area.Dock;
+                        }
+                        else if (SelectionArea.Dock != po.Area.Dock)
+                        {
+                            SelectionArea.Dock = SMControlSelection.All;
+                        }
                         Context.trackingType = SMControlSelection.All;
                         break;
                     }
@@ -419,6 +425,7 @@ namespace SlideMaker.Views
         public void SelectObjectsIntersectingRect(MNPageContext Context, Rectangle r)
         {
             SelectionArea.RelativeArea = Rectangle.Empty;
+            SelectionArea.Dock = SMControlSelection.None;
 
             foreach (SMControl po in PageData.Objects)
             {
@@ -427,13 +434,21 @@ namespace SlideMaker.Views
                 if (testResult != SMControlSelection.None)
                 {
                     area.Selected = true;
-                    //Debugger.Log(0, "", " - merging rect\n");
-                    MNPage.MergeRectangles(ref SelectionArea.RelativeArea, area.GetRawRectangle(Context.DisplaySize));
+                    MNPage.MergeRectangles(ref SelectionArea.RelativeArea, area.RelativeArea);
+                    if (SelectionArea.Dock == SMControlSelection.None)
+                    {
+                        SelectionArea.Dock = po.Area.Dock;
+                    }
+                    else if (SelectionArea.Dock != po.Area.Dock)
+                    {
+                        SelectionArea.Dock = SMControlSelection.All;
+                    }
+                    //Context.trackingType = SMControlSelection.All;
                 }
             }
 
-            //Debugger.Log(0, "", "SelectObjectsIntersectingRect TotalSelectionrect = " + SelectionArea.RelativeArea + "\n");
-
+            //Debugger.Log(0, "", "S.Area.Dock = " + SelectionArea.Dock.ToString() + "\n");
+            //Debugger.Log(0, "", "S.Area.Rect = " + SelectionArea.RelativeArea.ToString() + "\n\n");
         }
 
         private bool HasSelectedObjects
@@ -639,6 +654,8 @@ namespace SlideMaker.Views
                     ConvertRelativeToAbstract(ref origTotalSelectionRect, ref relativeRect, ref abst);
                     ConvertAbstractToRelative(ref SelectionArea.RelativeArea, ref abst, ref relativeRect);
                     area.SetRawRectangle(PageEditDisplaySize.LandscapeBig, relativeRect);
+                    if (area.Dock != SMControlSelection.None)
+                        area.DockModified = true;
                 }
             }
         }
@@ -784,6 +801,9 @@ namespace SlideMaker.Views
 
         public void PageEditView_DragDrop(object sender, DragEventArgs e)
         {
+            if (Page.CurrentScreenDimension != SMScreen.Screen_1024_768__4_3)
+                return;
+
             if (e.Data.GetDataPresent(typeof(PageEditDraggableItem)))
             {
                 PageEditDraggableItem ctrl = e.Data.GetData(typeof(PageEditDraggableItem)) as PageEditDraggableItem;
@@ -937,13 +957,13 @@ namespace SlideMaker.Views
             Point center = clientPoint;
             pm.Area.SetCenterSize(Context.PhysicalToLogical(center), defSize);
             pm.Area.Selected = true;
-            pm.Area.RecalcAllBounds(Context);
 
             PageData.ClearSelection();
             PageData.Objects.Add(pm);
             MNNotificationCenter.BroadcastMessage(this, "ControlAdded", pm);
 
             SelectionArea.RelativeArea = pm.Area.RelativeArea;
+            SelectionArea.Dock = pm.Area.Dock;
             Invalidate();
 
             MNNotificationCenter.BroadcastMessage(this, "ObjectSelected", pm);
@@ -1065,7 +1085,6 @@ namespace SlideMaker.Views
                         {
                             RSFileReader reader = new RSFileReader(br);
                             PageData.PasteSelection(reader);
-                            PageData.RecalcAreasForSelection(Context);
                         }
                     }
                 }
@@ -1109,6 +1128,9 @@ namespace SlideMaker.Views
 
         private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (Page.CurrentScreenDimension != SMScreen.Screen_1024_768__4_3)
+                return;
+
             if (Clipboard.ContainsText(TextDataFormat.UnicodeText))
             {
                 string strType = "Label";
@@ -1383,6 +1405,7 @@ namespace SlideMaker.Views
             }
 
             SelectionArea.RelativeArea = PageData.GetTotalSelectionRect();
+            SelectionArea.Dock = PageData.GetTotalSelectionDock();
             this.Invalidate();
         }
 
@@ -1418,6 +1441,7 @@ namespace SlideMaker.Views
 
         public void ClearSelection()
         {
+            SelectionArea.Clear();
             PageData.ClearSelection();
         }
 
@@ -1669,16 +1693,16 @@ namespace SlideMaker.Views
             if (sc is SMLabel)
             {
                 SMLabel lab = sc as SMLabel;
-                if (lab.BackType == SMBackgroundType.Shadow)
+                if (lab.Area.BackType == SMBackgroundType.Shadow)
                 {
-                    if (lab.BackgroundImage == null)
+                    if (lab.Area.BackgroundImage == null)
                     {
                         CreateBackgroundImageForLabel(lab);
                     }
                 }
                 else
                 {
-                    lab.BackgroundImage = null;
+                    lab.Area.BackgroundImage = null;
                 }
             }
         }
@@ -1722,8 +1746,8 @@ namespace SlideMaker.Views
             ShadowPainter sp = new ShadowPainter(rs.TotalRectangle, Color.White, 16, 16);
             rs.DrawInto(sp);
 
-            lab.BackgroundImage = sp.GetPNGImage();
-            lab.BackgroundImageOffset = sp.OffsetBitmap;
+            lab.Area.BackgroundImage = sp.GetPNGImage();
+            lab.Area.BackgroundImageOffset = sp.OffsetBitmap;
         }
 
         public void ClearAllConnections()

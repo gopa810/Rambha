@@ -67,9 +67,11 @@
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.shrinkImagesToTheirCanvasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.generateInitialPagesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.pageDetailPanel1 = new SlideMaker.Views.PageDetailPanel();
             this.toolStripMenuItem9 = new System.Windows.Forms.ToolStripSeparator();
             this.checkTransitionPagesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pageDetailPanel1 = new SlideMaker.Views.PageDetailPanel();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.convertAllFilesToVersion3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -348,7 +350,9 @@
             this.shrinkImagesToTheirCanvasToolStripMenuItem,
             this.generateInitialPagesToolStripMenuItem,
             this.toolStripMenuItem9,
-            this.checkTransitionPagesToolStripMenuItem});
+            this.checkTransitionPagesToolStripMenuItem,
+            this.toolStripSeparator1,
+            this.convertAllFilesToVersion3ToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
@@ -367,14 +371,6 @@
             this.generateInitialPagesToolStripMenuItem.Text = "Generate Initial pages";
             this.generateInitialPagesToolStripMenuItem.Click += new System.EventHandler(this.generateInitialPagesToolStripMenuItem_Click);
             // 
-            // pageDetailPanel1
-            // 
-            this.pageDetailPanel1.Location = new System.Drawing.Point(51, 47);
-            this.pageDetailPanel1.Name = "pageDetailPanel1";
-            this.pageDetailPanel1.Size = new System.Drawing.Size(325, 257);
-            this.pageDetailPanel1.TabIndex = 3;
-            this.pageDetailPanel1.BackToParentView += new SlideMaker.Views.NormalEventHandler(this.pageScrollArea1_BackToParentView);
-            // 
             // toolStripMenuItem9
             // 
             this.toolStripMenuItem9.Name = "toolStripMenuItem9";
@@ -386,6 +382,26 @@
             this.checkTransitionPagesToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
             this.checkTransitionPagesToolStripMenuItem.Text = "CheckTransitionPages";
             this.checkTransitionPagesToolStripMenuItem.Click += new System.EventHandler(this.checkTransitionPagesToolStripMenuItem_Click);
+            // 
+            // pageDetailPanel1
+            // 
+            this.pageDetailPanel1.Location = new System.Drawing.Point(51, 47);
+            this.pageDetailPanel1.Name = "pageDetailPanel1";
+            this.pageDetailPanel1.Size = new System.Drawing.Size(325, 257);
+            this.pageDetailPanel1.TabIndex = 3;
+            this.pageDetailPanel1.BackToParentView += new SlideMaker.Views.NormalEventHandler(this.pageScrollArea1_BackToParentView);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(225, 6);
+            // 
+            // convertAllFilesToVersion3ToolStripMenuItem
+            // 
+            this.convertAllFilesToVersion3ToolStripMenuItem.Name = "convertAllFilesToVersion3ToolStripMenuItem";
+            this.convertAllFilesToVersion3ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.convertAllFilesToVersion3ToolStripMenuItem.Text = "Convert All Files to version 3";
+            this.convertAllFilesToVersion3ToolStripMenuItem.Click += new System.EventHandler(this.convertAllFilesToVersion3ToolStripMenuItem_Click);
             // 
             // MainFrame
             // 
@@ -451,6 +467,8 @@
         private System.Windows.Forms.ToolStripMenuItem reviewFrameToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem9;
         private System.Windows.Forms.ToolStripMenuItem checkTransitionPagesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem convertAllFilesToVersion3ToolStripMenuItem;
     }
 }
 

@@ -48,4 +48,11 @@ namespace Rambha.Document
         Times = 16,
         Default = 17
     }
+
+    public enum SMScreen
+    {
+        Screen_1024_768__4_3,
+        Screen_1152_768__3_2,
+        Screen_1376_774__16_9
+    }
 }

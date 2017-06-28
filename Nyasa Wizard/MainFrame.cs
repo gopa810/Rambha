@@ -806,6 +806,56 @@ namespace SlideMaker
             }
         }
 
+        private void convertAllFilesToVersion3ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (string s in Directory.EnumerateFiles(@"c:\Users\Gopa702\Documents\"))
+            {
+                if (Path.GetExtension(s) == ".smb")
+                {
+                    Debugger.Log(0, "", "File: " + s + "\n");
+                    MNDocument doc = new MNDocument();
+
+                    using (Stream str = File.OpenRead(s))
+                    {
+                        using (BinaryReader br = new BinaryReader(str))
+                        {
+                            RSFileReader fr = new RSFileReader(br);
+                            doc.Book.Load(fr);
+                        }
+                    }
+                    using (Stream str = File.OpenWrite(s))
+                    {
+                        using (BinaryWriter br = new BinaryWriter(str))
+                        {
+                            RSFileWriter fr = new RSFileWriter(br);
+                            doc.Book.Save(fr);
+                        }
+                    }
+                }
+                else if (Path.GetExtension(s) == ".smd")
+                {
+                    Debugger.Log(0, "", "File: " + s + "\n");
+                    MNDocument doc = new MNDocument();
+                    using (Stream str = File.OpenRead(s))
+                    {
+                        using (BinaryReader br = new BinaryReader(str))
+                        {
+                            RSFileReader fr = new RSFileReader(br);
+                            doc.Data.Load(fr);
+                        }
+                    }
+                    using (Stream str = File.OpenWrite(s))
+                    {
+                        using (BinaryWriter bw = new BinaryWriter(str))
+                        {
+                            RSFileWriter fw = new RSFileWriter(bw);
+                            doc.Data.Save(fw);
+                        }
+                    }
+                }
+            }
+        }
+
 
     }
 }

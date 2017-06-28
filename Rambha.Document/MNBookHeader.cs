@@ -106,7 +106,10 @@ namespace Rambha.Document
             BookColor = Color.White;
             BookPriority = 0;
             HomePage = "start";
-            Version = 2;
+
+            // version 2 is initial release
+            // version 3 is added support for multiple screen dimensions
+            Version = 3;
             DefaultFontSize = 32;
             DefaultFontName = MNFontName.GilSansMurari;
 

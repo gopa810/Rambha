@@ -27,7 +27,7 @@ namespace Rambha.Document
 
         public MNPage CurrentPage { get; set; }
 
-        public PageEditDisplaySize DisplaySize { get; set; }
+        public SMScreen DisplaySize { get; set; }
 
         public static Image[] HandImages = null;
 
@@ -191,10 +191,9 @@ namespace Rambha.Document
             {
                 switch (DisplaySize)
                 {
-                    case PageEditDisplaySize.LandscapeBig: return new Size(1024, 768);
-                    case PageEditDisplaySize.LandscapeSmall: return new Size(800, 600);
-                    case PageEditDisplaySize.PortaitBig: return new Size(768, 1024);
-                    case PageEditDisplaySize.PortaitSmall: return new Size(600, 800);
+                    case SMScreen.Screen_1024_768__4_3: return new Size(1024, 768);
+                    case SMScreen.Screen_1152_768__3_2: return new Size(1152, 768);
+                    case SMScreen.Screen_1376_774__16_9: return new Size(1376, 774);
                     default: return new Size(1024, 768);
                 }
             }

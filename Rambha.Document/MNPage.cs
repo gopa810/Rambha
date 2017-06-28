@@ -116,6 +116,11 @@ namespace Rambha.Document
 
         public SMRectangleArea Area = new SMRectangleArea();
 
+        // this should be updated for each page painting
+        public SMScreen CurrentScreenDimension = SMScreen.Screen_1024_768__4_3;
+
+        public List<SMScreen> AvailableScreenDimensions = new List<SMScreen>() { SMScreen.Screen_1024_768__4_3 };
+
         // not stored
         //
 
@@ -315,6 +320,15 @@ namespace Rambha.Document
             bw.WriteByte(30);
             bw.WriteBool(ShowAudio);
 
+            foreach (SMScreen scr in AvailableScreenDimensions)
+            {
+                if (scr != SMScreen.Screen_1024_768__4_3)
+                {
+                    bw.WriteByte(31);
+                    bw.WriteInt32((int)scr);
+                }
+            }
+
             // end of object
             bw.WriteByte(0);
         }
@@ -329,6 +343,8 @@ namespace Rambha.Document
             ShowBackNavigation = true;
             ShowForwardNavigation = true;
             bool showAudioLoaded = false;
+            AvailableScreenDimensions.Clear();
+            AvailableScreenDimensions.Add(SMScreen.Screen_1024_768__4_3);
 
             while ((tag = br.ReadByte()) != 0)
             {
@@ -435,6 +451,9 @@ namespace Rambha.Document
                         ShowAudio = br.ReadBool();
                         showAudioLoaded = true;
                         break;
+                    case 31:
+                        AvailableScreenDimensions.Add((SMScreen)br.ReadInt32());
+                        break;
                     default:
                         break;
                 }
@@ -518,7 +537,7 @@ namespace Rambha.Document
         {
             foreach (SMControl s in Objects)
             {
-                s.Area.Selected = false;
+                s.ClearSelection();
             }
 
             if (Template != null)
@@ -565,7 +584,7 @@ namespace Rambha.Document
             for (i = 0; i < selectedObjects.Count; i++)
             {
                 SMControl item = selectedObjects[i];
-                Rectangle rcArea = item.Area.GetRawRectangle(PageEditDisplaySize.LandscapeBig);
+                Rectangle rcArea = item.Area.RelativeArea;
                 if (totalRect.IsEmpty)
                 {
                     totalRect = rcArea;
@@ -1164,27 +1183,35 @@ namespace Rambha.Document
             return returnedValue;
         }
 
-        public void RecalcAreasForSelection(MNPageContext context)
-        {
-            foreach (SMControl c in Objects)
-            {
-                if (c.Area.Selected)
-                {
-                    c.Area.RecalcAllBounds(context);
-                }
-            }
-        }
-
         public Rectangle GetTotalSelectionRect()
         {
             Rectangle tr = Rectangle.Empty;
 
             foreach (SMControl po in SelectedObjects)
             {
-                MergeRectangles(ref tr, po.Area.GetRawRectangle(PageEditDisplaySize.LandscapeBig));
+                MergeRectangles(ref tr, po.Area.RelativeArea);
             }
 
             return tr;
+        }
+
+        public SMControlSelection GetTotalSelectionDock()
+        {
+            SMControlSelection dock = SMControlSelection.None;
+
+            foreach (SMControl po in SelectedObjects)
+            {
+                if (dock == SMControlSelection.None)
+                {
+                    dock = po.Area.Dock;
+                }
+                else if (dock != po.Area.Dock)
+                {
+                    dock = SMControlSelection.All;
+                }
+            }
+
+            return dock;
         }
 
         public bool HasSelectedObject()
@@ -1383,6 +1410,11 @@ namespace Rambha.Document
             {
                 c.ResetStatus();
             }
+        }
+
+        public bool HasDimension(SMScreen screen)
+        {
+            return AvailableScreenDimensions.IndexOf(screen) >= 0;
         }
     }
 }

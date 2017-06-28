@@ -101,9 +101,17 @@ namespace SlideMaker
         }
         public Size GetAspects()
         {
-            return (pageView1.Context.DisplaySize == PageEditDisplaySize.PortaitBig
-                || pageView1.Context.DisplaySize == PageEditDisplaySize.PortaitSmall) ?
-                new Size(3, 4) : new Size(4, 3);
+            switch (pageView1.Context.DisplaySize)
+            {
+                case SMScreen.Screen_1024_768__4_3:
+                    return new Size(4, 3);
+                case SMScreen.Screen_1152_768__3_2:
+                    return new Size(3, 2);
+                case SMScreen.Screen_1376_774__16_9:
+                    return new Size(16, 9);
+            }
+
+            return new Size(4, 3);
         }
 
         public Size AdjustSizeForm(int mode)

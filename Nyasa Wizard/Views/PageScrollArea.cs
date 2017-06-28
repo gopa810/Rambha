@@ -23,6 +23,8 @@ namespace SlideMaker.Views
 
         public event NormalEventHandler BackToParentView;
 
+        public SMScreen UserSelectedScreenDimension = SMScreen.Screen_1024_768__4_3;
+
         public PageScrollArea()
         {
             InitializeComponent();
@@ -36,7 +38,28 @@ namespace SlideMaker.Views
         public void SetPage(MNPage page)
         {
             pageEditView1.Page = page;
-            //MNNotificationCenter.CurrentDocument = page.Document;
+            pageEditView1.ClearSelection();
+            if (!page.HasDimension(UserSelectedScreenDimension))
+            {
+                if (MessageBox.Show("Create new dimension?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    page.AvailableScreenDimensions.Add(UserSelectedScreenDimension);
+                    page.CurrentScreenDimension = UserSelectedScreenDimension;
+                    foreach (SMControl c in page.Objects)
+                    {
+                        SMRectangleArea area = c.Area;
+                    }
+                }
+                else
+                {
+                    page.CurrentScreenDimension = SMScreen.Screen_1024_768__4_3;
+                    DisplaySize = SMScreen.Screen_1024_768__4_3;
+                    checkPagePlacement();
+                    toolStripComboBox1.SelectedIndex = 0;
+                }
+            }
+            page.CurrentScreenDimension = UserSelectedScreenDimension;
+
             MNNotificationCenter.CurrentPage = page;
         }
 
@@ -68,23 +91,56 @@ namespace SlideMaker.Views
 
         private void toolStripComboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
+            SMScreen screen = SMScreen.Screen_1024_768__4_3;
+
             switch (toolStripComboBox1.SelectedIndex)
             {
                 case 0:
-                    DisplaySize = PageEditDisplaySize.LandscapeBig;
+                    screen = SMScreen.Screen_1024_768__4_3;
                     break;
                 case 1:
-                    DisplaySize = PageEditDisplaySize.LandscapeSmall;
+                    screen = SMScreen.Screen_1152_768__3_2;
                     break;
                 case 2:
-                    DisplaySize = PageEditDisplaySize.PortaitBig;
-                    break;
-                case 3:
-                    DisplaySize = PageEditDisplaySize.PortaitSmall;
+                    screen = SMScreen.Screen_1376_774__16_9;
                     break;
                 default:
                     break;
             }
+
+            if (screen == UserSelectedScreenDimension)
+                return;
+
+            if (pageEditView1.Page != null)
+            {
+                pageEditView1.ClearSelection();
+                if (pageEditView1.Page.HasDimension(screen) == false)
+                {
+                    if (MessageBox.Show("Create new dimension?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        foreach (MNPage p in pageEditView1.Page.Document.Data.Pages)
+                        {
+                            if (!p.HasDimension(screen))
+                                p.AvailableScreenDimensions.Add(screen);
+                            foreach (SMControl c in p.Objects)
+                            {
+                                c.ProduceArea(screen);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                pageEditView1.Page.CurrentScreenDimension = screen;
+            }
+
+
+            UserSelectedScreenDimension = screen;
+            DisplaySize = screen;
+            checkPagePlacement();
+
         }
         private void PageScrollArea_SizeChanged(object sender, EventArgs e)
         {
@@ -211,31 +267,17 @@ namespace SlideMaker.Views
                 PageObjectSelected(sender, e);
         }
 
-        public PageEditDisplaySize DisplaySize 
+        public SMScreen DisplaySize 
         {
             get 
             {
                 return pageEditView1.DisplaySize; 
             }
             set
-            { 
+            {
+                UserSelectedScreenDimension = value;
                 pageEditView1.DisplaySize = value;
-                switch (value)
-                {
-                    case PageEditDisplaySize.LandscapeBig:
-                        pageEditView1.ViewSize = new Size(1024, 768);
-                        break;
-                    case PageEditDisplaySize.LandscapeSmall:
-                        pageEditView1.ViewSize = new Size(800, 600);
-                        break;
-                    case PageEditDisplaySize.PortaitBig:
-                        pageEditView1.ViewSize = new Size(768, 1024);
-                        break;
-                    case PageEditDisplaySize.PortaitSmall:
-                        pageEditView1.ViewSize = new Size(600, 800);
-                        break;
-
-                }
+                pageEditView1.ViewSize = SMRectangleArea.GetPageSize(value);
                 if (pageEditView1.Page != null)
                 {
                     pageEditView1.Context.DisplaySize = value;
@@ -244,7 +286,6 @@ namespace SlideMaker.Views
                         SMRectangleArea area = sm.Area;
                         if (area.Selected)
                         {
-                            area.RecalcAllBounds(pageEditView1.Context);
                             area.GetBoundsRecalc(pageEditView1.Context);
                         }
                     }

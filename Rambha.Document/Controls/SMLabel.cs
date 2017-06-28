@@ -29,7 +29,7 @@ namespace Rambha.Document
             RichContent = true;
             RunningLine = SMRunningLine.Natural;
             richText = new SMRichText(this);
-            BackType = SMBackgroundType.None;
+            Area.BackType = SMBackgroundType.None;
         }
 
         public override GSCore ExecuteMessage(string token, GSCoreCollection args)
@@ -62,7 +62,7 @@ namespace Rambha.Document
             {
                 //drawWords = SMWordToken.WordListFromString(Text, this);
                 richText.ForceRecalc();
-                BackgroundImage = null;
+                Area.BackgroundImage = null;
             }
         }
 
@@ -71,16 +71,12 @@ namespace Rambha.Document
             if (richText != null)
             {
                 richText.ForceRecalc();
-                BackgroundImage = null;
+                Area.BackgroundImage = null;
             }
         }
 
         public SMRichText richText = null;
 
-        public const int PADDING_DOCK_TOP = 33;
-        public const int PADDING_DOCK_BOTTOM = 44;
-        public const int PADDING_DOCK_LEFT = 66;
-        public const int PADDING_DOCK_RIGHT = 88;
         public override void Paint(MNPageContext context)
         {
             SMRectangleArea area = this.Area;
@@ -99,8 +95,8 @@ namespace Rambha.Document
             Rectangle boundsA = bounds;
             boundsA.Y = Math.Max(0, bounds.Top);
             boundsA.X = Math.Max(0, bounds.Left);
-            boundsA.Width = Math.Min(1024,bounds.Right);
-            boundsA.Height = Math.Min(768,bounds.Bottom);
+            boundsA.Width = Math.Min(context.PageWidth, bounds.Right);
+            boundsA.Height = Math.Min(context.PageHeight, bounds.Bottom);
             boundsA.Width -= boundsA.X;
             boundsA.Height -= boundsA.Y;
 
@@ -131,112 +127,37 @@ namespace Rambha.Document
 
             if (plainText != null)
             {
-                Rectangle r = Rectangle.Empty;
                 Size textSize = richText.MeasureString(context, plainText, textBounds.Width);
-                if (Dock == SMControlSelection.Top)
+                Rectangle r = Area.GetDockedRectangle(context.PageSize, textSize);
+                if (Area.Dock != SMControlSelection.None)
                 {
-                    r.X = 0;
-                    r.Y = MNPage.HEADER_HEIGHT;
-                    r.Height = textSize.Height + PADDING_DOCK_BOTTOM + PADDING_DOCK_TOP;
-                    r.Width = context.PageWidth;
-                    textBounds.X = PADDING_DOCK_LEFT;
-                    textBounds.Y = r.Y + PADDING_DOCK_TOP;
-                    if (BackType == SMBackgroundType.Solid)
-                    {
-                        context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
-                    }
-                    else if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
-                    {
-                        context.g.DrawImage(BackgroundImage, 
-                            textBounds.X + BackgroundImageOffset.X, 
-                            textBounds.Y + BackgroundImageOffset.Y);
-                    }
+                    textBounds.X = Area.RelativeArea.X + SMRectangleArea.PADDING_DOCK_LEFT;
+                    textBounds.Y = Area.RelativeArea.Y + SMRectangleArea.PADDING_DOCK_TOP;
+                    textBounds.Width = Area.RelativeArea.Width - SMRectangleArea.PADDING_DOCK_LEFT 
+                        - SMRectangleArea.PADDING_DOCK_RIGHT + 2;
+                    textBounds.Height = Area.RelativeArea.Height - SMRectangleArea.PADDING_DOCK_TOP - SMRectangleArea.PADDING_DOCK_BOTTOM + 2;
                     richText.Paragraph.VertAlign = SMVerticalAlign.Top;
-                    richText.DrawString(context, layout, textBounds);
-                    Area.RelativeArea = r;
                 }
-                else if (Dock == SMControlSelection.Bottom)
+
+                if (Area.BackType == SMBackgroundType.None)
                 {
-                    r.Y = context.PageHeight - textSize.Height - PADDING_DOCK_TOP - PADDING_DOCK_BOTTOM;
-                    r.X = 0;
-                    r.Height = textSize.Height + PADDING_DOCK_BOTTOM + PADDING_DOCK_TOP;
-                    r.Width = context.PageWidth;
-                    textBounds.X = PADDING_DOCK_LEFT;
-                    textBounds.Y = r.Y + PADDING_DOCK_TOP;
-                    if (BackType == SMBackgroundType.Solid)
-                    {
-                        context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
-                    }
-                    else if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
-                    {
-                        context.g.DrawImage(BackgroundImage,
-                            textBounds.X + BackgroundImageOffset.X,
-                            textBounds.Y + BackgroundImageOffset.Y);
-                    }
-                    richText.Paragraph.VertAlign = SMVerticalAlign.Top;
-                    richText.DrawString(context, layout, textBounds);
-                    Area.RelativeArea = r;
+                    DrawStyledBackground(context, layout, bounds);
                 }
-                else if (Dock == SMControlSelection.Right)
+                else if (Area.BackType == SMBackgroundType.Solid)
                 {
-                    r.X = context.PageWidth - textSize.Width - PADDING_DOCK_LEFT - PADDING_DOCK_RIGHT;
-                    r.Y = MNPage.HEADER_HEIGHT;
-                    r.Height = context.PageHeight - MNPage.HEADER_HEIGHT;
-                    r.Width = textSize.Width + PADDING_DOCK_RIGHT + PADDING_DOCK_LEFT;
-                    textBounds.X = r.X + PADDING_DOCK_LEFT;
-                    textBounds.Y = r.Y + PADDING_DOCK_TOP;
-                    if (BackType == SMBackgroundType.Solid)
-                    {
-                        context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
-                    }
-                    else if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
-                    {
-                        context.g.DrawImage(BackgroundImage,
-                            textBounds.X + BackgroundImageOffset.X,
-                            textBounds.Y + BackgroundImageOffset.Y);
-                    }
-                    richText.Paragraph.VertAlign = SMVerticalAlign.Top;
-                    richText.DrawString(context, layout, textBounds);
-                    Area.RelativeArea = r;
+                    context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
                 }
-                else if (Dock == SMControlSelection.Left)
+                else if (Area.BackType == SMBackgroundType.Shadow && Area.BackgroundImage != null)
                 {
-                    r.X = 0;
-                    r.Y = MNPage.HEADER_HEIGHT;
-                    r.Height = context.PageHeight - MNPage.HEADER_HEIGHT;
-                    r.Width = textSize.Width + PADDING_DOCK_RIGHT + PADDING_DOCK_LEFT;
-                    textBounds.X = r.X + PADDING_DOCK_LEFT;
-                    textBounds.Y = r.Y + PADDING_DOCK_TOP;
-                    if (BackType == SMBackgroundType.Solid)
-                    {
-                        context.g.FillRectangle(SMGraphics.GetBrush(Page.BackgroundColor), r);
-                    }
-                    else if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
-                    {
-                        context.g.DrawImage(BackgroundImage,
-                            textBounds.X + BackgroundImageOffset.X,
-                            textBounds.Y + BackgroundImageOffset.Y);
-                    }
-                    richText.Paragraph.VertAlign = SMVerticalAlign.Top;
-                    richText.DrawString(context, layout, textBounds);
-                    Area.RelativeArea = r;
+                    context.g.DrawImage(Area.BackgroundImage,
+                        textBounds.X + Area.BackgroundImageOffset.X,
+                        textBounds.Y + Area.BackgroundImageOffset.Y);
                 }
-                else
-                {
-                    if (BackType == SMBackgroundType.Shadow && BackgroundImage != null)
-                    {
-                        context.g.DrawImage(BackgroundImage,
-                            textBounds.X + BackgroundImageOffset.X,
-                            textBounds.Y + BackgroundImageOffset.Y);
-                    }
-                    else
-                    {
-                        DrawStyledBackground(context, layout, bounds);
-                    }
+
+                if (Area.Dock == SMControlSelection.None)
                     DrawStyledBorder(context, layout, bounds);
 
-                    richText.DrawString(context, layout, textBounds);
-                }
+                richText.DrawString(context, layout, textBounds);
 
                 /*if (RichContent)
                 {

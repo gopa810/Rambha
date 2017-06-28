@@ -212,7 +212,7 @@ namespace Rambha.Document
         {
         }
 
-        public void AddValue(MNPageContext context, Point offset)
+/*        public void AddValue(MNPageContext context, Point offset)
         {
             int change;
             float pageDim;
@@ -229,7 +229,7 @@ namespace Rambha.Document
 
             this.SetValue(context.DisplaySize, this.GetValue(context.DisplaySize) + change);
         }
-
+*/
 
         /// <summary>
         /// Making string representation

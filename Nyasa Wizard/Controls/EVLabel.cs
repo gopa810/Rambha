@@ -23,8 +23,8 @@ namespace SlideMaker
         public void SetObject(SMLabel obj)
         {
             Object = obj;
-            comboBox1.SelectedIndex = (int)obj.BackType;
-            switch (obj.Dock)
+            comboBox1.SelectedIndex = (int)obj.Area.BackType;
+            switch (obj.Area.Dock)
             {
                 case SMControlSelection.None:
                     comboBox2.SelectedIndex = 0;
@@ -47,7 +47,7 @@ namespace SlideMaker
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Object.BackType = (SMBackgroundType)comboBox1.SelectedIndex;
+            Object.Area.BackType = (SMBackgroundType)comboBox1.SelectedIndex;
             EVContainer.Shared.OnValueUpdatedImmediate();
         }
 
@@ -56,19 +56,19 @@ namespace SlideMaker
             switch (comboBox2.SelectedIndex)
             {
                 case 0:
-                    Object.Dock = SMControlSelection.None;
+                    Object.Area.Dock = SMControlSelection.None;
                     break;
                 case 1:
-                    Object.Dock = SMControlSelection.Left;
+                    Object.Area.Dock = SMControlSelection.Left;
                     break;
                 case 2:
-                    Object.Dock = SMControlSelection.Top;
+                    Object.Area.Dock = SMControlSelection.Top;
                     break;
                 case 3:
-                    Object.Dock = SMControlSelection.Right;
+                    Object.Area.Dock = SMControlSelection.Right;
                     break;
                 case 4:
-                    Object.Dock = SMControlSelection.Bottom;
+                    Object.Area.Dock = SMControlSelection.Bottom;
                     break;
             }
             EVContainer.Shared.OnValueUpdatedImmediate();

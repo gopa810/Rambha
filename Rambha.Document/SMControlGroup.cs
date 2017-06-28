@@ -47,7 +47,7 @@ namespace Rambha.Document
             SMRectangleArea cga = Area;
             SMRectangleArea ca = control.Area;
 
-            bool pr = cga.GetRawRectangle(PageEditDisplaySize.LandscapeBig).Contains(ca.GetRawRectangle(PageEditDisplaySize.LandscapeBig));
+            bool pr = cga.RelativeArea.Contains(ca.RelativeArea);
             return pr ? ControlIsCompatible(control) : false;
         }
 

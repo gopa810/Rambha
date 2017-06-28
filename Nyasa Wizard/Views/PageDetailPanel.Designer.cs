@@ -178,7 +178,7 @@
             this.tabControl1.Location = new System.Drawing.Point(3, 22);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(373, 615);
+            this.tabControl1.Size = new System.Drawing.Size(232, 615);
             this.tabControl1.TabIndex = 1;
             // 
             // tabPages
@@ -187,7 +187,7 @@
             this.tabPages.Controls.Add(this.toolStrip1);
             this.tabPages.Location = new System.Drawing.Point(4, 22);
             this.tabPages.Name = "tabPages";
-            this.tabPages.Size = new System.Drawing.Size(365, 589);
+            this.tabPages.Size = new System.Drawing.Size(224, 589);
             this.tabPages.TabIndex = 4;
             this.tabPages.Text = "Pages";
             this.tabPages.UseVisualStyleBackColor = true;
@@ -203,7 +203,7 @@
             this.listBoxPages.ItemHeight = 16;
             this.listBoxPages.Location = new System.Drawing.Point(3, 28);
             this.listBoxPages.Name = "listBoxPages";
-            this.listBoxPages.Size = new System.Drawing.Size(359, 560);
+            this.listBoxPages.Size = new System.Drawing.Size(218, 560);
             this.listBoxPages.TabIndex = 1;
             this.listBoxPages.SelectedIndexChanged += new System.EventHandler(this.listBoxPages_SelectedIndexChanged_1);
             // 
@@ -219,7 +219,7 @@
             this.toolStripButton9});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(365, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(224, 25);
             this.toolStrip1.TabIndex = 0;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -1214,7 +1214,7 @@
             this.label1.Location = new System.Drawing.Point(0, 0);
             this.label1.Name = "label1";
             this.label1.Padding = new System.Windows.Forms.Padding(8, 2, 8, 2);
-            this.label1.Size = new System.Drawing.Size(376, 19);
+            this.label1.Size = new System.Drawing.Size(235, 19);
             this.label1.TabIndex = 2;
             this.label1.Text = "Navigation";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -1234,7 +1234,7 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
             this.splitContainer1.Size = new System.Drawing.Size(911, 637);
-            this.splitContainer1.SplitterDistance = 379;
+            this.splitContainer1.SplitterDistance = 238;
             this.splitContainer1.TabIndex = 2;
             // 
             // splitContainer2
@@ -1251,8 +1251,8 @@
             // 
             this.splitContainer2.Panel2.Controls.Add(this.tabControlDetails);
             this.splitContainer2.Panel2.Controls.Add(this.label2);
-            this.splitContainer2.Size = new System.Drawing.Size(528, 637);
-            this.splitContainer2.SplitterDistance = 378;
+            this.splitContainer2.Size = new System.Drawing.Size(669, 637);
+            this.splitContainer2.SplitterDistance = 530;
             this.splitContainer2.TabIndex = 3;
             // 
             // tabControl2
@@ -1262,7 +1262,7 @@
             this.tabControl2.Location = new System.Drawing.Point(0, 0);
             this.tabControl2.Name = "tabControl2";
             this.tabControl2.SelectedIndex = 0;
-            this.tabControl2.Size = new System.Drawing.Size(378, 637);
+            this.tabControl2.Size = new System.Drawing.Size(530, 637);
             this.tabControl2.TabIndex = 2;
             // 
             // tabPage1
@@ -1271,7 +1271,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(370, 611);
+            this.tabPage1.Size = new System.Drawing.Size(522, 611);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Pages";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -1280,11 +1280,11 @@
             // 
             this.pageScrollArea1.AllowDrop = true;
             this.pageScrollArea1.AutoScroll = true;
-            this.pageScrollArea1.DisplaySize = Rambha.Document.PageEditDisplaySize.LandscapeBig;
+            this.pageScrollArea1.DisplaySize = Rambha.Document.SMScreen.Screen_1024_768__4_3;
             this.pageScrollArea1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pageScrollArea1.Location = new System.Drawing.Point(3, 3);
             this.pageScrollArea1.Name = "pageScrollArea1";
-            this.pageScrollArea1.Size = new System.Drawing.Size(364, 605);
+            this.pageScrollArea1.Size = new System.Drawing.Size(516, 605);
             this.pageScrollArea1.TabIndex = 1;
             this.pageScrollArea1.NewPageRequested += new SlideMaker.Views.PageChangedEventHandler(this.pageScrollArea1_NewPageRequested);
             this.pageScrollArea1.BackToParentView += new SlideMaker.Views.NormalEventHandler(this.pageScrollArea1_BackToParentView);
@@ -1300,7 +1300,7 @@
             this.tabControlDetails.Location = new System.Drawing.Point(3, 22);
             this.tabControlDetails.Name = "tabControlDetails";
             this.tabControlDetails.SelectedIndex = 0;
-            this.tabControlDetails.Size = new System.Drawing.Size(143, 615);
+            this.tabControlDetails.Size = new System.Drawing.Size(132, 615);
             this.tabControlDetails.TabIndex = 4;
             this.tabControlDetails.SelectedIndexChanged += new System.EventHandler(this.tabControlDetails_SelectedIndexChanged);
             // 
@@ -1309,7 +1309,7 @@
             this.tabPage5.Controls.Add(this.containerA);
             this.tabPage5.Location = new System.Drawing.Point(4, 22);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Size = new System.Drawing.Size(135, 589);
+            this.tabPage5.Size = new System.Drawing.Size(124, 589);
             this.tabPage5.TabIndex = 1;
             this.tabPage5.Text = "Extra";
             this.tabPage5.UseVisualStyleBackColor = true;
@@ -1322,7 +1322,7 @@
             this.containerA.AutoScroll = true;
             this.containerA.Location = new System.Drawing.Point(3, 3);
             this.containerA.Name = "containerA";
-            this.containerA.Size = new System.Drawing.Size(129, 580);
+            this.containerA.Size = new System.Drawing.Size(118, 580);
             this.containerA.TabIndex = 0;
             // 
             // tabPageProperties
@@ -1390,7 +1390,7 @@
             this.label2.Location = new System.Drawing.Point(3, 0);
             this.label2.Name = "label2";
             this.label2.Padding = new System.Windows.Forms.Padding(8, 2, 8, 2);
-            this.label2.Size = new System.Drawing.Size(140, 19);
+            this.label2.Size = new System.Drawing.Size(129, 19);
             this.label2.TabIndex = 3;
             this.label2.Text = "Details";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;

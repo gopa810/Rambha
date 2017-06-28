@@ -114,19 +114,16 @@
             this.toolStripLabel1.Name = "toolStripLabel1";
             this.toolStripLabel1.Size = new System.Drawing.Size(71, 22);
             this.toolStripLabel1.Text = "Display Size:";
-            this.toolStripLabel1.Visible = false;
             // 
             // toolStripComboBox1
             // 
             this.toolStripComboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.toolStripComboBox1.Items.AddRange(new object[] {
-            "Landscape 10\"  4:3",
-            "Landspace 7\" 4:3",
-            "Portait 10\" 3:4",
-            "Portait 7\" 3:4"});
+            "1024x768   4:3",
+            "1152x768   3:2",
+            "1376x774   16:9"});
             this.toolStripComboBox1.Name = "toolStripComboBox1";
             this.toolStripComboBox1.Size = new System.Drawing.Size(121, 25);
-            this.toolStripComboBox1.Visible = false;
             this.toolStripComboBox1.SelectedIndexChanged += new System.EventHandler(this.toolStripComboBox1_SelectedIndexChanged);
             // 
             // toolStripSeparator2
@@ -326,7 +323,7 @@
             // 
             this.pageEditView1.BackColor = System.Drawing.SystemColors.Window;
             this.pageEditView1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pageEditView1.DisplaySize = Rambha.Document.PageEditDisplaySize.LandscapeBig;
+            this.pageEditView1.DisplaySize = Rambha.Document.SMScreen.Screen_1024_768__4_3;
             this.pageEditView1.LastRelativePoint = new System.Drawing.Point(0, 0);
             this.pageEditView1.LastUserPoint = new System.Drawing.Point(0, 0);
             this.pageEditView1.Location = new System.Drawing.Point(89, 98);

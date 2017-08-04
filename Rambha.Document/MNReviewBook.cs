@@ -5,9 +5,9 @@ using System.Text;
 
 using System.Xml;
 
-namespace SlideViewer
+namespace Rambha.Document
 {
-    public class ReviewBook
+    public class MNReviewBook
     {
         public string BookNotes = "";
 

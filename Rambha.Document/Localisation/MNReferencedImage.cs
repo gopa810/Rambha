@@ -67,7 +67,6 @@ namespace Rambha.Document
         public override void Load(RSFileReader br)
         {
             byte tag;
-            int a;
             while ((tag = br.ReadByte()) != 0)
             {
                 switch (tag)

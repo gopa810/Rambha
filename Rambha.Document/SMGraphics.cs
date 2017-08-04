@@ -5,6 +5,8 @@ using System.Text;
 using System.Drawing;
 using System.Drawing.Text;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.IO;
 
 namespace Rambha.Document
 {
@@ -14,8 +16,11 @@ namespace Rambha.Document
         public static Dictionary<Color, Brush> BrushDict = new Dictionary<Color, Brush>();
         public static Dictionary<String, Pen> PenDict = new Dictionary<string, Pen>();
         public static StringFormat StrFormatCenter;
+        public static Font DefaultFont;
+        public static string CustomFontsDir;
 
         public static Dictionary<MNFontName, Font> BuiltInFonts = new Dictionary<MNFontName, Font>();
+        public static List<string> AddedFonts = new List<string>();
         public static StringFormat StrFormatLeftCenter;
 
         public static SMStatusLayout clickableLayoutN = new SMStatusLayout();
@@ -25,8 +30,18 @@ namespace Rambha.Document
         public static SMStatusLayout dropableLayoutN = new SMStatusLayout();
         public static SMStatusLayout dropableLayoutH = new SMStatusLayout();
 
+        [DllImport("gdi32.dll", EntryPoint = "AddFontResourceW", SetLastError = true)]
+        public static extern int AddFontResource([In][MarshalAs(UnmanagedType.LPWStr)]
+                                     string lpFileName);
+
+        [DllImport("gdi32.dll", EntryPoint = "RemoveFontResourceW", SetLastError = true)]
+        public static extern bool RemoveFontResource([In][MarshalAs(UnmanagedType.LPWStr)]
+                                     string lpFileName);
+
         static SMGraphics()
         {
+            DefaultFont = new Font(FontFamily.GenericSansSerif, 18);
+
             StrFormatCenter = new StringFormat();
             StrFormatCenter.Alignment = StringAlignment.Center;
             StrFormatCenter.LineAlignment = StringAlignment.Center;
@@ -74,42 +89,94 @@ namespace Rambha.Document
             dropableLayoutH.BorderWidth = 4;
             dropableLayoutH.BorderStyle = SMBorderStyle.RoundRectangle;
 
-            InstalledFontCollection inst = new InstalledFontCollection();
-            foreach (FontFamily ff in inst.Families)
-            {
-                Debugger.Log(0,"", string.Format("FontFamily: {0} \n", ff.Name));
-                if (ff.Name.Equals("Tekton Pro"))
-                    BuiltInFonts[MNFontName.TektonPro] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Shanti"))
-                    BuiltInFonts[MNFontName.Shanti] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Penmanship Print"))
-                    BuiltInFonts[MNFontName.PenmanshipPrint] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Sabon"))
-                    BuiltInFonts[MNFontName.Sabon] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Gill Sans MT Murari"))
-                    BuiltInFonts[MNFontName.GilSansMurari] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Chaparral Pro"))
-                    BuiltInFonts[MNFontName.ChaparralPro] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Berlin Sans FB"))
-                    BuiltInFonts[MNFontName.BerlinSansFB] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Balaram"))
-                    BuiltInFonts[MNFontName.Balaram] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Garamond"))
-                    BuiltInFonts[MNFontName.AdobeGaramondPro] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Arial Rounded MT Bold"))
-                    BuiltInFonts[MNFontName.VagRounded] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Lucida Sans"))
-                    BuiltInFonts[MNFontName.LucidaSans] = new Font(ff, 14f, FontStyle.Regular);
-                if (ff.Name.Equals("Times New Roman"))
-                    BuiltInFonts[MNFontName.Times] = new Font(ff, 14f, FontStyle.Regular);
-            }
 
-            Font defaultFont = BuiltInFonts[MNFontName.LucidaSans];
-            BuiltInFonts[MNFontName.Devanagari] = defaultFont;
-            BuiltInFonts[MNFontName.FranklinGothicCondensed] = defaultFont;
-            BuiltInFonts[MNFontName.OddsAndSods] = defaultFont;
-            BuiltInFonts[MNFontName.Default] = defaultFont;
-            BuiltInFonts[MNFontName.WWDesigns] = defaultFont;
+
+            string fontsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts");
+            CustomFontsDir = fontsDir;
+
+            InstalledFontCollection installed = new InstalledFontCollection();
+            FontFamily[] inst = installed.Families;
+
+            InstallAppFont(inst, MNFontName.TektonPro, "Tekton Pro", new string[] { "TektonPro-Bold.otf" });
+            InstallAppFont(inst, MNFontName.Shanti, "Shanti", new string[] { "SHANT_.TTF", "SHANT_B.TTF", "SHANT_BI.TTF", "SHANT_I.TTF" });
+            //InstallAppFont(MNFontName.PenmanshipPrint, "Penmanship Print", new string[] { "PENMP___.TTF" });
+            InstallAppFont(inst, MNFontName.Sabon, "Sabon", new string[] { "Sabon-Bold.otf", "Sabon-BoldItalic.otf", "Sabon-Italic.otf", "Sabon-Roman.otf" });
+            InstallAppFont(inst, MNFontName.GilSansMurari, "Gill Sans MT Murari", new string[] { "GILMUBD.ttf", "GILMUBDI.ttf", "GILMUIT.ttf", "GILMURG.ttf" });
+            InstallAppFont(inst, MNFontName.ChaparralPro, "Chaparral Pro", new string[] { "ChaparralPro-Bold.otf", "ChaparralPro-BoldIt.otf", "ChaparralPro-Italic.otf", "ChaparralPro-Regular.otf" });
+            InstallAppFont(inst, MNFontName.BerlinSansFB, "Berlin Sans FB", new string[] { "BRLNSB.TTF", "BRLNSDB.TTF" });
+            InstallAppFont(inst, MNFontName.AdobeGaramondPro, "Garamond", new string[] { "AGaramondPro-Bold.otf", "AGaramondPro-Italic.otf", "AGaramondPro-Regular.otf" });
+            InstallAppFont(inst, MNFontName.VagRounded, "Arial Rounded MT Bold", new string[] { "vag_rounded_bold.ttf" });
+            InstallAppFont(inst, MNFontName.Times, "Times New Roman", new string[] { });
+            InstallAppFont(inst, MNFontName.LucidaSans, "Lucida Sans", new string[] { });
+
+            BuiltInFonts[MNFontName.Devanagari] = DefaultFont;
+            BuiltInFonts[MNFontName.FranklinGothicCondensed] = DefaultFont;
+            BuiltInFonts[MNFontName.OddsAndSods] = DefaultFont;
+            BuiltInFonts[MNFontName.Default] = DefaultFont;
+            BuiltInFonts[MNFontName.WWDesigns] = DefaultFont;
+            BuiltInFonts[MNFontName.Balaram] = DefaultFont;
+
+        }
+
+        public static FontFamily FindFontFamily(FontFamily[] inst, string familyFont)
+        {
+            foreach(FontFamily ff in inst)
+            {
+                if (ff.Name == familyFont)
+                    return ff;
+            }
+            return null;
+        }
+        private static void InstallAppFont(FontFamily[] inst, MNFontName fontName, string familyName, string[] filesToAdd)
+        {
+            if (!BuiltInFonts.ContainsKey(fontName))
+            {
+                FontFamily family = FindFontFamily(inst, familyName);
+                if (family != null)
+                {
+                    Font font = new Font(family, 14f, FontStyle.Regular);
+                    BuiltInFonts[fontName] = font;
+                }
+            }
+            if (!BuiltInFonts.ContainsKey(fontName))
+            {
+                foreach (string fileRaw in filesToAdd)
+                {
+                    string file = Path.Combine(CustomFontsDir, fileRaw);
+                    string ext = Path.GetExtension(file).ToLower();
+                    if (ext == ".ttf" || ext == ".otf")
+                    {
+                        int a = AddFontResource(file);
+                        if (a > 0)
+                        {
+                            AddedFonts.Add(file);
+                        }
+                    }
+                }
+
+                try
+                {
+                    FontFamily family = new FontFamily(familyName);
+                    Font font = new Font(family, 14f, FontStyle.Regular);
+                    BuiltInFonts[fontName] = font;
+                }
+                catch
+                {
+                    BuiltInFonts.Remove(fontName);
+                }
+            }
+            if (!BuiltInFonts.ContainsKey(fontName))
+            {
+                BuiltInFonts[fontName] = DefaultFont;
+            }
+        }
+
+        public static void RemoveAddedFonts()
+        {
+            foreach(string af in AddedFonts)
+            {
+                RemoveFontResource(af);
+            }
         }
 
         public static Font GetFont(MNFontName fontNameEnum)

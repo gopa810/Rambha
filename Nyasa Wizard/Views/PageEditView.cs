@@ -387,13 +387,11 @@ namespace SlideMaker.Views
         {
             SelectionArea.RelativeArea = Rectangle.Empty;
             SelectionArea.Dock = SMControlSelection.None;
-            bool hit = false;
             for (int i = PageData.Objects.Count - 1; i >= 0; i--)
             {
                 SMControl po = PageData.Objects[i];
                 if (po.Area.TestHitLogical(Context, logPoint))
                 {
-                    hit = true;
                     po.Area.Selected = !po.Area.Selected;
 
                     if (po.Area.Selected)
@@ -411,15 +409,7 @@ namespace SlideMaker.Views
                         break;
                     }
                 }
-                else
-                {
-                    hit = false;
-                    //Debugger.Log(0, "", "Object not hit" + po.Text + " : " + po.Area.Selected + "\n");
-                }
-
             }
-
-            //Debugger.Log(0,"", "SelectObjectsContainingPoint TotalSelectionrect = " + TotalSelectionRect + "\n");
         }
 
         public void SelectObjectsIntersectingRect(MNPageContext Context, Rectangle r)
@@ -1338,7 +1328,6 @@ namespace SlideMaker.Views
                 return;
 
             value = value / count;
-            double A, B;
             foreach (SMControl c in PageData.SelectedObjects)
             {
                 c.Area.Width = Convert.ToInt32(value);

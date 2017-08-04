@@ -186,7 +186,6 @@ namespace FilesGenerator
 
         public static Image GetSmallImage(string fileName)
         {
-            Image ret = null;
             string newSmallFile = null;
             using (Image img = Image.FromFile(fileName))
             {

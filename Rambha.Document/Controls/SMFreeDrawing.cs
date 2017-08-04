@@ -17,7 +17,6 @@ namespace Rambha.Document
         public Color PenColor = Color.Black;
         public double minDistance = 20;
 
-        private float oldWidth = 0;
         private Color oldColor = Color.Transparent;
 
         private TempPoints tempPoints = new TempPoints();

@@ -30,7 +30,6 @@ namespace Rambha.Document
         public override void Load(RSFileReader br)
         {
             br.Log("= = = SOUND = = =\n");
-            string s;
             byte b;
 
             while ((b = br.ReadByte()) != 0)

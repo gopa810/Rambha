@@ -42,6 +42,8 @@ namespace Rambha.Document
 
         public IDocumentViewDelegate Viewer = null;
 
+        public MNReviewBook Reviews = null;
+
         public MNDocument()
         {
             Book = new MNBookHeader();
@@ -186,6 +188,27 @@ namespace Rambha.Document
             DefaultLanguage.Styles.Add(ds);
 
             DefaultLanguage.Modified = true;
+        }
+
+        public string GetReviewPageText(long idPage, int v)
+        {
+            if (Reviews == null) return null;
+            if (!Reviews.Pages.ContainsKey(idPage))
+                return null;
+            ReviewPage rp = Reviews.Pages[idPage];
+            return v == 0 ? rp.PageTitle : rp.PageHelp;
+        }
+
+        public string GetReviewText(long idPage, long idControl)
+        {
+            if (Reviews == null) return null;
+            if (!Reviews.Pages.ContainsKey(idPage))
+                return null;
+            ReviewPage rp = Reviews.Pages[idPage];
+            if (!rp.Items.ContainsKey(idControl))
+                return null;
+            ReviewItem ri = rp.Items[idControl];
+            return ri.ItemText;
         }
 
         ~MNDocument()

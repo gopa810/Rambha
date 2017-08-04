@@ -13,7 +13,7 @@ using Rambha.Document;
 
 namespace SlideViewer
 {
-    public class AudioPlayer
+    public class AudioPlayer: IDisposable
     {
         MNReferencedSound sound = null;
         WaveStream p_audioFileReader = null;
@@ -50,6 +50,11 @@ namespace SlideViewer
                 p_memoryStream = null;
             }
 
+            if (timer1 != null)
+            {
+                timer1.Dispose();
+                timer1 = null;
+            }
             DisposeAudios();
         }
 
@@ -163,6 +168,11 @@ namespace SlideViewer
             {
                 ErrorCatcher.currentOperation = "";
             }
+        }
+
+        public void Dispose()
+        {
+            DisposeAll();
         }
     }
 }

@@ -68,8 +68,27 @@ namespace Rambha.Document
         private GSString p_unique_name = new GSString("");
 
         [Browsable(false)]
-        public string Text { get { return p_text; } set { p_text = value; TextDidChange(); } }
+        public string Text
+        {
+            get
+            {
+                string reviewText = p_text;
+                if (Page != null && Page.Document != null)
+                    reviewText = Page.Document.GetReviewText(Page.Id, this.Id);
+                return string.IsNullOrWhiteSpace(reviewText) ? p_text : reviewText;
+            }
+            set
+            {
+                p_text = value;
+                TextDidChange();
+            }
+        }
         private string p_text = String.Empty;
+
+        public string TextRaw
+        {
+            get { return p_text; }
+        }
 
         [Browsable(true), Category("Content"), DisplayName("Content Type")]
         public SMContentType ContentType { get; set; }

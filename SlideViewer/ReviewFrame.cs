@@ -17,7 +17,7 @@ namespace SlideViewer
     {
         private static ReviewFrame p_Shared = null;
 
-        private static ReviewBook p_Book = new ReviewBook();
+        private static MNReviewBook p_Book = new MNReviewBook();
         private static ReviewPage p_Page = new ReviewPage();
         private static ReviewItem p_Item = new ReviewItem();
 
@@ -48,6 +48,10 @@ namespace SlideViewer
             if (p != null)
                 InitWithPage(p);
             Page = p;
+            if (p != null && Page.Document != null)
+            {
+                Page.Document.Reviews = p_Book;
+            }
             label9.Text = p.Id.ToString();
         }
 
@@ -63,8 +67,8 @@ namespace SlideViewer
             {
                 p_Page = new ReviewPage();
                 p_Book.Pages[p.Id] = p_Page;
-                p_Page.PageTitle = p.TextB;
-                p_Page.PageHelp = p.MessageText;
+                p_Page.PageTitle = p.TextBRaw;
+                p_Page.PageHelp = p.MessageTextRaw;
             }
 
             richTextBox1.Text = p_Page.PageTitle;
@@ -141,7 +145,7 @@ namespace SlideViewer
             {
                 p_Item = new ReviewItem();
                 p_Page.Items[sControl.Id] = p_Item;
-                p_Item.ItemText = sControl.Text;
+                p_Item.ItemText = sControl.TextRaw;
                 p_Item.ItemNotes = "";
             }
 
@@ -166,12 +170,18 @@ namespace SlideViewer
         private void StartDocumentReview(MNDocument doc, string filePath)
         {
             Document = doc;
+            doc.Reviews = p_Book;
             ClearUI();
 
             labelBookTitle.Text = Document.Book.BookTitle;
             tabControl1.SelectedTab = tabBook;
 
-            LoadData(Document.Book.FilePath.Replace(".smb", ".smr"));
+            string folder = Properties.Settings.Default.ReviewsDirectory;
+            if (Directory.Exists(folder))
+            {
+                string path = Path.Combine(folder, Path.GetFileNameWithoutExtension(Document.Book.FilePath) + ".smr");
+                LoadData(path);
+            }
 
             p_PageOrig = null;
             p_ItemOrig = null;
@@ -181,7 +191,7 @@ namespace SlideViewer
 
         private void LoadData(string p)
         {
-            p_Book = new ReviewBook();
+            p_Book = new MNReviewBook();
             if (File.Exists(p))
             {
                 XmlDocument doc = new XmlDocument();
@@ -207,7 +217,47 @@ namespace SlideViewer
         {
             if (Document != null)
             {
-                SaveData(Document.Book.FilePath.Replace(".smb", ".smr"));
+                Document.Reviews = null;
+                bool retry = true;
+
+                string folder = Properties.Settings.Default.ReviewsDirectory;
+                while (retry)
+                {
+                    if (folder.Length == 0 || !Directory.Exists(folder))
+                    {
+                        FolderBrowserDialog fbd = new FolderBrowserDialog();
+                        if (fbd.ShowDialog() == DialogResult.OK)
+                        {
+                            folder = fbd.SelectedPath;
+                            Properties.Settings.Default.ReviewsDirectory = folder;
+                            Properties.Settings.Default.Save();
+                        }
+                    }
+                    if (Directory.Exists(folder))
+                    {
+                        string path = Path.Combine(folder, Path.GetFileNameWithoutExtension(Document.Book.FilePath) + ".smr");
+                        try
+                        {
+                            SaveData(path);
+                            retry = false;
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorCatcher.Add("Message from saving review file: {0}", ex.Message);
+                        }
+                    }
+
+                    if (retry)
+                    {
+                        if (MessageBox.Show("Review file was not saved. Do you want to try different folder?", "Unsuccessful saving", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Error) == DialogResult.Yes)
+                        {
+                            retry = true;
+                            folder = "";
+                        }
+                        else
+                            retry = false;
+                    }
+                }
             }
         }
 
@@ -248,7 +298,7 @@ namespace SlideViewer
         {
             if (p_PageOrig != null)
             {
-                richTextBox1.ForeColor = p_PageOrig.TextB.Equals(p_Page.PageTitle) ? Color.Gray : Color.Black;
+                richTextBox1.ForeColor = p_PageOrig.TextBRaw.Equals(p_Page.PageTitle) ? Color.Gray : Color.Black;
             }
         }
 
@@ -262,7 +312,7 @@ namespace SlideViewer
         {
             if (p_PageOrig != null)
             {
-                richTextBox2.ForeColor = p_PageOrig.MessageText.Equals(p_Page.PageHelp) ? Color.Gray : Color.Black;
+                richTextBox2.ForeColor = p_PageOrig.MessageTextRaw.Equals(p_Page.PageHelp) ? Color.Gray : Color.Black;
             }
         }
 
@@ -281,7 +331,7 @@ namespace SlideViewer
         {
             if (p_ItemOrig != null)
             {
-                textItemText.ForeColor = p_ItemOrig.Text.Equals(p_Item.ItemText) ? Color.Gray : Color.Black;
+                textItemText.ForeColor = p_ItemOrig.TextRaw.Equals(p_Item.ItemText) ? Color.Gray : Color.Black;
             }
         }
 

@@ -60,12 +60,12 @@ namespace SlideViewer
                     }
                 }
             }
-
+            
             Library.LastDirectory = dir;
             Library.GetCurrentBookDatabase(dir);
             Library.CalculateDatabaseStatus();
             Library.FetchRemote(null);
-
+            
             ReviewFrame.DisplayWindow();
         }
 
@@ -554,6 +554,8 @@ namespace SlideViewer
             ReviewFrame.Shared.SavePosition();
             this.SavePosition();
 
+            SMGraphics.RemoveAddedFonts();
+
             ErrorCatcher.Save();
         }
 
@@ -565,6 +567,20 @@ namespace SlideViewer
                     new Rectangle(Properties.Settings.Default.MainFramePosition,
                         Properties.Settings.Default.MainFrameSize);
             }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string folder = Properties.Settings.Default.ReviewsDirectory;
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            fbd.SelectedPath = folder;
+            if (fbd.ShowDialog() == DialogResult.OK)
+            {
+                folder = fbd.SelectedPath;
+                Properties.Settings.Default.ReviewsDirectory = folder;
+                Properties.Settings.Default.Save();
+            }
+
         }
     }
 }

@@ -85,6 +85,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="MNReviewBook.cs" />
     <Compile Include="SMConnection.cs" />
     <Compile Include="Controls\SMKeyboard.cs" />
     <Compile Include="Controls\SMMemoryGame.cs" />

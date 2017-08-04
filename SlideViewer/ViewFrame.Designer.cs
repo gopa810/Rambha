@@ -38,6 +38,7 @@
             this.buttonPlay = new System.Windows.Forms.Button();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.panelUpdater = new SlideViewer.UpdaterView();
+            this.button3 = new System.Windows.Forms.Button();
             this.panelBook.SuspendLayout();
             this.panelFiles.SuspendLayout();
             this.SuspendLayout();
@@ -79,6 +80,7 @@
             // panelFiles
             // 
             this.panelFiles.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelFiles.Controls.Add(this.button3);
             this.panelFiles.Controls.Add(this.button2);
             this.panelFiles.Controls.Add(this.button1);
             this.panelFiles.Controls.Add(this.buttonBrowse);
@@ -92,7 +94,7 @@
             // button2
             // 
             this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.button2.Location = new System.Drawing.Point(285, 198);
+            this.button2.Location = new System.Drawing.Point(285, 130);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(65, 23);
             this.button2.TabIndex = 4;
@@ -114,11 +116,11 @@
             // buttonBrowse
             // 
             this.buttonBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonBrowse.Location = new System.Drawing.Point(285, 227);
+            this.buttonBrowse.Location = new System.Drawing.Point(285, 159);
             this.buttonBrowse.Name = "buttonBrowse";
-            this.buttonBrowse.Size = new System.Drawing.Size(65, 26);
+            this.buttonBrowse.Size = new System.Drawing.Size(65, 45);
             this.buttonBrowse.TabIndex = 2;
-            this.buttonBrowse.Text = "Browse";
+            this.buttonBrowse.Text = "Books Folder";
             this.buttonBrowse.UseVisualStyleBackColor = true;
             this.buttonBrowse.Click += new System.EventHandler(this.buttonBrowse_Click);
             // 
@@ -158,6 +160,17 @@
             this.panelUpdater.Size = new System.Drawing.Size(168, 169);
             this.panelUpdater.TabIndex = 4;
             // 
+            // button3
+            // 
+            this.button3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.button3.Location = new System.Drawing.Point(285, 210);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(65, 45);
+            this.button3.TabIndex = 5;
+            this.button3.Text = "Reviews Folder";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
             // ViewFrame
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -190,5 +203,6 @@
         private UpdaterView panelUpdater;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
     }
 }

@@ -440,7 +440,6 @@ namespace Rambha.Document
         {
             base.LoadStatusCore(br);
             byte b;
-            byte b2;
             int currentSpotIndex = 0;
             List<MNReferencedSpot> spots = null;
             if (Img != null && Img.Image != null && Img.Image.HasSpots())

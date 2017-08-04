@@ -917,7 +917,6 @@ namespace SlideViewer.Views
         public override GSCore ExecuteMessage(string token, GSCoreCollection args)
         {
             string arg1 = string.Empty;
-            MNPage p = null;
             switch(token)
             {
                 case "invalidate":

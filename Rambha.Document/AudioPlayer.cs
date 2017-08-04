@@ -13,7 +13,7 @@ using Rambha.Document;
 
 namespace Rambha.Document
 {
-    public class AudioPlayer
+    public class AudioPlayer: IDisposable
     {
         MNReferencedSound sound = null;
         WaveStream p_audioFileReader = null;
@@ -44,6 +44,12 @@ namespace Rambha.Document
 
         public void DisposeAll()
         {
+            if (timer1 != null)
+            {
+                timer1.Dispose();
+                timer1 = null;
+            }
+
             if (p_memoryStream != null)
             {
                 p_memoryStream.Dispose();
@@ -150,6 +156,11 @@ namespace Rambha.Document
                     }
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            DisposeAll();
         }
     }
 }

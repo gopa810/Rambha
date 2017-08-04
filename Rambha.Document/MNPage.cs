@@ -26,7 +26,17 @@ namespace Rambha.Document
         public MNDocument Document { get; set; }
 
         [Browsable(true),DisplayName("Page Title"),Category("Page")]
-        public string Title { get { return p_title_obj.Value; } set { p_title_obj.Value = value; } }
+        public string Title
+        {
+            get
+            {
+                return p_title_obj.Value;
+            }
+            set
+            {
+                p_title_obj.Value = value;
+            }
+        }
         private GSString p_title_obj = new GSString("");
 
         [Browsable(true), DisplayName("API Name"), Category("API")]
@@ -51,10 +61,55 @@ namespace Rambha.Document
         public string MessageTitle { get; set; }
 
         [Browsable(false)]
-        public string MessageText { get; set; }
+        public string MessageText
+        {
+            get
+            {
+                string text = null;
+                if (Document != null)
+                    text = Document.GetReviewPageText(Id, 1);
+                return string.IsNullOrWhiteSpace(text) ? p_messageText : text;
+            }
+            set
+            {
+                p_messageText = value;
+            }
+        }
+        private string p_messageText = string.Empty;
+        public string MessageTextRaw
+        {
+            get
+            {
+                return p_messageText;
+            }
+        }
 
         [Browsable(false)]
-        public string TextB { get; set; }
+        public string TextB
+        {
+            get
+            {
+                string text = null;
+                if (Document != null)
+                {
+                    text = Document.GetReviewPageText(Id, 0);
+                    //Debugger.Log(0, "", "==> Reviewed Text: " + text ?? "(null)" + "\n");
+                }
+                return string.IsNullOrWhiteSpace(text) ? p_text_b : text;
+            }
+            set
+            {
+                p_text_b = value;
+            }
+        }
+        private string p_text_b = string.Empty;
+        public string TextBRaw
+        {
+            get
+            {
+                return p_text_b;
+            }
+        }
 
         [Browsable(false)]
         public string TextC { get; set; }
@@ -572,7 +627,7 @@ namespace Rambha.Document
 
         public void DuplicateSelectedObjects(int rows, int columns, bool hz, bool vt, int spacing)
         {
-            int i, t;
+            int i;
             if (hz || vt)
                 spacing = Math.Max(spacing, 10);
 
@@ -1134,7 +1189,6 @@ namespace Rambha.Document
         public SMControl PasteSelection(RSFileReader br)
         {
             byte b;
-            long areaId = -1;
             long pageId = -1;
             List<SMControl> tempControls = new List<SMControl>();
             SMControl returnedValue = null;

@@ -141,6 +141,8 @@ namespace Rambha.Document
 
         public byte[] InitialStatus = null;
 
+        public SMRichText HeaderText = new SMRichText();
+
         public const int HEADER_HEIGHT = 64;
 
         public Color BackgroundColor
@@ -154,6 +156,14 @@ namespace Rambha.Document
                 backgroundColor = value;
                 nontransparentBackgroundBrush = new SolidBrush(backgroundColor);
                 semitransparentBackgroundBrush = new SolidBrush(Color.FromArgb(128, backgroundColor));
+            }
+        }
+
+        public Brush BackgroundBrush
+        {
+            get
+            {
+                return SMGraphics.GetBrush(backgroundColor);
             }
         }
 
@@ -226,21 +236,75 @@ namespace Rambha.Document
 
         public override GSCore GetPropertyValue(string s)
         {
-            switch (s)
+            int dotIndex = s.IndexOf('.');
+            if (dotIndex >= 0)
             {
-                case "title":
-                    return p_title_obj;
-                case "messageTitle":
-                    return new GSString(MessageTitle);
-                case "messageText":
-                case "textA":
-                    return new GSString(MessageText);
-                case "textB":
-                    return new GSString(TextB);
-                case "textC":
-                    return new GSString(TextC);
-                default:
-                    return base.GetPropertyValue(s);
+                string apiName = s.Substring(0, dotIndex);
+                string subName = s.Substring(dotIndex + 1);
+
+                SMControl ctrl = FindObjectWithAPIName(apiName);
+                if (ctrl != null)
+                {
+                    return ctrl.GetPropertyValue(subName);
+                }
+            }
+            else
+            {
+                switch (s)
+                {
+                    case "title":
+                        return p_title_obj;
+                    case "messageTitle":
+                        return new GSString(MessageTitle);
+                    case "messageText":
+                    case "textA":
+                        return new GSString(MessageText);
+                    case "textB":
+                        return new GSString(TextB);
+                    case "textC":
+                        return new GSString(TextC);
+                    default:
+                        break;
+                }
+            }
+            return base.GetPropertyValue(s);
+        }
+
+        public override void SetPropertyValue(string propertyName, string propertyValue)
+        {
+            int dotIndex = propertyName.IndexOf('.');
+            if (dotIndex >= 0)
+            {
+                string apiName = propertyName.Substring(0, dotIndex);
+                string subName = propertyName.Substring(dotIndex + 1);
+
+                SMControl ctrl = FindObjectWithAPIName(apiName);
+                if (ctrl != null)
+                {
+                    ctrl.SetPropertyValue(subName, propertyValue);
+                }
+            }
+            else
+            {
+                switch(propertyName)
+                {
+                    case "title":
+                        p_title_obj.Value = propertyValue;
+                        break;
+                    case "messageTitle":
+                        MessageTitle = propertyValue;
+                        break;
+                    case "messageText":
+                    case "textA":
+                        MessageText = propertyValue;
+                        break;
+                    case "textB":
+                        TextB = propertyValue;
+                        break;
+                    case "textC":
+                        TextC = propertyValue;
+                        break;
+                }
             }
         }
 
@@ -538,6 +602,8 @@ namespace Rambha.Document
             return true;
         }
 
+        private SMStatusLayout headerLayout = new SMStatusLayout();
+
         public MNPage(MNDocument doc): base()
         {
             Document = doc;
@@ -557,6 +623,13 @@ namespace Rambha.Document
             ShowMessageAlways = false;
             DefaultAudioState = false;
             ShowAudio = false;
+            HeaderText.Paragraph = new SMParaFormat()
+            {
+                Align = SMHorizontalAlign.Left,
+                VertAlign = SMVerticalAlign.Center,
+            };
+            HeaderText.Font = new SMFont(MNFontName.Default, 16, FontStyle.Italic);
+            headerLayout.ForeColor = Color.White;
         }
 
         public override string ToString()
@@ -798,61 +871,6 @@ namespace Rambha.Document
                     }
                 }
 
-                if (topControls)
-                {
-                    int height = HEADER_HEIGHT;
-                    int leftX = 0;
-                    int rightX = context.PageWidth;
-                    if (ShowBackNavigation)
-                    {
-                        g.FillRectangle((context.hitHeaderButton == 1 ? Brushes.Blue : Brushes.Black), leftX, 0, height, height);
-                        if (context.navigIconBack != null)
-                            g.DrawImage(context.navigIconBack, leftX, 0, height, height);
-                        if (context.navigArrowBack != null)
-                            g.DrawImage(context.navigArrowBack, 0, context.PageHeight / 2 - 100, 80, 200); 
-                        leftX += height;
-                    }
-
-                    if (ShowForwardNavigation)
-                    {
-                        rightX -= height;
-                        g.FillRectangle((context.hitHeaderButton == 4 ? Brushes.Blue : Brushes.Black), rightX, 0, height, height);
-                        if (context.navigIconFwd != null)
-                            g.DrawImage(context.navigIconFwd, rightX, 0, height, height);
-                        if (context.navigArrowFwd != null)
-                            g.DrawImage(context.navigArrowFwd, context.PageWidth - 80, context.PageHeight / 2 - 100, 80, 200);
-                    }
-
-                    if (ShowHome)
-                    {
-                        g.FillRectangle((context.hitHeaderButton == 2 ? Brushes.Blue : Brushes.Black), leftX, 0, height, height);
-                        if (context.navigIconMenu != null)
-                            g.DrawImage(context.navigIconMenu, leftX, 0, height, height);
-                        leftX += height;
-                    }
-
-                    if (ShowHelp && !ShowMessageAlways)
-                    {
-                        rightX -= height;
-                        g.FillRectangle((context.hitHeaderButton == 3 ? Brushes.Blue : Brushes.Black), rightX, 0, height, height);
-                        if (context.navigIconHelp != null)
-                            g.DrawImage(context.navigIconHelp, rightX, 0, height, height);
-                    }
-
-                    if (ShowAudio && context.navigSpeakerOn != null && context.navigSpeakerOff != null)
-                    {
-                        rightX -= height;
-                        g.FillRectangle((context.hitHeaderButton == 5 ? Brushes.Blue : Brushes.Black), rightX, 0, height, height);
-                        g.DrawImage(MNNotificationCenter.AudioOn ? context.navigSpeakerOn : context.navigSpeakerOff, rightX, 0, height, height);
-                    }
-
-                    if (ShowTitle)
-                    {
-                        g.FillRectangle(Brushes.Black, leftX, 0, rightX - leftX, height);
-                        g.DrawString(TextB, context.PageTitleFont, Brushes.White, leftX + 16, 16);
-                    }
-
-                }
             }
             catch (Exception ex)
             {
@@ -860,6 +878,80 @@ namespace Rambha.Document
                 Debugger.Log(0, "", "\n\n");
             }
         }
+
+        public void PaintUserControls(MNPageContext context)
+        {
+            try
+            {
+                Graphics g = context.g;
+
+
+                int leftX = context.TopRectL.Left, rightX = context.TopRectL.Right;
+                if ((ShowBackNavigation || ShowForwardNavigation || ShowHome || ShowHelp || ShowAudio)
+                    && !context.TopRectL.IsEmpty)
+                {
+                    g.FillRectangle(Brushes.Black, context.TopRectL);
+                }
+                if (ShowBackNavigation)
+                {
+                    g.FillRectangle((context.hitHeaderButton == 1 ? Brushes.Blue : Brushes.Black), context.BackButtonRectL);
+                    if (context.navigIconBack != null)
+                        g.DrawImage(context.navigIconBack, context.BackButtonRectL);
+                    if (context.navigArrowBack != null && context.BackAreaRectL.Width != 0)
+                        g.DrawImage(context.navigArrowBack, context.BackAreaRectL);
+                    leftX = 64;
+                }
+
+                if (ShowForwardNavigation)
+                {
+                    g.FillRectangle((context.hitHeaderButton == 4 ? Brushes.Blue : Brushes.Black), context.FwdButtonRectL);
+                    if (context.navigIconFwd != null)
+                        g.DrawImage(context.navigIconFwd, context.FwdButtonRectL);
+                    if (context.navigArrowFwd != null && context.FwdAreaRectL.Width != 0)
+                        g.DrawImage(context.navigArrowFwd, context.FwdAreaRectL);
+                    rightX -= 64;
+                }
+
+                if (ShowHome)
+                {
+                    g.FillRectangle((context.hitHeaderButton == 2 ? Brushes.Blue : Brushes.Black), context.MenuButtonRectL);
+                    if (context.navigIconMenu != null)
+                        g.DrawImage(context.navigIconMenu, context.MenuButtonRectL);
+                    leftX += 64;
+                }
+
+                if (ShowHelp && !ShowMessageAlways)
+                {
+                    g.FillRectangle((context.hitHeaderButton == 3 ? Brushes.Blue : Brushes.Black), context.HelpButtonRectL);
+                    if (context.navigIconHelp != null)
+                        g.DrawImage(context.navigIconHelp, context.HelpButtonRectL);
+                    rightX -= 64;
+                }
+
+                if (ShowAudio && context.navigSpeakerOn != null && context.navigSpeakerOff != null)
+                {
+                    g.FillRectangle((context.hitHeaderButton == 5 ? Brushes.Blue : Brushes.Black), context.AudioButtonRectL);
+                    g.DrawImage(MNNotificationCenter.AudioOn ? context.navigSpeakerOn : context.navigSpeakerOff, context.AudioButtonRectL);
+                    rightX -= 64;
+                }
+
+                if (ShowTitle)
+                {
+                    //g.FillRectangle(Brushes.Black, leftX, 0, rightX - leftX, HEADER_HEIGHT);
+                    HeaderText.DrawString(context, headerLayout, TextB, new Rectangle(leftX + 16, 0, rightX - leftX - 32, HEADER_HEIGHT));
+                    //g.DrawString(TextB, context.PageTitleFont, Brushes.White, leftX + 16, 16);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception in Page drawing of User Controls: {0}", ex.Message);
+            }
+
+
+        }
+
+
 
         public void ClearConnections()
         {

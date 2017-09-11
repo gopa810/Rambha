@@ -69,9 +69,11 @@
             this.generateInitialPagesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem9 = new System.Windows.Forms.ToolStripSeparator();
             this.checkTransitionPagesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.pageDetailPanel1 = new SlideMaker.Views.PageDetailPanel();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.convertAllFilesToVersion3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pageDetailPanel1 = new SlideMaker.Views.PageDetailPanel();
+            this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            this.editPagesTextsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -80,12 +82,12 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.toolStripMenuItem4,
-            this.windowToolStripMenuItem,
             this.viewToolStripMenuItem,
-            this.toolsToolStripMenuItem});
+            this.toolsToolStripMenuItem,
+            this.windowToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1109, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1413, 24);
             this.menuStrip1.TabIndex = 2;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -206,7 +208,9 @@
             this.toolStripMenuItem5,
             this.toolStripSeparator2,
             this.makeGroupListLabels,
-            this.makeGroupSortPic});
+            this.makeGroupSortPic,
+            this.toolStripSeparator4,
+            this.editPagesTextsToolStripMenuItem});
             this.toolStripMenuItem4.Name = "toolStripMenuItem4";
             this.toolStripMenuItem4.Size = new System.Drawing.Size(39, 20);
             this.toolStripMenuItem4.Text = "Edit";
@@ -383,14 +387,6 @@
             this.checkTransitionPagesToolStripMenuItem.Text = "CheckTransitionPages";
             this.checkTransitionPagesToolStripMenuItem.Click += new System.EventHandler(this.checkTransitionPagesToolStripMenuItem_Click);
             // 
-            // pageDetailPanel1
-            // 
-            this.pageDetailPanel1.Location = new System.Drawing.Point(51, 47);
-            this.pageDetailPanel1.Name = "pageDetailPanel1";
-            this.pageDetailPanel1.Size = new System.Drawing.Size(325, 257);
-            this.pageDetailPanel1.TabIndex = 3;
-            this.pageDetailPanel1.BackToParentView += new SlideMaker.Views.NormalEventHandler(this.pageScrollArea1_BackToParentView);
-            // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
@@ -403,11 +399,31 @@
             this.convertAllFilesToVersion3ToolStripMenuItem.Text = "Convert All Files to version 3";
             this.convertAllFilesToVersion3ToolStripMenuItem.Click += new System.EventHandler(this.convertAllFilesToVersion3ToolStripMenuItem_Click);
             // 
+            // pageDetailPanel1
+            // 
+            this.pageDetailPanel1.Location = new System.Drawing.Point(42, 49);
+            this.pageDetailPanel1.Name = "pageDetailPanel1";
+            this.pageDetailPanel1.Size = new System.Drawing.Size(445, 257);
+            this.pageDetailPanel1.TabIndex = 3;
+            this.pageDetailPanel1.BackToParentView += new SlideMaker.Views.NormalEventHandler(this.pageScrollArea1_BackToParentView);
+            // 
+            // toolStripSeparator4
+            // 
+            this.toolStripSeparator4.Name = "toolStripSeparator4";
+            this.toolStripSeparator4.Size = new System.Drawing.Size(225, 6);
+            // 
+            // editPagesTextsToolStripMenuItem
+            // 
+            this.editPagesTextsToolStripMenuItem.Name = "editPagesTextsToolStripMenuItem";
+            this.editPagesTextsToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.editPagesTextsToolStripMenuItem.Text = "Edit Pages Texts";
+            this.editPagesTextsToolStripMenuItem.Click += new System.EventHandler(this.editPagesTextsToolStripMenuItem_Click);
+            // 
             // MainFrame
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1109, 485);
+            this.ClientSize = new System.Drawing.Size(1413, 485);
             this.Controls.Add(this.pageDetailPanel1);
             this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -469,6 +485,8 @@
         private System.Windows.Forms.ToolStripMenuItem checkTransitionPagesToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem convertAllFilesToVersion3ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
+        private System.Windows.Forms.ToolStripMenuItem editPagesTextsToolStripMenuItem;
     }
 }
 

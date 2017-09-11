@@ -190,6 +190,7 @@ namespace SlideViewer.Views
             if (CurrentPage == null)
                 return;
 
+
             e.Graphics.Transform = Context.LastMatrix;
 
             Context.g = e.Graphics;

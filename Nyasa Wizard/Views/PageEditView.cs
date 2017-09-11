@@ -164,8 +164,34 @@ namespace SlideMaker.Views
             Context.CurrentPage = Page;
             Context.DisplaySize = DisplaySize;
             Context.zoom = ZoomRatio;
-            Context.PageWidth = view_size.Width;
-            Context.PageHeight = view_size.Height;
+            Size screenSize = SMRectangleArea.GetPageSize(DisplaySize);
+            Context.PageWidth = screenSize.Width;
+            Context.PageHeight = screenSize.Height;
+
+            double scale = Math.Min(Bounds.Width / (double)screenSize.Width,
+                                    Bounds.Height / (double)screenSize.Height);
+
+
+            int drawingWidthP = Convert.ToInt32(scale * screenSize.Width);
+            int drawingHeightP = Convert.ToInt32(scale * screenSize.Height);
+            int leftMarginP = (Bounds.Width - drawingWidthP) / 2;
+            int rightMarginP = leftMarginP;
+            int leftMarginL = (int)(leftMarginP / scale);
+            int rightMarginL = (int)(rightMarginP / scale);
+
+            Context.TopRectL = new Rectangle(-leftMarginL, 0, screenSize.Width + leftMarginL + rightMarginL, 64);
+            Context.SideRectLeftL = new Rectangle(-leftMarginL, 0, leftMarginL, screenSize.Height);
+            Context.SideRectRightL = new Rectangle(screenSize.Width, 0, rightMarginL, screenSize.Height);
+            Context.BackButtonRectL = new Rectangle(-leftMarginL, 0, 64, 64); // context.TopRectL.Left, context.PageHeight / 2 - 100, 80, 200
+            Context.BackAreaRectL = new Rectangle(-leftMarginL, screenSize.Height / 2 - 100, 80, 200);
+            Context.MenuButtonRectL = new Rectangle(-leftMarginL + 64, 0, 64, 64);
+            Context.FwdButtonRectL = new Rectangle(screenSize.Width - 64 + rightMarginL, 0, 64, 64);
+            Context.FwdAreaRectL = new Rectangle(screenSize.Width - 80 + rightMarginL, screenSize.Height / 2 - 100, 80, 200);
+            Context.HelpButtonRectL = new Rectangle(screenSize.Width - 128 + rightMarginL, 0, 64, 64);
+            Context.AudioButtonRectL = new Rectangle(screenSize.Width - 192 + rightMarginL, 0, 64, 64);
+            Context.xoffset = leftMarginP;
+            Context.yoffset = 0;
+            //Context.zoom = (float)scale;
             Context.drawSelectionMarks = true;
 
             CheckLabelBackgrounds();
@@ -196,6 +222,8 @@ namespace SlideMaker.Views
             {
                 Context.PaintMessageBox(false);
             }
+
+            PageData.PaintUserControls(Context);
         }
 
         private void setPictureToolStripMenuItem_Click(object sender, EventArgs e)

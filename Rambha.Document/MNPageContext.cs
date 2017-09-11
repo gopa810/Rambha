@@ -19,6 +19,8 @@ namespace Rambha.Document
         public int PageHeight;
         public bool drawSelectionMarks = true;
         public float zoom = 1.0f;
+        public int xoffset;
+        public int yoffset;
 
         public bool isTracking { get { return trackingType != SMControlSelection.None;  } }
         public SMControlSelection trackingType = SMControlSelection.None;
@@ -73,6 +75,16 @@ namespace Rambha.Document
         public SMTitledMessage messageBox = null;
         public Pen SpotAreaBorderPen = null;
 
+        public Rectangle TopRectL = new Rectangle();
+        public Rectangle SideRectLeftL = new Rectangle();
+        public Rectangle SideRectRightL = new Rectangle();
+        public Rectangle BackButtonRectL = new Rectangle();
+        public Rectangle FwdButtonRectL = new Rectangle();
+        public Rectangle BackAreaRectL = new Rectangle();
+        public Rectangle FwdAreaRectL = new Rectangle();
+        public Rectangle MenuButtonRectL = new Rectangle();
+        public Rectangle HelpButtonRectL = new Rectangle();
+        public Rectangle AudioButtonRectL = new Rectangle();
 
         public MNPageContext()
         {
@@ -191,10 +203,11 @@ namespace Rambha.Document
             {
                 switch (DisplaySize)
                 {
-                    case SMScreen.Screen_1024_768__4_3: return new Size(1024, 768);
-                    case SMScreen.Screen_1152_768__3_2: return new Size(1152, 768);
-                    case SMScreen.Screen_1376_774__16_9: return new Size(1376, 774);
-                    default: return new Size(1024, 768);
+                    case SMScreen.Screen_1024_768__4_3: return SMRectangleArea._size_4_3;
+                    case SMScreen.Screen_1152_768__3_2: return SMRectangleArea._size_3_2;
+                    case SMScreen.Screen_1376_774__16_9: return SMRectangleArea._size_16_9;
+                    case SMScreen.Screen_768_1024__3_4: return SMRectangleArea._size_3_4;
+                    default: return SMRectangleArea._size_4_3;
                 }
             }
         }

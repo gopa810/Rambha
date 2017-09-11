@@ -43,5 +43,22 @@ namespace Rambha.Script
             sw.Write(getIntegerValue().ToString());
         }
 
+        public static bool StringToBool(string value)
+        {
+            switch (value.ToLower())
+            {
+                case "true":
+                case "yes":
+                case "1":
+                    return true;
+                case "false":
+                case "no":
+                case "0":
+                    return false;
+            }
+
+            return false;
+                                                                
+        }
     }
 }

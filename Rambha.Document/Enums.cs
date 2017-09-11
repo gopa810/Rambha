@@ -51,8 +51,9 @@ namespace Rambha.Document
 
     public enum SMScreen
     {
-        Screen_1024_768__4_3,
-        Screen_1152_768__3_2,
-        Screen_1376_774__16_9
+        Screen_1024_768__4_3 = 0,
+        Screen_1152_768__3_2 = 1,
+        Screen_1376_774__16_9 = 2,
+        Screen_768_1024__3_4 = 3
     }
 }

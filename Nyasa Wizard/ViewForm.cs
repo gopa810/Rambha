@@ -86,7 +86,7 @@ namespace SlideMaker
             Properties.Settings.Default.Save();
         }
 
-        public void AdjustLayoutPageView()
+        /*public void AdjustLayoutPageView()
         {
             int part;
             Size size;
@@ -98,7 +98,8 @@ namespace SlideMaker
             pageView1.Size = size;
             pageView1.RecalculateMatrix();
             pageView1.Invalidate();
-        }
+        }*/
+
         public Size GetAspects()
         {
             switch (pageView1.Context.DisplaySize)
@@ -109,12 +110,14 @@ namespace SlideMaker
                     return new Size(3, 2);
                 case SMScreen.Screen_1376_774__16_9:
                     return new Size(16, 9);
+                case SMScreen.Screen_768_1024__3_4:
+                    return new Size(3, 4);
             }
 
             return new Size(4, 3);
         }
 
-        public Size AdjustSizeForm(int mode)
+        /*public Size AdjustSizeForm(int mode)
         {
             Size s = ClientSize;
             float part;
@@ -135,7 +138,7 @@ namespace SlideMaker
             s = new System.Drawing.Size(Convert.ToInt32(part * asp.Width), Convert.ToInt32(part * asp.Height));
 
             return SizeFromClientSize(s);
-        }
+        }*/
 
         public void showSelectLanguageDialog(MNDocument book)
         {
@@ -167,7 +170,7 @@ namespace SlideMaker
             public int Bottom;
         }
 
-        protected override void WndProc(ref Message m)
+        /*protected override void WndProc(ref Message m)
         {
             if (m.Msg == WM_SIZING)
             {
@@ -211,7 +214,7 @@ namespace SlideMaker
                 Marshal.StructureToPtr(rc, m.LParam, true);
             }
             base.WndProc(ref m);
-        }
+        }*/
 
         public void dialogDidSelectLanguage(MNLocalisation loc)
         {
@@ -219,7 +222,7 @@ namespace SlideMaker
 
         private void pageView1_SizeChanged(object sender, EventArgs e)
         {
-            AdjustLayoutPageView();
+            //AdjustLayoutPageView();
         }
 
 

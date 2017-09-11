@@ -226,6 +226,8 @@ namespace SlideViewer
                     return new Size(3, 2);
                 case SMScreen.Screen_1376_774__16_9:
                     return new Size(16, 9);
+                case SMScreen.Screen_768_1024__3_4:
+                    return new Size(3, 4);
             }
 
             return new Size(4, 3);

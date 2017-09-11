@@ -104,6 +104,9 @@ namespace SlideMaker.Views
                 case 2:
                     screen = SMScreen.Screen_1376_774__16_9;
                     break;
+                case 3:
+                    screen = SMScreen.Screen_768_1024__3_4;
+                    break;
                 default:
                     break;
             }
@@ -301,6 +304,8 @@ namespace SlideMaker.Views
 
         private void PageScrollArea_MouseClick(object sender, MouseEventArgs e)
         {
+            if (pageEditView1 != null && pageEditView1.Page != null)
+                pageEditView1.Page.ClearSelection();
             MNNotificationCenter.BroadcastMessage(this, "SelectedObject", pageEditView1.Document);
         }
 

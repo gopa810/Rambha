@@ -370,6 +370,7 @@ namespace Rambha.Document
         public static Size _size_4_3 = new Size(1024, 768);
         public static Size _size_3_2 = new Size(1152, 768);
         public static Size _size_16_9 = new Size(1376, 774);
+        public static Size _size_3_4 = new Size(768, 1024);
 
         public static Size GetPageSize(SMScreen screen)
         {
@@ -379,6 +380,8 @@ namespace Rambha.Document
                     return _size_3_2;
                 case SMScreen.Screen_1376_774__16_9:
                     return _size_16_9;
+                case SMScreen.Screen_768_1024__3_4:
+                    return _size_3_4;
                 default:
                     return _size_4_3;
             }

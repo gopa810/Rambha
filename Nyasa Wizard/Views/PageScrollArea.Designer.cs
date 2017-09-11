@@ -121,7 +121,8 @@
             this.toolStripComboBox1.Items.AddRange(new object[] {
             "1024x768   4:3",
             "1152x768   3:2",
-            "1376x774   16:9"});
+            "1376x774   16:9",
+            "768x1024   3:4"});
             this.toolStripComboBox1.Name = "toolStripComboBox1";
             this.toolStripComboBox1.Size = new System.Drawing.Size(121, 25);
             this.toolStripComboBox1.SelectedIndexChanged += new System.EventHandler(this.toolStripComboBox1_SelectedIndexChanged);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Linq;
+using System.Diagnostics;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml;
@@ -58,12 +58,15 @@ namespace SlideMaker.Views
             if (p != null)
                 InitWithPage(p);
             Page = p;
-            label9.Text = p.Id.ToString();
         }
 
         private void InitWithPage(MNPage p)
         {
             tabControl1.SelectedTab = tabPage;
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append("<html><head></head><body style='font-family:Helvetica'>");
+
 
             if (p_Book.Pages.ContainsKey(p.Id))
             {
@@ -71,24 +74,57 @@ namespace SlideMaker.Views
             }
             else
             {
-                p_Page = new ReviewPage();
-                p_Book.Pages[p.Id] = p_Page;
-                p_Page.PageTitle = p.TextB;
-                p_Page.PageHelp = p.MessageText;
+                webBrowser1.DocumentText = "";
+                return;
             }
 
-            richTextBox1.Text = p_Page.PageTitle;
-            richTextBox2.Text = p_Page.PageHelp;
-            richTextBox3.Text = p_Page.PageNotes;
-            textItemText.Text = "";
-            textItemNotes.Text = "";
+            if (!p.TextB.Equals(p_Page.PageTitle))
+            {
+                sb.AppendFormat("<p><b>Page Title</b><br>{0}</p>", p_Page.PageTitle);
+            }
+            if (!p.MessageText.Equals(p_Page.PageHelp))
+            {
+                sb.AppendFormat("<p><b>Page Help</b><br>{0}</p>", p_Page.PageHelp);
+            }
+            if (!string.IsNullOrWhiteSpace(p_Page.PageNotes))
+            {
+                sb.AppendFormat("<p><b>Page Help</b><br>{0}</p>", p_Page.PageNotes);
+            }
+
+            bool header = false;
+            foreach(KeyValuePair<long,ReviewItem> revi in p_Page.Items)
+            {
+                if (!header)
+                {
+                    sb.AppendFormat("<h3 style='background:#efa0ef'>Items</h3>");
+                    header = true;
+                }
+
+                sb.AppendLine("<table style='border:1px solid black;'>");
+                sb.AppendFormat("<tr><td>ID</td><td>{0}</td></tr>", revi.Key);
+                SMControl itor = p_PageOrig.FindObject(revi.Key);
+                if (itor != null && !itor.Text.Equals(p_Item.ItemText))
+                {
+                    sb.AppendFormat("<tr><td>New Text</td><td>{0}</td></tr>", revi.Value.ItemText);
+                    sb.AppendFormat("<tr><td>Orig Text</td><td>{0}</td></tr>", itor.Text);
+                }
+                else if (itor != null)
+                {
+                    sb.AppendFormat("<tr><td>Text</td><td>{0}</td></tr>", revi.Value.ItemText);
+                }
+
+                if (!string.IsNullOrWhiteSpace(revi.Value.ItemNotes))
+                    sb.AppendFormat("<tr><td>Notes</td><td>{0}</td></tr>", revi.Value.ItemNotes);
+                sb.AppendLine("</table>");
+
+            }
+
+            sb.Append("</body></html>");
 
             p_PageOrig = p;
             p_ItemOrig = null;
 
-            UpdatePageHelpColor();
-            UpdatePageTitleColor();
-
+            webBrowser1.DocumentText = sb.ToString();
         }
 
         public MNDocument Document { get; set; }
@@ -147,32 +183,7 @@ namespace SlideMaker.Views
             }
             else if (message.Equals("ObjectForReview"))
             {
-                SetItem(args[0] as SMControl);
             }
-        }
-
-        private void SetItem(SMControl sControl)
-        {
-            if (p_Page.Items.ContainsKey(sControl.Id))
-            {
-                p_Item = p_Page.Items[sControl.Id];
-            }
-            else
-            {
-                p_Item = new ReviewItem();
-                p_Page.Items[sControl.Id] = p_Item;
-                p_Item.ItemText = sControl.Text;
-                p_Item.ItemNotes = "";
-            }
-
-            tabControl1.SelectedTab = tabItem;
-
-            labelControlId.Text = sControl.Id.ToString();
-            textItemText.Text = p_Item.ItemText;
-            textItemNotes.Text = p_Item.ItemNotes;
-
-            p_ItemOrig = sControl;
-            UpdateItemTextColor();
         }
 
         public void SetPageTab()
@@ -191,7 +202,7 @@ namespace SlideMaker.Views
             labelBookTitle.Text = Document.Book.BookTitle;
             tabControl1.SelectedTab = tabBook;
 
-            LoadData(Document.Book.FilePath.Replace(".smb", ".smr"));
+            LoadData(filePath.Replace(".smb", ".smr"));
 
             p_PageOrig = null;
             p_ItemOrig = null;
@@ -204,9 +215,14 @@ namespace SlideMaker.Views
             p_Book = new ReviewBook();
             if (File.Exists(p))
             {
+                Debugger.Log(0, "", "Review File " + p + " has been read.");
                 XmlDocument doc = new XmlDocument();
                 doc.Load(p);
                 p_Book.LoadFromXml(doc);
+            }
+            else
+            {
+                Debugger.Log(0, "", "File " + p + " does not exist.\n");
             }
 
             textBookNotes.Text = p_Book.BookNotes;
@@ -216,11 +232,7 @@ namespace SlideMaker.Views
         {
             labelBookTitle.Text = "";
             textBookNotes.Text = "";
-            richTextBox1.Text = "";
-            richTextBox2.Text = "";
-            richTextBox3.Text = "";
-            textItemText.Text = "";
-            textItemNotes.Text = "";
+            webBrowser1.DocumentText = "";
         }
 
         private void StopDocumentReview()
@@ -260,56 +272,5 @@ namespace SlideMaker.Views
             p_Book.BookNotes = textBookNotes.Text;
         }
 
-        private void richTextBox1_TextChanged(object sender, EventArgs e)
-        {
-            p_Page.PageTitle = richTextBox1.Text;
-            UpdatePageTitleColor();
-        }
-
-        private void UpdatePageTitleColor()
-        {
-            if (p_PageOrig != null)
-            {
-                richTextBox1.ForeColor = p_PageOrig.TextB.Equals(p_Page.PageTitle) ? Color.Gray : Color.Black;
-            }
-        }
-
-        private void richTextBox2_TextChanged(object sender, EventArgs e)
-        {
-            p_Page.PageHelp = richTextBox2.Text;
-            UpdatePageHelpColor();
-        }
-
-        private void UpdatePageHelpColor()
-        {
-            if (p_PageOrig != null)
-            {
-                richTextBox2.ForeColor = p_PageOrig.MessageText.Equals(p_Page.PageHelp) ? Color.Gray : Color.Black;
-            }
-        }
-
-        private void richTextBox3_TextChanged(object sender, EventArgs e)
-        {
-            p_Page.PageNotes = richTextBox3.Text;
-        }
-
-        private void richTextBox4_TextChanged(object sender, EventArgs e)
-        {
-            p_Item.ItemText = textItemText.Text;
-            UpdateItemTextColor();
-        }
-
-        private void UpdateItemTextColor()
-        {
-            if (p_ItemOrig != null)
-            {
-                textItemText.ForeColor = p_ItemOrig.Text.Equals(p_Item.ItemText) ? Color.Gray : Color.Black;
-            }
-        }
-
-        private void richTextBox5_TextChanged(object sender, EventArgs e)
-        {
-            p_Item.ItemNotes = textItemNotes.Text;
-        }
     }
 }

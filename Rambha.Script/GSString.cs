@@ -49,7 +49,7 @@ namespace Rambha.Script
                 case "yes":
                 case "1":
                     return true;
-                case "false":
+                case "false":   
                 case "no":
                 case "0":
                     return false;

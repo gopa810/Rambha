@@ -162,6 +162,13 @@ namespace Rambha.Document
             Underline = false;
         }
 
+        public SMFont(MNFontName name, int size, FontStyle style)
+        {
+            this.Name = name;
+            this.Size = size;
+            this.Style = style;
+        }
+
         public override string ToString()
         {
             return Name.ToString() + ", " + Size + "pt";

@@ -139,18 +139,7 @@ namespace Rambha.Document
             }
             set
             {
-                switch (Page.CurrentScreenDimension)
-                {
-                    case SMScreen.Screen_1024_768__4_3:
-                        _area_4_3 = value;
-                        break;
-                    case SMScreen.Screen_1152_768__3_2:
-                        _area_3_2 = value;
-                        break;
-                    case SMScreen.Screen_1376_774__16_9:
-                        _area_16_9 = value;
-                        break;
-                }
+                SetArea(Page.CurrentScreenDimension, value);
             }
         }
 
@@ -166,6 +155,9 @@ namespace Rambha.Document
                     break;
                 case SMScreen.Screen_1376_774__16_9:
                     _area_16_9 = ra;
+                    break;
+                case SMScreen.Screen_768_1024__3_4:
+                    _area_3_4 = ra;
                     break;
             }
         }
@@ -183,6 +175,12 @@ namespace Rambha.Document
                 case SMScreen.Screen_1376_774__16_9:
                     newArea.CenterX = newArea.CenterX * 1376 / 1024;
                     newArea.CenterY = newArea.CenterY * 774 / 768;
+                    break;
+                case SMScreen.Screen_768_1024__3_4:
+                    newArea.Left = newArea.Left * 768 / 1024;
+                    newArea.Right = newArea.Right * 768 / 1024;
+                    newArea.Top = newArea.Top * 1024 / 768;
+                    newArea.Bottom = newArea.Bottom * 1024 / 768;
                     break;
             }
 
@@ -202,12 +200,15 @@ namespace Rambha.Document
                 return _area_3_2;
             if (scr == SMScreen.Screen_1376_774__16_9)
                 return _area_16_9;
+            if (scr == SMScreen.Screen_768_1024__3_4)
+                return _area_3_4;
             return null;
         }
 
         private SMRectangleArea _area_4_3 = new SMRectangleArea();
         private SMRectangleArea _area_3_2 = null;
         private SMRectangleArea _area_16_9 = null;
+        private SMRectangleArea _area_3_4 = null;
 
         public List<MNReferencedText> Scripts = new List<MNReferencedText>();
 
@@ -267,11 +268,33 @@ namespace Rambha.Document
             {
                 case "title":
                     return p_unique_name;
+                case "text":
+                    return new GSString(Text);
                 case "checked":
                     return new GSBoolean(UIStateChecked);
                 default:
                     return base.GetPropertyValue(s);
             }
+        }
+
+        public override void SetPropertyValue(string propertyName, string propertyValue)
+        {
+            switch (propertyName)
+            {
+                case "title":
+                    p_unique_name.Value = propertyValue;
+                    break;
+                case "checked":
+                    UIStateChecked = GSBoolean.StringToBool(propertyValue);
+                    break;
+                case "text":
+                    Text = propertyValue;
+                    break;
+                default:
+                    base.SetPropertyValue(propertyName, propertyValue);
+                    break;
+             }
+
         }
 
         public virtual void StyleDidChange()
@@ -709,6 +732,12 @@ namespace Rambha.Document
             {
                 bw.WriteByte(228);
                 _area_16_9.Save(bw);
+            }
+
+            if (_area_3_4 != null)
+            {
+                bw.WriteByte(228);
+                _area_3_4.Save(bw);
             }
 
             // end-of-object
@@ -1335,6 +1364,8 @@ namespace Rambha.Document
                 _area_3_2.Selected = false;
             if (_area_16_9 != null)
                 _area_16_9.Selected = false;
+            if (_area_3_4 != null)
+                _area_3_4.Selected = false;
         }
     }
 

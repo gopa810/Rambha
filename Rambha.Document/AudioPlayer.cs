@@ -22,17 +22,20 @@ namespace Rambha.Document
         WaveChannel32 p_waveChannel = null;
         public bool Playing { get; set; }
 
-        Timer timer1 = new Timer();
+        Timer timer1 = null;
 
         public AudioPlayer()
         {
+            if (timer1 == null)
+                timer1 = new Timer();
             timer1.Tick += new EventHandler(timer1_Tick);
             Playing = false;
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            timer1.Stop();
+            if (timer1 != null)
+                timer1.Stop();
             if (p_waveOut != null)
             {
                 Debugger.Log(0, "", "Audio Player stoped.\n");
@@ -104,7 +107,8 @@ namespace Rambha.Document
 
         public void Stop()
         {
-            timer1.Stop();
+            if (timer1 != null)
+                timer1.Stop();
             DisposeAll();
         }
 
@@ -136,6 +140,8 @@ namespace Rambha.Document
                 if (p_audioFileReader != null)
                 {
                     TimeSpan length = p_audioFileReader.TotalTime;
+                    if (timer1 == null)
+                        timer1 = new Timer();
                     timer1.Interval = Convert.ToInt32(length.TotalMilliseconds);
                     timer1.Start();
 

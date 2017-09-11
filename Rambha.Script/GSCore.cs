@@ -53,7 +53,12 @@ namespace Rambha.Script
                     return GSVoid.Void;
             }
         }
-        
+
+        public virtual void SetPropertyValue(string propertyName, string propertyValue)
+        {
+
+        }
+
         public virtual GSCore[] GetChildren()
         {
             return null;

@@ -130,6 +130,12 @@
     <Compile Include="Controls\EVSeparator.Designer.cs">
       <DependentUpon>EVSeparator.cs</DependentUpon>
     </Compile>
+    <Compile Include="DialogCloneCounter.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogCloneCounter.Designer.cs">
+      <DependentUpon>DialogCloneCounter.cs</DependentUpon>
+    </Compile>
     <Compile Include="DialogDuplicating.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -141,6 +147,18 @@
     </Compile>
     <Compile Include="Controls\DialogEditOrderedListTexts.Designer.cs">
       <DependentUpon>DialogEditOrderedListTexts.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogEditPageTexts.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogEditPageTexts.Designer.cs">
+      <DependentUpon>DialogEditPageTexts.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogImportEditText.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogImportEditText.Designer.cs">
+      <DependentUpon>DialogImportEditText.cs</DependentUpon>
     </Compile>
     <Compile Include="DialogInsertTransPages.cs">
       <SubType>Form</SubType>
@@ -407,14 +425,23 @@
     <EmbeddedResource Include="Controls\EVContainer.resx">
       <DependentUpon>EVContainer.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="DialogCloneCounter.resx">
+      <DependentUpon>DialogCloneCounter.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DialogDuplicating.resx">
       <DependentUpon>DialogDuplicating.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\DialogEditOrderedListTexts.resx">
       <DependentUpon>DialogEditOrderedListTexts.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="DialogEditPageTexts.resx">
+      <DependentUpon>DialogEditPageTexts.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DialogGenerateLangFile.resx">
       <DependentUpon>DialogGenerateLangFile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogImportEditText.resx">
+      <DependentUpon>DialogImportEditText.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DialogInsertTransPages.resx">
       <DependentUpon>DialogInsertTransPages.cs</DependentUpon>

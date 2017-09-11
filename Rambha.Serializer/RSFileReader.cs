@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Drawing;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Rambha.Serializer
 {
@@ -124,14 +125,27 @@ namespace Rambha.Serializer
             return ImageData;
         }
 
+        private static CultureInfo p_ci = null;
+        public static CultureInfo SafeCultureInfo
+        {
+            get
+            {
+                if (p_ci == null)
+                    p_ci = new CultureInfo("en");
+                return p_ci;
+            }
+        }
+
         public double ReadDouble()
         {
-            return double.Parse(ReadString());
+            string str = ReadString();
+            return double.Parse(str, SafeCultureInfo);
         }
 
         public float ReadFloat()
         {
-            return float.Parse(ReadString());
+            string str = ReadString();
+            return float.Parse(str, SafeCultureInfo);
         }
 
         public Font ReadFont()

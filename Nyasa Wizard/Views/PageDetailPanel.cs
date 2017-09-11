@@ -462,6 +462,10 @@ namespace SlideMaker.Views
 
                 EVStorage.EvPageName.Instance.SetObject(page);
                 containerA.AddPanel("Page", EVStorage.EvPageName.Instance);
+
+                pageNotesChangeNotify = false;
+                richTextBoxPageNotes.Text = page.MessageText;
+                pageNotesChangeNotify = true;
             }
             else if (obj is MNDocument)
             {
@@ -662,31 +666,46 @@ namespace SlideMaker.Views
                 if (pageNo >= 0 && pageNo < document.Data.Pages.Count)
                 {
                     MNPage currentPage = document.Data.Pages[pageNo];
-                    MNPage newPage = new MNPage(document);
-                    MNPage.CopyControlsFrom(currentPage, newPage);
-                    newPage.Title = currentPage.Title + (currentPage.Title.EndsWith("*") ? "" : " ") + "*";
-                    newPage.Description = currentPage.Description;
-                    newPage.MessageText = currentPage.MessageText;
-                    newPage.MessageTitle = currentPage.MessageTitle;
-                    newPage.TextB = currentPage.TextB;
-                    newPage.TextC = currentPage.TextC;
-                    newPage.ShowHelp = currentPage.ShowHelp;
-                    newPage.ShowHome = currentPage.ShowHome;
-                    newPage.ShowBackNavigation = currentPage.ShowBackNavigation;
-                    newPage.ShowTitle = currentPage.ShowTitle;
-                    newPage.ShowForwardNavigation = currentPage.ShowForwardNavigation;
-                    document.Data.Pages.Insert(pageNo + 1, newPage);
-                    listBoxPages.Items.Insert(pageNo + 1, newPage);
-                    listBoxPages.SelectedIndex = pageNo + 1;
+                    MNPage newPage = null;
 
-                    MNNotificationCenter.CurrentPage = newPage;
+                    DialogCloneCounter dcc = new DialogCloneCounter();
+                    if (dcc.ShowDialog() == DialogResult.OK)
+                    {
+                        for (int i = dcc.DialogValue_StartInt; i <= dcc.DialogValue_EndInt; i++)
+                        {
+                            newPage = new MNPage(document);
+                            MNPage.CopyControlsFrom(currentPage, newPage);
+                            newPage.Id = currentPage.Document.Data.GetNextId();
+                            newPage.Title = string.Format("{0}{1}", dcc.DialogValue_Prefix, i);
+                            newPage.Description = currentPage.Description;
+                            newPage.MessageText = currentPage.MessageText;
+                            newPage.MessageTitle = currentPage.MessageTitle;
+                            newPage.TextB = currentPage.TextB;
+                            newPage.TextC = currentPage.TextC;
+                            newPage.ShowHelp = currentPage.ShowHelp;
+                            newPage.ShowHome = currentPage.ShowHome;
+                            newPage.ShowBackNavigation = currentPage.ShowBackNavigation;
+                            newPage.ShowTitle = currentPage.ShowTitle;
+                            newPage.ShowForwardNavigation = currentPage.ShowForwardNavigation;
+                            // increment for inserting into listbox and also for next iteration
+                            pageNo++;
+                            document.Data.Pages.Insert(pageNo, newPage);
+                            listBoxPages.Items.Insert(pageNo, newPage);
+                            listBoxPages.SelectedIndex = pageNo;
+                        }
 
-                    //pageScrollArea1.Dock = DockStyle.Fill;
-                    pageScrollArea1.Visible = true;
-                    pageScrollArea1.SetPage(newPage);
-                    pageScrollArea1.Invalidate();
+                        if (newPage != null)
+                        {
+                            MNNotificationCenter.CurrentPage = newPage;
 
-                    MNNotificationCenter.BroadcastMessage(pageScrollArea1, "ObjectSelected", newPage);
+                            //pageScrollArea1.Dock = DockStyle.Fill;
+                            pageScrollArea1.Visible = true;
+                            pageScrollArea1.SetPage(newPage);
+                            pageScrollArea1.Invalidate();
+
+                            MNNotificationCenter.BroadcastMessage(pageScrollArea1, "ObjectSelected", newPage);
+                        }
+                    }
                 }
             }
         }
@@ -1665,6 +1684,17 @@ namespace SlideMaker.Views
             pageScrollArea1.InvalidateClient();
         }
 
-
+        private bool pageNotesChangeNotify = true;
+        private void richTextBoxPageNotes_TextChanged(object sender, EventArgs e)
+        {
+            if (pageNotesChangeNotify)
+            {
+                PageEditView pev = pageScrollArea1.GetPageEditView();
+                if (pev != null && pev.Page != null)
+                {
+                    pev.Page.MessageText = richTextBoxPageNotes.Text;
+                }
+            }
+        }
     }
 }

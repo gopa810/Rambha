@@ -856,6 +856,10 @@ namespace SlideMaker
             }
         }
 
-
+        private void editPagesTextsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DialogEditPageTexts dlg = new DialogEditPageTexts();
+            dlg.ShowDialog();
+        }
     }
 }

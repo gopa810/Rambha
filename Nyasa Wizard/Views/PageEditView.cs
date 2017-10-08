@@ -153,6 +153,48 @@ namespace SlideMaker.Views
             p_bigFont = new Font(FontFamily.GenericSansSerif, 40);
         }
 
+        public static Bitmap PaintPageToBitmap(MNPageContext context, MNPage p)
+        {
+            Bitmap img = new Bitmap(1024, 768, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            Graphics g = Graphics.FromImage(img);
+
+            context.g = g;
+            context.CurrentPage = p;
+            context.drawSelectionMarks = false;
+            context.zoom = 1f;
+            context.PageWidth = 1024;
+            context.PageHeight = 768;
+            context.DisplaySize = SMScreen.Screen_1024_768__4_3;
+
+            Size screenSize = SMRectangleArea.GetPageSize(SMScreen.Screen_1024_768__4_3);
+            int drawingWidthP = Convert.ToInt32(screenSize.Width);
+            int drawingHeightP = Convert.ToInt32(screenSize.Height);
+            int leftMarginP = (1024 - drawingWidthP) / 2;
+            int rightMarginP = leftMarginP;
+            int leftMarginL = (int)(leftMarginP);
+            int rightMarginL = (int)(rightMarginP);
+
+            context.TopRectL = new Rectangle(-leftMarginL, 0, screenSize.Width + leftMarginL + rightMarginL, 64);
+            context.SideRectLeftL = new Rectangle(-leftMarginL, 0, leftMarginL, screenSize.Height);
+            context.SideRectRightL = new Rectangle(screenSize.Width, 0, rightMarginL, screenSize.Height);
+            context.BackButtonRectL = new Rectangle(-leftMarginL, 0, 64, 64); // context.TopRectL.Left, context.PageHeight / 2 - 100, 80, 200
+            context.BackAreaRectL = new Rectangle(-leftMarginL, screenSize.Height / 2 - 100, 80, 200);
+            context.MenuButtonRectL = new Rectangle(-leftMarginL + 64, 0, 64, 64);
+            context.FwdButtonRectL = new Rectangle(screenSize.Width - 64 + rightMarginL, 0, 64, 64);
+            context.FwdAreaRectL = new Rectangle(screenSize.Width - 80 + rightMarginL, screenSize.Height / 2 - 100, 80, 200);
+            context.HelpButtonRectL = new Rectangle(screenSize.Width - 128 + rightMarginL, 0, 64, 64);
+            context.AudioButtonRectL = new Rectangle(screenSize.Width - 192 + rightMarginL, 0, 64, 64);
+            context.xoffset = leftMarginP;
+            context.yoffset = 0;
+
+            p.PaintBackground(context);
+            p.Paint(context, false);
+            p.Paint(context, true);
+            p.PaintUserControls(context);
+
+            return img;
+        }
+
         private void PageEditView_Paint(object sender, PaintEventArgs e)
         {
             if (PageData == null)

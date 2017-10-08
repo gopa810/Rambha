@@ -98,6 +98,29 @@ namespace SlideMaker
             pageDetailPanel1.RefreshView();
         }
 
+        public MNDocument LoadDocument(string fileName)
+        {
+            MNDocument prevDocument = MNNotificationCenter.CurrentDocument;
+            string prevFilename = MNNotificationCenter.CurrentFileName;
+
+            if (LoadBookHeader(fileName))
+            {
+                MNNotificationCenter.CurrentDocument.Book.FindLanguageFiles(Path.GetDirectoryName(fileName));
+
+                fileName = fileName.Replace(".smb", ".smd");
+                LoadBookData(fileName);
+
+                fileName = fileName.Replace(".smd", ".sme");
+                LoadBookLang(fileName);
+            }
+
+            MNDocument newDocument = MNNotificationCenter.CurrentDocument;
+            MNNotificationCenter.CurrentDocument = prevDocument;
+            MNNotificationCenter.CurrentFileName = prevFilename;
+
+            return newDocument;
+        }
+
         private void ApplyUpdatesAndChanges()
         {
             //MNSharedObjects.CopyToDocument(MNNotificationCenter.CurrentDocument);
@@ -860,6 +883,140 @@ namespace SlideMaker
         {
             DialogEditPageTexts dlg = new DialogEditPageTexts();
             dlg.ShowDialog();
+        }
+
+        private void exportDocumentToHTMLToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            PageEditView pev = pageDetailPanel1.GetEditView();
+            MNPageContext ctx = pev.Context;
+            MNDocument doc = MNNotificationCenter.CurrentDocument;
+
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.FileName = doc.Book.BookCode + ".html";
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                ConvertDocToHtml(pev, doc, sfd.FileName);
+            }
+        }
+
+        public static void ConvertDocToHtml(PageEditView pev, MNDocument doc, string filePath)
+        {
+            StringBuilder sb = new StringBuilder();
+            string dataFolderName = doc.Book.BookCode + "_data";
+            string rootDir = "d:\\temp\\books";
+            string dataDir = Path.Combine(rootDir, dataFolderName);
+            if (!Directory.Exists(dataDir))
+            {
+                Directory.CreateDirectory(dataDir);
+            }
+
+            sb.Append("<html><head><title>" + doc.Book.BookTitle + "</title></head>");
+            sb.Append("<body>");
+            sb.AppendFormat("<h1>{0}</h1><h2>Book Info:</h2>", doc.Book.BookTitle);
+            sb.AppendFormat("<p>Book Code:<b> {0}</b></p>", doc.Book.BookCode);
+            sb.AppendFormat("<p>Book Title:<b> {0}</b></p>", doc.Book.BookTitle);
+            sb.AppendFormat("<hr><p>Following sections are describing content of each page in the document. One section is dedicated to one page. Title of section is \"Page\" plus page-id and is not important for review process. It is important only for developers."
+                + "<br>Pages are exported from Tablet screen.");
+            sb.AppendFormat("<p>Reviewers are expected to correct all mistakes in english text especially in values for <b>Page Title</b> and <b>Message Text</b>");
+
+            sb.AppendLine("<p><p><p>");
+            foreach (MNPage p in doc.Data.Pages)
+            {
+                sb.AppendFormat("<p style='margin-top:48px;margin-bottom:56px;padding:24pt;background:#ffff7f;border:14px solid #ffa0a0;'><span style='font-size:120%;'>SECTION</span><br><span style='font-size:150%;font-weight:bold'>Page {0}</span></p>", p.Id);
+                Bitmap bmp = PageEditView.PaintPageToBitmap(pev.Context, p);
+                string imageFileName = "page" + p.Id + ".png";
+                string imagePath = Path.Combine(dataFolderName, imageFileName);
+                bmp.Save(Path.Combine(dataDir, imageFileName), ImageFormat.Png);
+
+                sb.AppendFormat("<p><img width=512 height=384 src=\"{0}\" border=1></p>\n", imagePath);
+
+                sb.AppendFormat("<table  style='border:1px solid black;'>\n");
+                string name = "";
+
+                PrintHtmlControlItemRec(sb, "Page Title", 0, p.TextB);
+                PrintHtmlControlItemRec(sb, "Message Text", 0, p.MessageText);
+                PrintHtmlControlItemRec(sb, "TextC", 0, p.TextC);
+
+                foreach (SMControl c in p.Objects)
+                {
+                    if (c is SMCheckBox)
+                    {
+                        name = "CheckBox";
+                    }
+                    else if (c is SMImage)
+                    {
+                        name = "Image";
+                    }
+                    else if (c is SMImageButton)
+                    {
+                        name = "ImageButton";
+                    }
+                    else if (c is SMLabel)
+                    {
+                        name = "Label";
+                    }
+                    else if (c is SMSelection)
+                    {
+                        name = "Selection";
+                    }
+                    else if (c is SMTextContainer)
+                    {
+                        name = "Container";
+                    }
+                    else if (c is SMTextView)
+                    {
+                        name = "TextView";
+                    }
+
+                    PrintHtmlControlItemRec(sb, name, c.Id, c.Text);
+                }
+                sb.AppendFormat("</table>\n");
+            }
+
+            sb.AppendLine("</body>");
+            sb.AppendLine("</html>");
+            File.WriteAllText(Path.Combine(rootDir, doc.Book.BookCode + ".html"), sb.ToString());
+
+        }
+
+        private static void PrintHtmlControlItemRec(StringBuilder sb, string name, long cid, string text)
+        {
+            if (!string.IsNullOrWhiteSpace(text) && !string.IsNullOrWhiteSpace(name))
+            {
+                sb.Append("<tr><td style='background:#ffffc0;padding:8px;border-bottom:1px solid #a0a07f;'>");
+                if (cid != 0)
+                    sb.AppendFormat("{0} {1}</td>", name, cid);
+                else
+                    sb.AppendFormat("{0}</td>", name);
+                sb.AppendFormat("<td style='padding:8px;border-bottom:1px solid #a0a07f;'>{0}</td></tr>\n", text.Replace("\n", "<br>"));
+            }
+        }
+
+        private void convertAllFilesToHTMLToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            PageEditView pev = pageDetailPanel1.GetEditView();
+            MNPageContext ctx = pev.Context;
+
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "SlideViewer books (*.smb)|*.smb";
+            ofd.FilterIndex = 0;
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                foreach(string file in Directory.EnumerateFiles(Path.GetDirectoryName(ofd.FileName)))
+                {
+                    if (file.EndsWith(".smb"))
+                    {
+                        MNDocument docx = LoadDocument(file);
+                        ConvertDocToHtml(pev, docx, file.Replace(".smb", ".html"));
+                        Debugger.Log(0,"", "Converted " + Path.GetFileName(file) + ".\n");
+                        docx = null;
+                    }
+                    MNNotificationCenter.CurrentDocument = null;
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+                Debugger.Log(0, "", "Finished.\n");
+            }
         }
     }
 }

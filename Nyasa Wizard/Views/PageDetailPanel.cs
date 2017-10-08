@@ -108,6 +108,11 @@ namespace SlideMaker.Views
                 BackToParentView(sender, e);
         }
 
+        public PageEditView GetEditView()
+        {
+            return pageScrollArea1.GetPageEditView();
+        }
+
         public void RefreshView()
         {
             pageScrollArea1.InvalidateClient();

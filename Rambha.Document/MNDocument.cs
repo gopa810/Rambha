@@ -695,7 +695,7 @@ namespace Rambha.Document
 
             for(int i = 0; i < Data.Pages.Count; i++)
             {
-                ctx.sbControlList.Clear();
+                ctx.Clear();
                 ctx.CurrentPage = Data.Pages[i];
                 ctx.FileCurrentPage = Path.Combine(ctx.DirCurrentBook, ctx.CurrentPage.PageNameHtml());
                 ctx.CurrentPage.ExportToHtml(ctx);

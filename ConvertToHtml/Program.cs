@@ -16,7 +16,7 @@ namespace ConvertToHtml
         {
             MNExportContext etx = new MNExportContext();
             etx.DirAllBooks = @"e:\temp";
-            string file = @"e:\Dropbox\ReaderBooks\SSAT.smb";
+            string file = @"e:\Dropbox\ReaderBooks\PAC.smb";
 
             Console.WriteLine("File: {0}", file);
             MNDocument docx = Program.LoadDocument(file);

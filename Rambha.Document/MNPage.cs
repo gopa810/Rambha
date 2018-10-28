@@ -1639,6 +1639,7 @@ namespace Rambha.Document
             template.Replace("%controlsJs%", jss.ToString());
             template.Replace("%controlsCss%", csss.ToString());
             template.Replace("%controlsList%", ctx.sbControlList.ToString());
+            template.Replace("%resizeList%", ctx.sbResizeList.ToString());
 
             // write page file
             File.WriteAllText(ctx.FileCurrentPage, template.ToString());

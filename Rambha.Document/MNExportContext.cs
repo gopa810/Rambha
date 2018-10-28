@@ -21,6 +21,7 @@ namespace Rambha.Document
         public HashSet<string> UsedControls = new HashSet<string>();
 
         public StringBuilder sbControlList = new StringBuilder();
+        public StringBuilder sbResizeList = new StringBuilder();
 
         public string GetFileNameFromImage(Image image)
         {
@@ -36,17 +37,31 @@ namespace Rambha.Document
             return string.Format("sound/{0}.mp3", sound.Name);
         }
 
+        public void Clear()
+        {
+            sbControlList.Clear();
+            sbResizeList.Clear();
+        }
+
         public void AppendToControlList(params string[] args)
         {
-            if (sbControlList.Length > 0)
-                sbControlList.Append(",\n");
-            sbControlList.Append("  {\n");
-            for(int i = 0; i < args.Length-1; i+= 2)
+            AppendToDictionaryList(sbControlList, args);
+        }
+        public void AppendToResizeList(params string[] args)
+        {
+            AppendToDictionaryList(sbResizeList, args);
+        }
+        public void AppendToDictionaryList(StringBuilder sb, params string[] args)
+        {
+            if (sb.Length > 0)
+                sb.Append(",\n");
+            sb.Append("  {\n");
+            for (int i = 0; i < args.Length - 1; i += 2)
             {
-                sbControlList.AppendFormat("    \"{0}\": \"{1}\"{2}\n", args[i], args[i + 1],
+                sb.AppendFormat("    \"{0}\": \"{1}\"{2}\n", args[i], args[i + 1],
                     (i < args.Length - 2 ? "," : ""));
             }
-            sbControlList.Append("  }");
+            sb.Append("  }");
         }
     }
 }

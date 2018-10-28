@@ -75,6 +75,19 @@ namespace Rambha.Document
             bw.WriteByte(0);
         }
 
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            sbHtml.Append("<div ");
+            sbHtml.AppendFormat(" id=\"c{0}\" ", this.Id);
+            sbHtml.AppendFormat(" style ='position:absolute;z-index:{0};", zorder);
+            sbHtml.Append(Area.HtmlLTRB());
+            sbHtml.Append("'>");
+            sbHtml.AppendFormat("<textarea style='width:100%;height:100%;font-family:{0};font-size:100%;background:lightyellow;border:1px solid black;'></textarea>",
+                Font.Name);
+            //sbHtml.Append("<b>" + GetType().Name + "</b><br>" + this.Text);
+            sbHtml.Append("</div>\n");
+        }
+
         public override void Paint(MNPageContext context)
         {
             Rectangle bounds = Area.GetBounds(context);

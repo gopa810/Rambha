@@ -90,6 +90,28 @@ namespace Rambha.Document
             bw.WriteByte(0);
         }
 
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            ctx.AppendToResizeList("type", "canvaswh", "id", "can", "w", Area.RelativeArea.Width.ToString(), "h", Area.RelativeArea.Height.ToString());
+
+            sbHtml.AppendFormat("<div style='position:absolute;z-index:{2};display:flex;flex-direction:row;left:{0}%;top:{1}%;'>\n", 25 * Area.RelativeArea.Left / 256, 25 * Area.RelativeArea.Top / 192, zorder);
+            sbHtml.AppendFormat("<div style='display:flex;flex-direction:column'>\n");
+            sbHtml.AppendFormat("    <div style=\"width:40px;height:30px;background:green;\" id=\"green\" onclick=\"freeDrawingColor(this)\"></div>\n");
+            sbHtml.AppendFormat("    <div style=\"width:40px;height:30px;background:blue;\" id=\"blue\" onclick=\"freeDrawingColor(this)\"></div>\n");
+            sbHtml.AppendFormat("    <div style=\"width:40px;height:30px;background:red;\" id=\"red\" onclick=\"freeDrawingColor(this)\"></div>\n");
+            sbHtml.AppendFormat("    <div style=\"width:40px;height:30px;background:yellow;\" id=\"yellow\" onclick=\"freeDrawingColor(this)\"></div>\n");
+            sbHtml.AppendFormat("    <div style=\"width:40px;height:30px;background:orange;\" id=\"orange\" onclick=\"freeDrawingColor(this)\"></div>\n");
+            sbHtml.AppendFormat("    <div style=\"width:40px;height:30px;background:black;\" id=\"black\" onclick=\"freeDrawingColor(this)\"></div>\n");
+            sbHtml.AppendFormat("    <div style=\"width:36px;height:30px;background:white;border:2px solid;\" id=\"white\" onclick=\"freeDrawingColor(this)\"></div>\n");
+            sbHtml.AppendFormat("	<br>\n");
+            sbHtml.AppendFormat("    <input type=\"button\" value=\"clear\" id=\"clr\" size=\"23\" onclick=\"freeDrawingErase()\" style=\"\">\n");
+            sbHtml.AppendFormat("</div><div>\n");
+            sbHtml.AppendFormat("    <canvas id=\"can\" width={1} height={2} style=\"z-index:{0};", zorder, Area.RelativeArea.Width, Area.RelativeArea.Height);
+            if (BackgroundImage != null)
+                sbHtml.AppendFormat("background-size:contain;background-repeat:no-repeat;background-position:center;background-image:url('{0}');", ctx.GetFileNameFromImage(BackgroundImage));
+            sbHtml.AppendFormat("border:2px solid;\"></canvas></div></div>\n");
+        }
+
         public override void Paint(MNPageContext context)
         {
             Rectangle bounds = Area.GetBounds(context);

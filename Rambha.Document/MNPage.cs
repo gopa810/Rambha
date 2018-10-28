@@ -634,7 +634,7 @@ namespace Rambha.Document
 
         public override string ToString()
         {
-            return Title;
+            return string.Format("{0}: {1}", Id, Title);
         }
 
         public bool HasSelectedObjects()
@@ -1561,6 +1561,88 @@ namespace Rambha.Document
         public bool HasDimension(SMScreen screen)
         {
             return AvailableScreenDimensions.IndexOf(screen) >= 0;
+        }
+
+        public string PageNameHtml()
+        {
+            return string.Format("page{0:0000}.html", Id);
+        }
+
+        public string GoForwardHtml()
+        {
+            MNPage p = null;
+
+            // displaying next page (page with index + 1)
+            // store current page index to history
+                if (NextPage != null && NextPage.Length > 0)
+                    p = Document.FindPage(NextPage);
+                else
+                    p = Document.FindPageWithIndex(Index + 1);
+
+            return p == null ? "" : p.PageNameHtml();
+        }
+
+        public string GoHomePage()
+        {
+            MNPage p = Document.FindPage(Document.Book.StartPage);
+            return p == null ? "" : p.PageNameHtml();
+        }
+
+        public void ExportToHtml(MNExportContext ctx)
+        {
+            StringBuilder template = new StringBuilder(File.ReadAllText(ctx.TemplatePage));
+
+            template.Replace("%pageTitle%", this.Title);
+            template.Replace("%pgBkgColor%", ColorTranslator.ToHtml(this.BackgroundColor));
+            template.Replace("%defAudioState%", this.DefaultAudioState.ToString());
+            template.Replace("%dispTitle%", ShowTitle ? "block" : "none");
+            template.Replace("%dispHeader%", (ShowTitle || ShowForwardNavigation || ShowBackNavigation || ShowHome || ShowAudio) ? "block" : "none");
+            template.Replace("%dispBack%", ShowBackNavigation ? "block" : "none");
+            template.Replace("%dispFwd%", ShowForwardNavigation ? "block" : "none");
+            template.Replace("%dispHelp%", (ShowHelp && !ShowMessageAlways) ? "block" : "none");
+            template.Replace("%dispAudio%", ShowAudio ? "block" : "none");
+            template.Replace("%dispHome%", ShowHome ? "block" : "none");
+            template.Replace("%prevPage%", "");
+            template.Replace("%dispMessageAlways%", ShowMessageAlways ? "block" : "none");
+            template.Replace("%nextPage%", GoForwardHtml());
+            template.Replace("%homePage%", GoHomePage());
+            template.Replace("%messageTitle%", MessageTitle);
+            template.Replace("%messageText%", MessageText);
+            template.Replace("%textB%", TextB.Trim().Replace("\n", "<br>"));
+            template.Replace("%textC%", TextC.Trim().Replace("\n", "<br>"));
+            template.Replace("%defFontSize%", "24"/*Document.Book.DefaultFontSize.ToString()*/);
+            template.Replace("%defFontName%", Document.Book.DefaultFontName);
+
+            StringBuilder ctrls = new StringBuilder();
+            StringBuilder csss = new StringBuilder();
+            StringBuilder jss = new StringBuilder();
+            int zorder = 10;
+
+            if (Template != null && Template != this)
+            {
+                foreach (SMControl c in Template.Objects)
+                {
+                    ctx.UsedControls.Add(c.GetType().ToString());
+                    c.ExportToHtml(ctx, zorder, ctrls, csss, jss);
+                    zorder += 5;
+                }
+            }
+
+            foreach (SMControl c in this.Objects)
+            {
+                ctx.UsedControls.Add(c.GetType().ToString());
+                c.ExportToHtml(ctx, zorder, ctrls, csss, jss);
+                zorder += 5;
+            }
+
+            template.Replace("%controlsHtml%", ctrls.ToString());
+            template.Replace("%controlsJs%", jss.ToString());
+            template.Replace("%controlsCss%", csss.ToString());
+            template.Replace("%controlsList%", ctx.sbControlList.ToString());
+
+            // write page file
+            File.WriteAllText(ctx.FileCurrentPage, template.ToString());
+            ctx.Files++;
         }
     }
 }

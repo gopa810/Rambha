@@ -202,6 +202,8 @@ namespace SlideViewer.Views
             CurrentPage.Paint(Context, false);
             CurrentPage.Paint(Context, true);
 
+            //Debugger.Log(0, "", "Size of text with font size 24: " + e.Graphics.MeasureString("M", new Font("Times", 24f, FontStyle.Regular)) + "\n");
+
             if (CurrentPage.ShowMessageAlways)
             {
                 Context.PaintMessageBox(false);

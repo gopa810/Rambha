@@ -160,7 +160,7 @@ namespace Rambha.Document
                 {
                     case 11: Name = br.ReadString(); break;
                     case 12:
-                        Font.Name = (MNFontName)br.ReadInt32();
+                        Font.Name = MNFontName.IntToString(br.ReadInt32());
                         Font.Size = br.ReadFloat();
                         Font.Style = (System.Drawing.FontStyle)br.ReadInt32();
                         break;

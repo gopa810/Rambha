@@ -433,7 +433,7 @@ namespace SlideMaker
 
         private void MainFrame_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (ViewForm.IsVisible())
+            /*if (ViewForm.IsVisible())
                 ViewForm.Shared.SavePosition();
             if (ReviewFrame.IsVisible())
                 ReviewFrame.Shared.SavePosition();
@@ -443,7 +443,7 @@ namespace SlideMaker
             if (bOmitFinalSave) return;
             autoSave.Stop();
             saveToolStripMenuItem_Click(sender, EventArgs.Empty);
-            MNSharedObjects.Save();
+            MNSharedObjects.Save();*/
         }
 
         private void showDefaultLanguageDataToolStripMenuItem_Click(object sender, EventArgs e)
@@ -890,20 +890,20 @@ namespace SlideMaker
             PageEditView pev = pageDetailPanel1.GetEditView();
             MNPageContext ctx = pev.Context;
             MNDocument doc = MNNotificationCenter.CurrentDocument;
+            string rootDir = "d:\\temp\\books";
 
             SaveFileDialog sfd = new SaveFileDialog();
             sfd.FileName = doc.Book.BookCode + ".html";
             if (sfd.ShowDialog() == DialogResult.OK)
             {
-                ConvertDocToHtml(pev, doc, sfd.FileName);
+                ConvertDocToHtml(pev, doc, sfd.FileName, rootDir);
             }
         }
 
-        public static void ConvertDocToHtml(PageEditView pev, MNDocument doc, string filePath)
+        public static void ConvertDocToHtml(PageEditView pev, MNDocument doc, string filePath, string rootDir)
         {
             StringBuilder sb = new StringBuilder();
             string dataFolderName = doc.Book.BookCode + "_data";
-            string rootDir = "d:\\temp\\books";
             string dataDir = Path.Combine(rootDir, dataFolderName);
             if (!Directory.Exists(dataDir))
             {
@@ -996,26 +996,45 @@ namespace SlideMaker
         {
             PageEditView pev = pageDetailPanel1.GetEditView();
             MNPageContext ctx = pev.Context;
+            string rootDir = Properties.Settings.Default.ExportHTMLFolder;
+
 
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.Filter = "SlideViewer books (*.smb)|*.smb";
             ofd.FilterIndex = 0;
             if (ofd.ShowDialog() == DialogResult.OK)
             {
-                foreach(string file in Directory.EnumerateFiles(Path.GetDirectoryName(ofd.FileName)))
+                if (MessageBox.Show("Now select folder where output will be writen (in the form of many HTml files and images)") == DialogResult.OK)
                 {
-                    if (file.EndsWith(".smb"))
+                    FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
+                    folderBrowser.SelectedPath = rootDir;
+                    if (folderBrowser.ShowDialog() == DialogResult.OK)
                     {
-                        MNDocument docx = LoadDocument(file);
-                        ConvertDocToHtml(pev, docx, file.Replace(".smb", ".html"));
-                        Debugger.Log(0,"", "Converted " + Path.GetFileName(file) + ".\n");
-                        docx = null;
+                        rootDir = folderBrowser.SelectedPath;
+                        Properties.Settings.Default.ExportHTMLFolder = rootDir;
+                        Properties.Settings.Default.Save();
+                        MNExportContext etx = new MNExportContext();
+                        etx.DirAllBooks = rootDir;
+                        foreach (string file in Directory.EnumerateFiles(Path.GetDirectoryName(ofd.FileName)))
+                        {
+                            if (file.EndsWith(".smb"))
+                            {
+                                MNDocument docx = LoadDocument(file);
+                                //ConvertDocToHtml(pev, docx, file.Replace(".smb", ".html"), rootDir);
+                                docx.ExportToHtml(etx, Path.GetFileNameWithoutExtension(file));
+                                Debugger.Log(0, "", "Converted " + Path.GetFileName(file) + ".\n");
+                                docx = null;
+                            }
+                            MNNotificationCenter.CurrentDocument = null;
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
+                            if (etx.Files >= etx.MaxFiles) break;
+                        }
+                        Debugger.Log(0, "", "Finished.\n");
+
+                        MessageBox.Show("Files were converted.");
                     }
-                    MNNotificationCenter.CurrentDocument = null;
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
                 }
-                Debugger.Log(0, "", "Finished.\n");
             }
         }
     }

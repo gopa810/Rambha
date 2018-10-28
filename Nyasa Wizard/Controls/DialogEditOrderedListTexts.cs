@@ -29,7 +29,8 @@ namespace SlideMaker
             Object.DrawnObjects.Clear();
             foreach (string s in lines)
             {
-                Object.Objects.Add(s);
+                if (!string.IsNullOrWhiteSpace(s))
+                    Object.AddText(s);
             }
         }
 
@@ -37,11 +38,11 @@ namespace SlideMaker
         {
             Object = obj;
             richTextBox1.Text = "";
-            foreach (object o in obj.Objects)
+            foreach (SMOrderedList.StringItem o in obj.Objects)
             {
-                if (o is String)
+                if (o.IsText)
                 {
-                    richTextBox1.AppendText((o as String) + "\n");
+                    richTextBox1.AppendText(o.Text + "\n");
                 }
             }
         }

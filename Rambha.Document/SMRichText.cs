@@ -466,7 +466,7 @@ namespace Rambha.Document
             }
             public float defaultFontSize = 20;
             public float fontSize = 20;
-            public MNFontName fontName = MNFontName.LucidaSans;
+            public string fontName = MNFontName.LucidaSans;
             public float lineOffset = 0;
 
             public SMFont GetFont()

@@ -62,6 +62,9 @@ namespace Rambha.Document
         [Browsable(false)]
         public string Tag { get; set; }
 
+        [Browsable(false)]
+        public string PropertiesText { get; set; } = "";
+
         [Browsable(true), Category("API"), DisplayName("API Name"), Description("Name of control for the script API. If empty then this control is not referenced from script.")]
         public string UniqueName { get { return p_unique_name.Value; } set { p_unique_name.Value = value; } }
 
@@ -481,6 +484,21 @@ namespace Rambha.Document
             return Paragraph.VertAlign;
         }
 
+        public string GetVerticalAlignHtml()
+        {
+            switch(Paragraph.VertAlign)
+            {
+                case SMVerticalAlign.Bottom:
+                    return "flex-end";
+                case SMVerticalAlign.Center:
+                    return "center";
+                case SMVerticalAlign.Top:
+                    return "flex-start";
+                default:
+                    return "inherit";
+            }
+        }
+
         public SMHorizontalAlign GetHorizontalAlign()
         {
             return Paragraph.Align;
@@ -740,6 +758,9 @@ namespace Rambha.Document
                 _area_3_4.Save(bw);
             }
 
+            bw.WriteByte(227);
+            bw.WriteString(PropertiesText);
+
             // end-of-object
             bw.WriteByte(0);
         }
@@ -787,7 +808,7 @@ namespace Rambha.Document
                         ContentType = (SMContentType)br.ReadInt32();
                         break;
                     case 249:
-                        Font.Name = (MNFontName)br.ReadInt32();
+                        Font.Name = MNFontName.IntToString(br.ReadInt32());
                         break;
                     case 248:
                         Font.Size = br.ReadFloat();
@@ -864,6 +885,10 @@ namespace Rambha.Document
                         rca.Load(br);
                         SetArea(rca.Screen, rca);
                         break;
+                    case 227:
+                        PropertiesText = br.ReadString();
+                        ProcessProperties(PropertiesText);
+                        break;
                     default:
                         return false;
                 }
@@ -871,6 +896,18 @@ namespace Rambha.Document
 
             return true;
         }
+
+        public void ProcessProperties(string propertiesText)
+        {
+            foreach (string s in propertiesText.Split('\r', '\n'))
+            {
+                if (string.IsNullOrWhiteSpace(s) || s.IndexOf(':') < 0)
+                    continue;
+                int sep = s.IndexOf(':');
+                SetPropertyValue(s.Substring(0, sep).Trim(), s.Substring(sep + 1).Trim());
+            }
+        }
+
 
         public virtual void Paint(MNPageContext context)
         {
@@ -1367,6 +1404,134 @@ namespace Rambha.Document
             if (_area_3_4 != null)
                 _area_3_4.Selected = false;
         }
+
+        public virtual void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            sbHtml.Append("<div ");
+            sbHtml.AppendFormat(" id=\"c{0}\" ", this.Id);
+            sbHtml.AppendFormat(" style ='position:absolute;z-index:{0};", zorder);
+            SMRectangleArea area = this.Area;
+            sbHtml.Append(area.HtmlLTRB());
+            sbHtml.Append("background:lightyellow;border:1px solid black;'>");
+            sbHtml.Append("<b>" + GetType().Name + "</b><br>" + this.Text);
+            sbHtml.Append("</div>\n");
+        }
+
+        public string ContentPaddingHtml()
+        {
+            if (Area.Dock == SMControlSelection.None)
+                return ContentPadding.Html();
+            return string.Format("padding:{0}% {1}% {2}% {3}%;", 25*SMRectangleArea.PADDING_DOCK_TOP/256, 25*SMRectangleArea.PADDING_DOCK_RIGHT/256,
+                25*SMRectangleArea.PADDING_DOCK_BOTTOM/256, 25*SMRectangleArea.PADDING_DOCK_LEFT/256);
+        }
+
+        public string GetOnclickHtml()
+        {
+            string s = ScriptOnClick;
+            string sstart = "(view showpage \"";
+            string send = "\")";
+            string onclick = "";
+            if (s.StartsWith(sstart))
+            {
+                s = s.Substring(sstart.Length, s.Length - send.Length - sstart.Length);
+                if (s == "#next") return "window.location='" + Page.GoForwardHtml() + "';";
+                if (s == "#back") return "window.history.back();";
+                MNPage p = Document.FindPage(s);
+                if (p == null) Console.WriteLine("reference to unknown page \"{0}\" occurs on page ID={1}\n", s, Page.Id);
+                onclick = string.Format("window.location='{0}';", p != null ? p.PageNameHtml() : s);
+            }
+            else if (s.StartsWith(sstart.Substring(0, sstart.Length - 1)))
+            {
+                s = s.Substring(sstart.Length - 1, s.Length - send.Length - sstart.Length + 2);
+                if (s == "#next") return "window.location='" + Page.GoForwardHtml() + "';";
+                if (s == "#back") return "window.history.back();";
+                MNPage p = Document.FindPage(s);
+                if (p == null) Console.WriteLine("reference to unknown page \"{0}\" occurs on page ID={1}\n", s, Page.Id);
+                onclick = string.Format("window.location='{0}';", p!=null ? p.PageNameHtml() : s);
+            }
+            if (onclick.Length == 0 && s.Length > 0)
+            {
+                Debugger.Log(0, "", "Script: " + ScriptOnClick + "\n");
+            }
+            return onclick;
+        }
+
+
+        public string HtmlFormatColor(bool bHigh)
+        {
+            StringBuilder sb = new StringBuilder();
+            SMStatusLayout layout = HtmlPrepareBrushesAndPens(bHigh);
+            if (Area.Dock == SMControlSelection.None)
+            {
+                switch (layout.BorderStyle)
+                {
+                    case SMBorderStyle.Rectangle:
+                        sb.AppendFormat("border:{0}px solid {1};background:{2};", layout.BorderWidth,
+                          ColorTranslator.ToHtml(layout.BorderColor), ColorTranslator.ToHtml(layout.BackColor));
+                        break;
+                    case SMBorderStyle.RoundRectangle:
+                        sb.AppendFormat("border:{0}px solid {1};background:{2};border-radius:{3}px;", layout.BorderWidth,
+                          ColorTranslator.ToHtml(layout.BorderColor), ColorTranslator.ToHtml(layout.BackColor),
+                          layout.CornerRadius);
+                        break;
+                    case SMBorderStyle.Elipse:
+                        sb.AppendFormat("border:{0}px solid {1};background:{2};border-radius:{3}px;", layout.BorderWidth,
+                          ColorTranslator.ToHtml(layout.BorderColor), ColorTranslator.ToHtml(layout.BackColor),
+                          20);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            if (Area.BackType == SMBackgroundType.Solid)
+            {
+                if (layout.BackColor != Color.Transparent)
+                {
+                    sb.AppendFormat("background:{0};", ColorTranslator.ToHtml(layout.BackColor));
+                }
+            }
+
+            sb.AppendFormat("color:{0};", ColorTranslator.ToHtml(layout.ForeColor));
+
+            return sb.ToString();
+        }
+
+        public string HtmlTextColor(bool bHigh)
+        {
+            SMStatusLayout layout = HtmlPrepareBrushesAndPens(bHigh);
+            return string.Format("color:{0};", ColorTranslator.ToHtml(layout.ForeColor));
+        }
+
+        public SMStatusLayout HtmlPrepareBrushesAndPens(bool isHigh)
+        {
+            if (StyleName.Equals("_brief"))
+                return (isHigh ? HighlightState : NormalState);
+            else if (StyleName.Equals("_clickable"))
+                return isHigh ? SMGraphics.clickableLayoutH : SMGraphics.clickableLayoutN;
+            else
+                return HtmlGetFullStatusLayout(isHigh);
+        }
+
+
+        protected SMStatusLayout HtmlGetFullStatusLayout(bool bHigh)
+        {
+            SMFont f;
+            if (Draggable == SMDragResponse.Line || Draggable == SMDragResponse.Drag)
+            {
+                return bHigh ? SMGraphics.draggableLayoutH : SMGraphics.draggableLayoutN;
+            }
+            else if (Cardinality == SMConnectionCardinality.One || Cardinality == SMConnectionCardinality.Many)
+            {
+                return bHigh ? SMGraphics.dropableLayoutH : SMGraphics.dropableLayoutN;
+            }
+            else if (Clickable)
+            {
+                return bHigh ? SMGraphics.clickableLayoutH : SMGraphics.clickableLayoutN;
+            }
+
+            return bHigh ? HighlightState : NormalState;
+        }
+
     }
 
 }

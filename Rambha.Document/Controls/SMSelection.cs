@@ -193,6 +193,47 @@ namespace Rambha.Document
             base.Paint(context);
         }
 
+
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            PrepareContent();
+            bool horz = bHorizontal;
+            string blockFormat = Font.HtmlString() + Paragraph.Html() + ContentPaddingHtml();
+            string dimensions = string.Format("height:{0}%;width:{1}%", horz ? 100 : 100 / texts.Count, horz ? 100 / texts.Count : 100);
+
+            sbHtml.Append("<div ");
+            sbHtml.AppendFormat(" id=\"c{0}\" ", this.Id);
+            sbHtml.AppendFormat(" style ='display:flex;flex-direction:{1};position:absolute;z-index:{0};", zorder,
+                horz ? "row" : "column");
+            SMRectangleArea area = this.Area;
+            sbHtml.Append(area.HtmlLTRB());
+            sbHtml.Append("'>\n");
+            int i = 0;
+            string[] radiustextH = { "15px 0px 0px 15px", "0px", "0px 15px 15px 0px" };
+            string[] radiustextV = { "15px 15px 0px 0px", "0px", "0px 0px 15px 15px" };
+            foreach (SelText si in texts)
+            {
+                int ridx = (i == 0 ? 0 : i == (texts.Count - 1) ? 2 : 1);
+                sbHtml.AppendFormat("<div id=\"sel{0}_{2}\" class=\"csSelectN\" style='cursor:pointer;border-radius:{1};{3};' onclick=\"toogleSelectCtrl({0},{2})\">\n", 
+                    Id, bHorizontal ? radiustextH[ridx] : radiustextV[ridx], i, dimensions);
+
+                sbHtml.AppendFormat("<div class=\"vertCenter\" style='text-align:center'><div>\n");
+                sbHtml.AppendFormat("{0}", si.text);
+                sbHtml.AppendFormat("</div></div>");
+
+                sbHtml.AppendFormat("</div>\n");
+                i++;
+            }
+            //sbHtml.Append("background:lightyellow;border:1px solid black;'>");
+            //sbHtml.Append("<b>" + GetType().Name + "</b><br>" + this.Text);
+            sbHtml.Append("</div>\n");
+
+            ctx.AppendToControlList("type", "select", "segments", texts.Count.ToString(), "correct", p_expectedSelection.ToString(),
+                "id", Id.ToString(), "current", "0");
+
+        }
+
+
         private string[] p_strSep = { "\n\n" };
 
         private int p_prevSel = -1;
@@ -285,6 +326,43 @@ namespace Rambha.Document
             }
 
             return UIStateError;
+        }
+
+        public void PrepareContent()
+        {
+            p_prevtext = Text;
+            texts.Clear();
+            string[] p = null;
+            int index = 0;
+            string s = Text.Replace("\r\n", "\n");
+            //Debugger.Log(0, "", "PrepareSelectionContents: " + Text + "<< end cont<<\n");
+            if (s.IndexOf("\n\n") >= 0)
+            {
+                bHorizontal = false;
+                p = s.Split(p_strSep, StringSplitOptions.RemoveEmptyEntries);
+            }
+            else
+            {
+                bHorizontal = true;
+                p = s.Split('|');
+            }
+
+            if (p != null)
+            {
+                foreach (string line in p)
+                {
+                    if (line.StartsWith("*"))
+                    {
+                        p_expectedSelection = index;
+                        texts.Add(new SelText(line.Substring(1)));
+                    }
+                    else
+                    {
+                        texts.Add(new SelText(line));
+                    }
+                    index++;
+                }
+            }
         }
 
         public void PrepareContent(MNPageContext context)

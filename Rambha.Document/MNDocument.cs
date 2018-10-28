@@ -6,6 +6,7 @@ using System.Text;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Drawing.Design;
 using System.Diagnostics;
 using System.Xml;
@@ -683,6 +684,33 @@ namespace Rambha.Document
             Book.Version = Math.Max(2, Book.Version);
         }
 
+        public void ExportToHtml(MNExportContext ctx, string fileWoExt)
+        {
+            ctx.UsedControls.Clear();
+            if (ctx.Files >= ctx.MaxFiles) return;
+            ctx.DirCurrentBook = Path.Combine(ctx.DirAllBooks, fileWoExt);
+            Directory.CreateDirectory(ctx.DirCurrentBook);
+            string dirImages = Path.Combine(ctx.DirCurrentBook, "img");
+            Directory.CreateDirectory(dirImages);
+
+            for(int i = 0; i < Data.Pages.Count; i++)
+            {
+                ctx.sbControlList.Clear();
+                ctx.CurrentPage = Data.Pages[i];
+                ctx.FileCurrentPage = Path.Combine(ctx.DirCurrentBook, ctx.CurrentPage.PageNameHtml());
+                ctx.CurrentPage.ExportToHtml(ctx);
+            }
+
+            foreach(MNReferencedImage img in DefaultLanguage.Images)
+            {
+                string fileName = Path.Combine(dirImages, "image" + img.Id + ".png");
+                if (!File.Exists(fileName))
+                {
+                    Bitmap bmp = new Bitmap(img.ImageData);
+                    bmp.Save(fileName, ImageFormat.Png);
+                }
+            }
+        }
 
     }
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlideMaker", "Nyasa Wizard\SlideMaker.csproj", "{C07A6C45-4B0B-421D-B4E6-3BEFC5D5F697}"
 EndProject
@@ -18,6 +18,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilesGenerator", "FilesGenerator\FilesGenerator.csproj", "{C7758ECE-F266-47C2-93C8-D9563FFD8373}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileListGen", "FileListGen\FileListGen.csproj", "{BF71DBF0-FC15-4A28-9D1C-8AE7A3B8044C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConvertToHtml", "ConvertToHtml\ConvertToHtml.csproj", "{5DF7288C-759F-42A9-99C2-F598ACF2DE23}"
+	ProjectSection(ProjectDependencies) = postProject
+		{26C66C19-2795-442B-BC49-2FD971702999} = {26C66C19-2795-442B-BC49-2FD971702999}
+		{9EC38D3A-B51A-4433-9BC7-0F8E9D2399E2} = {9EC38D3A-B51A-4433-9BC7-0F8E9D2399E2}
+		{A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5} = {A439BC7C-BFD2-476D-866F-5D6A1D2CDDE5}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -135,6 +142,22 @@ Global
 		{BF71DBF0-FC15-4A28-9D1C-8AE7A3B8044C}.Release|Mixed Platforms.Build.0 = Release|x86
 		{BF71DBF0-FC15-4A28-9D1C-8AE7A3B8044C}.Release|x64.ActiveCfg = Release|x86
 		{BF71DBF0-FC15-4A28-9D1C-8AE7A3B8044C}.Release|x86.ActiveCfg = Release|x86
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Debug|x64.Build.0 = Debug|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Debug|x86.Build.0 = Debug|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Release|x64.ActiveCfg = Release|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Release|x64.Build.0 = Release|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Release|x86.ActiveCfg = Release|Any CPU
+		{5DF7288C-759F-42A9-99C2-F598ACF2DE23}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

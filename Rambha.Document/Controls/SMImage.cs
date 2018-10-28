@@ -207,6 +207,197 @@ namespace Rambha.Document
             base.Paint(context);
         }
 
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            SMImage pi = this;
+            Rectangle rect = Area.RelativeArea;
+
+            SMStatusLayout layout = PrepareBrushesAndPens();
+
+            Rectangle bounds = ContentPadding.ApplyPadding(rect);
+            SMContentArangement argm = this.ContentArangement;
+            MNReferencedImage refImage = null;
+            Rectangle imgRect = bounds;
+
+            Image image = GetContentImage(out refImage);
+            if (image == null)
+                argm = SMContentArangement.TextOnly;
+
+
+            /*if (argm == SMContentArangement.ImageOnly)
+            {
+                SMContentScaling scaling = ContentScaling;
+                Rectangle rc = DrawImage(context, layout, bounds, image, scaling, SourceOffsetX, SourceOffsetY);
+                if (ContentScaling == SMContentScaling.Fill)
+                {
+                    showRect = bounds;
+                    sourceRect = rc;
+                }
+                else
+                {
+                    showRect = rc;
+                    sourceRect = new Rectangle(0, 0, image.Width, image.Height);
+                }
+            }
+            else
+            {*/
+                /*Size textSize = Size.Empty;
+                Font usedFont = GetUsedFont();*/
+                string plainText = Text.Length > 0 ? Text : DroppedText;
+                if (plainText.IndexOf("_") >= 0 && DroppedTag.Length > 0)
+                    plainText = plainText.Replace("_", DroppedTag);
+                /*if (plainText.Length != 0)
+                {
+                    textSize = rt.MeasureString(context, plainText, bounds.Width);
+                }
+
+                Rectangle textRect = bounds;
+
+
+
+                if (argm == SMContentArangement.ImageAbove)
+                {
+                    textRect.Height = textSize.Height;
+                    textRect.Y = bounds.Bottom - textRect.Height;
+                    textRect.X = (textRect.Left + textRect.Right) / 2 - textSize.Width / 2;
+                    textRect.Width = textSize.Width;
+                    imgRect.Height = bounds.Height - textRect.Height - ContentPadding.Top;
+                }
+                else if (argm == SMContentArangement.ImageBelow)
+                {
+                    textRect.Height = textSize.Height;
+                    textRect.X = (textRect.Left + textRect.Right) / 2 - textSize.Width / 2;
+                    textRect.Width = textSize.Width;
+                    imgRect.Y = textRect.Bottom + ContentPadding.Bottom;
+                    imgRect.Height = bounds.Height - textRect.Height - ContentPadding.Bottom;
+                }
+                else if (argm == SMContentArangement.ImageOnLeft)
+                {
+                    textRect.Width = textSize.Width;
+                    textRect.X = bounds.Right - textSize.Width;
+                    imgRect.Width = bounds.Width - textSize.Width - ContentPadding.Left;
+                }
+                else if (argm == SMContentArangement.ImageOnRight)
+                {
+                    textRect.Width = textSize.Width;
+                    imgRect.X = textRect.Right + ContentPadding.Right;
+                    imgRect.Width = bounds.Width - textSize.Width - ContentPadding.Right;
+                }
+                else if (argm == SMContentArangement.ImageOnly)
+                {
+                    textRect = Rectangle.Empty;
+                }
+                else if (argm == SMContentArangement.TextOnly)
+                {
+                    imgRect = Rectangle.Empty;
+                }
+
+
+                if (!imgRect.IsEmpty)
+                {
+                    Rectangle rc = DrawImage(context, layout, imgRect, image, ContentScaling, SourceOffsetX, SourceOffsetY);
+                    if (ContentScaling == SMContentScaling.Fill)
+                    {
+                        showRect = imgRect;
+                        sourceRect = rc;
+                    }
+                    else
+                    {
+                        showRect = rc;
+                        sourceRect = new Rectangle(0, 0, image.Width, image.Height);
+                    }
+
+                }
+
+                if (!textRect.IsEmpty)
+                {
+                    if (argm == SMContentArangement.TextOnly)
+                    {
+                        DrawStyledBorder(context, layout, bounds);
+                    }
+                    textRect.Inflate(2, 2);
+                    rt.DrawString(context, layout, plainText, textRect);
+                }
+            }*/
+
+            /*if (!imgRect.IsEmpty && refImage != null && refImage.HasSpots())
+            {
+                foreach (MNReferencedSpot rs in refImage.SafeSpots)
+                {
+                    if (rs.ContentType != SMContentType.TaggedArea) continue;
+                    if (rs.UIStateHighlighted || (HoverSpot == rs))
+                    {
+                        rs.Paint(context.g, showRect, false, context.SpotAreaBorderPen, null);
+                    }
+                }
+            }*/
+
+            string blockFormat = Font.HtmlString() + Paragraph.Html() + ContentPaddingHtml() + "position:absolute;" + Area.HtmlLTRB();
+            sbCss.AppendFormat(".c{0}n {{ {1} {2} }}\n", Id, HtmlFormatColor(false), blockFormat);
+            sbCss.AppendFormat(".c{0}h {{ {1} {2} }}\n", Id, HtmlFormatColor(true), blockFormat);
+            string imgText = "", textText = "";
+
+
+
+            if (argm != SMContentArangement.TextOnly)
+            {
+                imgText = string.Format("<td><img src=\"{1}\" style='object-fit:contain;width:100%;height:100%'></td>\n", Id, ctx.GetFileNameFromImage(refImage));
+            }
+            if (argm != SMContentArangement.ImageOnly)
+            {
+                // wrapping text into vertical/horizontal alignment DIV
+                textText = "<td>";
+                textText += plainText;
+                textText += "</td>\n";
+            }
+
+            switch(argm)
+            {
+                case SMContentArangement.ImageAbove:
+                    sbHtml.AppendFormat("  <table class=\"c{0}n\">\n", Id);
+                    sbHtml.Append("<tr>");
+                    sbHtml.Append(imgText);
+                    sbHtml.Append("<tr>");
+                    sbHtml.Append(textText);
+                    sbHtml.Append("</table>\n");
+                    break;
+                case SMContentArangement.ImageBelow:
+                    sbHtml.AppendFormat("  <table class=\"c{0}n\">\n", Id);
+                    sbHtml.Append("<tr>");
+                    sbHtml.Append(textText);
+                    sbHtml.Append("<tr>");
+                    sbHtml.Append(imgText);
+                    sbHtml.Append("</table>\n");
+                    break;
+                case SMContentArangement.ImageOnLeft:
+                    sbHtml.AppendFormat("  <table class=\"c{0}n\">\n", Id);
+                    sbHtml.Append("<tr>");
+                    sbHtml.Append(imgText);
+                    sbHtml.Append(textText);
+                    sbHtml.Append("</table>\n");
+                    break;
+                case SMContentArangement.ImageOnRight:
+                    sbHtml.AppendFormat("  <table class=\"c{0}n\">\n", Id);
+                    sbHtml.Append("<tr>");
+                    sbHtml.Append(textText);
+                    sbHtml.Append(imgText);
+                    sbHtml.Append("</table>\n");
+                    break;
+                case SMContentArangement.TextOnly:
+                    sbHtml.AppendFormat("  <table class=\"c{0}n\">\n", Id);
+                    sbHtml.Append("<tr>");
+                    sbHtml.Append(textText);
+                    sbHtml.Append("</table>\n");
+                    break;
+                case SMContentArangement.ImageOnly:
+                    sbHtml.AppendFormat("  <div class=\"c{0}n\">\n", Id);
+                    sbHtml.Append(imgText);
+                    sbHtml.Append("</div>\n");
+                    break;
+            }
+
+        }
+
         private System.Drawing.Image GetContentImage(out MNReferencedImage refImage)
         {
             if (DroppedImage != null)

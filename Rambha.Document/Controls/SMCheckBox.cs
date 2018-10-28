@@ -154,6 +154,25 @@ namespace Rambha.Document
             base.Paint(context, false);
         }
 
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            ctx.AppendToControlList("type", "checkbox", "id", Id.ToString(), "group", GroupName);
+            string blockFormat = Font.HtmlString() + Paragraph.Html() + ContentPaddingHtml() + "position:absolute;" + Area.HtmlLTRB();
+            sbCss.AppendFormat(".c{0}n {{ {1} {2} cursor:pointer; }}\n", Id, HtmlTextColor(false), blockFormat);
+            //sbCss.AppendFormat(".c{0}h {{ {1} {2} cursor:pointer; }}\n", Id, HtmlFormatColor(true), blockFormat);
+
+
+            sbHtml.AppendFormat("<div class=\"c{0}n\" onclick=\"toogleCheckBox({0})\"", Id);
+            sbHtml.Append(">");
+            string align = CheckBoxAtEnd ? "right" : "left";
+            sbHtml.AppendFormat("<img id=\"cbion{1}\" src=\"../rs/checkBoxOn.png\" style='display:none;object-fit:contain;float:{0};height:100%'>\n", align, Id);
+            sbHtml.AppendFormat("<img id=\"cbioff{1}\" src=\"../rs/checkBoxOff.png\" style='display:block;object-fit:contain;float:{0};height:100%'>\n", align, Id);
+            sbHtml.Append("<div class=\"vertCenter\" style='text-align:" + align + "'><div>" + Text);
+            sbHtml.Append("</div></div>\n");
+
+            sbHtml.Append("</div>");
+        }
+
 
         public override void OnClick(PVDragContext dc)
         {

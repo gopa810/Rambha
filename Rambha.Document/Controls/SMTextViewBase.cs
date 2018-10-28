@@ -1069,5 +1069,71 @@ namespace Rambha.Document
 
         }
 
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            sbHtml.Append("<div ");
+            sbHtml.AppendFormat(" id=\"c{0}\" ", this.Id);
+            sbHtml.AppendFormat(" style ='overflow-y:scroll;position:absolute;z-index:{0};", zorder);
+            sbHtml.Append(Area.HtmlLTRB());
+            sbHtml.Append(Font.HtmlString() + Paragraph.Html() + ContentPaddingHtml());
+            sbHtml.Append("'>");
+
+            if (Text.IndexOf("<edit") >= 0)
+            {
+                sbHtml.Append("<div style='display:flex;flex-direction:row;'>");
+                drawWords = SMWordToken.WordListFromString(Text, this);
+                foreach(SMWordBase wb in drawWords)
+                {
+                    if (wb is SMWordImage wbi)
+                    {
+                        sbHtml.AppendFormat("<div class=\"textViewElem\"><img src=\"{0}\" width={1} height={2}></div>", ctx.GetFileNameFromImage(wbi.image), wbi.imageSize.Width, wbi.imageSize.Height);
+                    }
+                    else if (wb is SMWordSpecial wbs)
+                    {
+                        switch(wbs.Type)
+                        {
+                            case SMWordSpecialType.HorizontalLine:
+                                sbHtml.Append("<hr>");
+                                break;
+                            case SMWordSpecialType.Newline:
+                                sbHtml.Append("</div>");
+                                sbHtml.Append("<div style='display:flex;flex-direction:row;'>");
+                                break;
+                            case SMWordSpecialType.NewPage:
+                                sbHtml.Append("</div>");
+                                sbHtml.Append("<div style='display:flex;flex-direction:row;margin-top:16pt;'>");
+                                break;
+                            case SMWordSpecialType.NewColumn:
+                                sbHtml.Append("</div>");
+                                sbHtml.Append("<div style='display:flex;flex-direction:row;margin-top:16pt;'>");
+                                break;
+                        }
+                    }
+                    else if (wb is SMWordText wbt)
+                    {
+                        sbHtml.AppendFormat("<div  class=\"textViewElem\">{0}</div>", wbt.text);
+                    }
+                    else if (wb is SMWordToken wbk)
+                    {
+                        if (wbk.Editable)
+                        {
+                            sbHtml.AppendFormat("<div class=\"textViewElem\"><input type=text size={1} style='background:LightYellow;font-family:{0};font-size:100%;'></div>", Font.Name, wbk.tag.Length);
+                        }
+                        else
+                        {
+                            sbHtml.AppendFormat("<div class=\"textViewElem\">{0}</div>", wbk.text);
+                        }
+                    }
+                }
+                sbHtml.Append("</div>");
+            }
+            else
+            {
+                sbHtml.Append(this.Text.Replace("\n", "<br>"));
+            }
+
+            sbHtml.Append("</div>\n");
+        }
+
     }
 }

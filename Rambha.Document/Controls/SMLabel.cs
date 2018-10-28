@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
+using System.Diagnostics;
 using System.IO;
 using System.ComponentModel;
 using System.Drawing.Design;
@@ -158,36 +159,6 @@ namespace Rambha.Document
                     DrawStyledBorder(context, layout, bounds);
 
                 richText.DrawString(context, layout, textBounds);
-
-                /*if (RichContent)
-                {
-                    if (!p_prevText.Equals(plainText) || drawWords == null)
-                    {
-                        p_prevText = plainText;
-                        drawWords = SMWordToken.WordListFromString(plainText, this);
-                    }
-                    SMRichLayout lay = SMTextContainer.RecalculateWordsLayout(context, textBounds, drawWords, this,
-                        RunningLine, -1);
-                    foreach (SMWordBase wt in drawWords)
-                    {
-                        wt.Paint(context, textBounds.X, textBounds.Y);
-                    }
-                }
-                else
-                {
-                    SizeF sf = context.g.MeasureString(plainText, usedFont);
-                    if (!Autosize && Paragraph.SizeToFit)
-                    {
-                        float cx = Math.Max(sf.Width / textBounds.Width, sf.Height / textBounds.Height);
-                        usedFont = (cx > 1f ? SMGraphics.GetFontVariation(usedFont, usedFont.Size / cx) : usedFont);
-                    }
-
-                    p_textSize = new Size((int)sf.Width, (int)sf.Height);
-
-                    StringFormat format = Paragraph.GetAlignmentStringFormat();
-
-                    context.g.DrawString(plainText, usedFont, tempForeBrush, textBounds, format);
-                }*/
             }
             else if (runningText != null)
             {
@@ -208,17 +179,6 @@ namespace Rambha.Document
                     context.g.DrawString(w.Text, usedFont, currBrush, curr);
                     curr.X += (int)textSize.Width;
 
-                    /*textSize = context.g.MeasureString(" ", Style.Font);
-                    if (curr.X + textSize.Width > textBounds.Right)
-                    {
-                        curr.X = textBounds.Left;
-                        curr.Y += (int)textSize.Height;
-                    }
-                    else
-                    {
-                        curr.X += (int)textSize.Width;
-                    }*/
-
                     index++;
                 }
             }
@@ -233,6 +193,74 @@ namespace Rambha.Document
             
             // draw selection marks
             base.Paint(context);
+        }
+
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+//            SMRectangleArea area = this.Area;
+//            Rectangle bounds = area.RelativeArea;
+
+
+            if (Text != null && Text.Contains("\\n"))
+                Text = Text.Replace("\\n", "\n");
+            Text = Text.Replace("\n", "<br>");
+            string plainText = Text;
+
+            if (Content != null)
+            {
+                plainText = null;
+                if (Content is MNReferencedText)
+                    plainText = ((MNReferencedText)Content).Text;
+                else if (Content is MNReferencedSound)
+                    plainText = Text;
+            }
+
+            if (plainText.StartsWith("$"))
+            {
+                plainText = Document.ResolveProperty(plainText.Substring(1));
+            }
+
+            if (plainText != null)
+            {
+                //Size textSize = richText.MeasureString(context, plainText, textBounds.Width);
+                /*Rectangle r = Area.GetDockedRectangle(SMRectangleArea._size_4_3, textSize);
+                if (Area.Dock != SMControlSelection.None)
+                {
+                    textBounds.X = Area.RelativeArea.X + SMRectangleArea.PADDING_DOCK_LEFT;
+                    textBounds.Y = Area.RelativeArea.Y + SMRectangleArea.PADDING_DOCK_TOP;
+                    textBounds.Width = Area.RelativeArea.Width - SMRectangleArea.PADDING_DOCK_LEFT
+                        - SMRectangleArea.PADDING_DOCK_RIGHT + 2;
+                    textBounds.Height = Area.RelativeArea.Height - SMRectangleArea.PADDING_DOCK_TOP - SMRectangleArea.PADDING_DOCK_BOTTOM + 2;
+                    richText.Paragraph.VertAlign = SMVerticalAlign.Top;
+                }*/
+
+
+                /*if (Area.BackType == SMBackgroundType.Shadow && Area.BackgroundImage != null)
+                {
+                    sbHtml.AppendFormat("<img style='position:absolute;top:{0}%;left:{1}%;width:{2}%;height:{3}%;' src=\"{4}\" />",
+                      SMRectangleArea.AbsToPercX(textBounds.X + Area.BackgroundImageOffset.X),
+                      SMRectangleArea.AbsToPercY(textBounds.Y + Area.BackgroundImageOffset.Y),
+                      SMRectangleArea.AbsToPercX(Area.BackgroundImage.Size.Width),
+                      SMRectangleArea.AbsToPercX(Area.BackgroundImage.Size.Height),
+                      ctx.GetFileNameFromImage(Area.BackgroundImage));
+                }*/
+
+                //if (Area.Dock == SMControlSelection.None) DrawStyledBorder(context, layout, bounds);
+
+                string onclick = GetOnclickHtml();
+
+                //richText.DrawString(context, layout, textBounds);
+                string blockFormat = Font.HtmlString() + Paragraph.Html() + ContentPaddingHtml() + "position:absolute;" + Area.HtmlLTRB();
+                sbCss.AppendFormat(".c{0}n {{ {1} {2} }}\n", Id, HtmlFormatColor(false), blockFormat);
+                sbCss.AppendFormat(".c{0}h {{ {1} {2} }}\n", Id, HtmlFormatColor(true), blockFormat);
+                sbHtml.AppendFormat("<div class=\"c{0}n\" style='display:flex;flex-direction:column;justify-content:{1};cursor:pointer;'", Id, GetVerticalAlignHtml());
+                if (onclick.Length > 0) sbHtml.AppendFormat(" onclick=\"{0}\" ", onclick);
+                sbHtml.Append(">\n");
+                sbHtml.Append("<div>" + plainText + "</div>");
+                sbHtml.AppendFormat("\n</div>\n");
+
+                
+            }
         }
 
         public override bool Load(RSFileReader br)

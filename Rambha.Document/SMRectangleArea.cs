@@ -441,5 +441,63 @@ namespace Rambha.Document
 
             return RelativeArea;
         }
+
+        public string HtmlLT()
+        {
+            if (Dock == SMControlSelection.None)
+                return SMRectangleArea.HtmlLT(RelativeArea);
+            return HtmlDock();
+        }
+
+        public string HtmlLTR()
+        {
+            if (Dock == SMControlSelection.None)
+                return SMRectangleArea.HtmlLTR(RelativeArea);
+            return HtmlDock();
+        }
+        public string HtmlLTRB()
+        {
+            if (Dock == SMControlSelection.None)
+                return SMRectangleArea.HtmlLTRB(RelativeArea);
+            return HtmlDock();
+        }
+
+        private string HtmlDock()
+        {
+            if (Dock == SMControlSelection.Top)
+            {
+                return "left:0;top:" + MNPage.HEADER_HEIGHT.ToString() + ";right:0;";
+            }
+            else if (Dock == SMControlSelection.Left)
+            {
+                return "left:0;top:" + MNPage.HEADER_HEIGHT.ToString() + ";bottom:0%;";
+            }
+            else if (Dock == SMControlSelection.Bottom)
+            {
+                return "left:0;bottom:0;right:0;";
+            }
+            else if (Dock == SMControlSelection.Right)
+            {
+                return "right:0;top:" + MNPage.HEADER_HEIGHT.ToString() + ";bottom:0";
+            }
+
+            return "";
+        }
+
+        public static int AbsToPercX(int x) { return 25 * x / 256; }
+        public static int AbsToPercY(int y) { return 25 * y / 192; }
+
+        public static string HtmlLT(Rectangle r)
+        {
+            return string.Format("left:{0}%;top:{1}%;", 25 * r.Left / 256, 25 * r.Top / 192);
+        }
+        public static string HtmlLTR(Rectangle r)
+        {
+            return string.Format("left:{0}%;top:{1}%;width:{2}%;", 25 * r.Left / 256, 25 * r.Top / 192, 25 * r.Width / 256);
+        }
+        public static string HtmlLTRB(Rectangle r)
+        {
+            return string.Format("left:{0}%;top:{1}%;width:{2}%;height:{3}%;", 25 * r.Left / 256, 25 * r.Top / 192, 25 * r.Width / 256, 25 * r.Height / 192);
+        }
     }
 }

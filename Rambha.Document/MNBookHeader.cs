@@ -49,7 +49,7 @@ namespace Rambha.Document
         public int DefaultFontSize { get; set; }
 
         [Browsable(true), Category("Presentation")]
-        public MNFontName DefaultFontName { get; set; }
+        public string DefaultFontName { get; set; }
 
         [Browsable(true), DisplayName("Book Icon"), Category("Document")]
         public MNReferencedImage BookImageRef { get; set; }
@@ -167,8 +167,8 @@ namespace Rambha.Document
             bw.WriteByte(25);
             bw.WriteInt32(DefaultFontSize);
 
-            bw.WriteByte(26);
-            bw.WriteInt32((int)DefaultFontName);
+            bw.WriteByte(27);
+            bw.WriteString(DefaultFontName);
 
             bw.WriteByte(0);
         }
@@ -237,7 +237,10 @@ namespace Rambha.Document
                         DefaultFontSize = br.ReadInt32();
                         break;
                     case 26:
-                        DefaultFontName = (MNFontName)br.ReadInt32();
+                        DefaultFontName = MNFontName.IntToString(br.ReadInt32());
+                        break;
+                    case 27:
+                        DefaultFontName = br.ReadString();
                         break;
                 }
             }

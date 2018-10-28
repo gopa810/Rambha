@@ -152,7 +152,7 @@ namespace SlideViewer
                     dm.Add("message", "RootFileDownloaded");
                     dm.Add("result", "Error");
                     dm.Add("error", StatusMessage);
-                    Callback(dm);
+                    Callback?.Invoke(dm);
                 }
                 else
                 {
@@ -166,7 +166,7 @@ namespace SlideViewer
                         Dictionary<string, object> dm = new Dictionary<string, object>();
                         dm.Add("message", "RootFileDownloaded");
                         dm.Add("result", "OK");
-                        Callback(dm);
+                        Callback?.Invoke(dm);
                     }
                 }
             }

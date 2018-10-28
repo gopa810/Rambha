@@ -41,7 +41,7 @@ namespace SlideMaker
                 if (Object != null && from >= 0 && from < Object.Objects.Count &&
                     to >= 0 && to < Object.Objects.Count)
                 {
-                    object obj = Object.Objects[from];
+                    SMOrderedList.StringItem obj = Object.Objects[from];
                     Object.Objects.RemoveAt(from);
                     Object.Objects.Insert(to, obj);
                     textBox1.Text = "";

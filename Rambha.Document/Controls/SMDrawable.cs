@@ -57,6 +57,35 @@ namespace Rambha.Document
             base.Paint(context);
         }
 
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            sbHtml.Append("<div ");
+            sbHtml.AppendFormat(" id=\"c{0}\" ", this.Id);
+            sbHtml.AppendFormat(" style ='position:absolute;z-index:{0};", zorder);
+            SMRectangleArea area = this.Area;
+            sbHtml.Append(area.HtmlLTRB());
+            sbHtml.Append("'>");
+
+            DrawingContext dc = new DrawingContext();
+            string[] lines = Drawings.Split('\r', '\n', ';');
+            foreach (string line in lines)
+            {
+                string[] lp = line.Split(' ');
+                if (lp.Length == 0)
+                    return;
+                if (lp[0] != "line") continue;
+                if (lp[1] == lp[3])
+                {
+                    sbHtml.AppendFormat("<div style='position:relative;top:{0}%;height:{1}%;left:{2}%;width:2;background:black;'></div>", lp[2], lp[4], lp[1]);
+                }
+                else if (lp[2] == lp[4])
+                {
+                    sbHtml.AppendFormat("<div style='position:relative;left:{0}%;width:{1}%;top:{2}%;height:2;background:black;'></div>", lp[1], lp[3], lp[2]);
+                }
+            }
+
+            sbHtml.Append("</div>\n");
+        }
 
         protected override GSCore ExecuteMessageSet(GSCore a1, GSCore a2, GSCoreCollection args)
         {

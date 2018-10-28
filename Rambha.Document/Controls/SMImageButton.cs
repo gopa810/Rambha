@@ -147,6 +147,96 @@ namespace Rambha.Document
             base.Paint(context);
         }
 
+
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            Rectangle rect = Area.RelativeArea;
+
+            SMStatusLayout layout = PrepareBrushesAndPens();
+
+            Rectangle bounds = ContentPadding.ApplyPadding(rect);
+            SMContentArangement argm = this.ContentArangement;
+            Rectangle imgRect = bounds;
+
+            Image image = GetContentImage();
+            if (string.IsNullOrEmpty(BuiltInImage))
+                argm = SMContentArangement.TextOnly;
+
+
+
+            string plainText = Text;
+
+
+            string blockFormat = Font.HtmlString() + Paragraph.Html() + ContentPaddingHtml() + "position:absolute;" + Area.HtmlLTRB();
+            sbCss.AppendFormat(".c{0}n {{ {1} {2} cursor:pointer; }}\n", Id, HtmlFormatColor(false), blockFormat);
+            sbCss.AppendFormat(".c{0}h {{ {1} {2} cursor:pointer; }}\n", Id, HtmlFormatColor(true), blockFormat);
+            string imgText = "", textText = "";
+
+
+
+            if (argm != SMContentArangement.TextOnly)
+            {
+                imgText = string.Format("<img src=\"../rs/{1}.png\" style='object-fit:contain;width:100%;height:100%'></td>\n", Id, BuiltInImage != null ? BuiltInImage : "default");
+            }
+            if (argm != SMContentArangement.ImageOnly)
+            {
+                // wrapping text into vertical/horizontal alignment DIV
+                textText += plainText;
+            }
+
+            string onclick = GetOnclickHtml();
+
+            sbHtml.AppendFormat("<div class=\"c{0}n\" onclick=\"{1}\"", Id, onclick);
+            sbHtml.Append(">");
+
+            switch (argm)
+            {
+                case SMContentArangement.ImageAbove:
+                    sbHtml.AppendFormat("  <table class=\"c{0}n\"", Id);
+                    if (onclick.Length > 0) sbHtml.AppendFormat(" onclick=\"{0}\"", onclick);
+                    sbHtml.Append(">\n");
+                    sbHtml.Append("<tr><td>");
+                    sbHtml.Append(imgText);
+                    sbHtml.Append("<tr><td>");
+                    sbHtml.Append(textText);
+                    sbHtml.Append("</table>\n");
+                    break;
+                case SMContentArangement.ImageBelow:
+                    sbHtml.AppendFormat("  <table class=\"c{0}n\"", Id);
+                    if (onclick.Length > 0) sbHtml.AppendFormat(" onclick=\"{0}\"", onclick);
+                    sbHtml.Append(">\n");
+                    sbHtml.Append("<tr><td>");
+                    sbHtml.Append(textText);
+                    sbHtml.Append("<tr><td>");
+                    sbHtml.Append(imgText);
+                    sbHtml.Append("</table>\n");
+                    break;
+                case SMContentArangement.ImageOnLeft:
+                    sbHtml.Append(string.Format("<img src=\"../rs/{1}.png\" style='object-fit:contain;float:left;height:100%'>\n", Id, BuiltInImage != null ? BuiltInImage : "default"));
+                    sbHtml.Append("<div class=\"vertCenter\"><div>" + textText);
+                    sbHtml.Append("</div></div>\n");
+                    break;
+                case SMContentArangement.ImageOnRight:
+                    sbHtml.Append(string.Format("<img src=\"../rs/{1}.png\" style='object-fit:contain;float:right;height:100%'>\n", Id, BuiltInImage != null ? BuiltInImage : "default"));
+                    sbHtml.Append("<div class=\"vertCenter\"><div>" + textText);
+                    sbHtml.Append("</div></div>\n");
+                    break;
+                case SMContentArangement.TextOnly:
+                    sbHtml.AppendFormat("  <div class=\"c{0}n\" style='display:flex;flex-direction:column;justify-content:center;'", Id);
+                    if (onclick.Length > 0) sbHtml.AppendFormat(" onclick=\"{0}\"", onclick);
+                    sbHtml.Append("><div>\n");
+                    sbHtml.Append(textText);
+                    sbHtml.Append("</div></div>\n");
+                    break;
+                case SMContentArangement.ImageOnly:
+                    sbHtml.AppendFormat("  <div class=\"c{0}n\" onclick=\"{1}\">\n", Id, onclick);
+                    sbHtml.Append(imgText);
+                    sbHtml.Append("</div>\n");
+                    break;
+            }
+
+            sbHtml.Append("</div>");
+        }
         private System.Drawing.Image GetContentImage()
         {
             if (BuiltInImage == null || Document == null)

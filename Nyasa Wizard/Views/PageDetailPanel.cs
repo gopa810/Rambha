@@ -400,6 +400,7 @@ namespace SlideMaker.Views
             {
                 ShowTab(0);
                 area = (SMRectangleArea)obj;
+                CurrentSelectedControl = null;
             }
             else if (obj is SMControl)
             {
@@ -455,9 +456,13 @@ namespace SlideMaker.Views
 
                 EVStorage.EvControlScripts.Instance.SetControl(obj as SMControl);
                 containerA.AddPanel("Scripts", EVStorage.EvControlScripts.Instance);
+
+                richTextFreeProperties.Text = ((SMControl)obj).PropertiesText;
             }
             else if (obj is MNPage)
             {
+                CurrentSelectedControl = null;
+
                 MNPage page = obj as MNPage;
                 ShowTab(0);
                 InitializeControlList(page);
@@ -476,6 +481,7 @@ namespace SlideMaker.Views
             {
                 propertyGrid1.SelectedObject = (obj as MNDocument).Book;
                 ShowTab(0);
+                CurrentSelectedControl = null;
             }
 
             if (area != null)
@@ -1699,6 +1705,15 @@ namespace SlideMaker.Views
                 {
                     pev.Page.MessageText = richTextBoxPageNotes.Text;
                 }
+            }
+        }
+
+        private void richTextFreeProperties_TextChanged(object sender, EventArgs e)
+        {
+            if (CurrentSelectedControl != null)
+            {
+                CurrentSelectedControl.PropertiesText = richTextFreeProperties.Text;
+                CurrentSelectedControl.ProcessProperties(richTextFreeProperties.Text);
             }
         }
     }

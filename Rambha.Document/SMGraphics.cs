@@ -19,7 +19,7 @@ namespace Rambha.Document
         public static Font DefaultFont;
         public static string CustomFontsDir;
 
-        public static Dictionary<MNFontName, Font> BuiltInFonts = new Dictionary<MNFontName, Font>();
+        public static Dictionary<string, Font> BuiltInFonts = new Dictionary<string, Font>();
         public static List<string> AddedFonts = new List<string>();
         public static StringFormat StrFormatLeftCenter;
 
@@ -127,7 +127,8 @@ namespace Rambha.Document
             }
             return null;
         }
-        private static void InstallAppFont(FontFamily[] inst, MNFontName fontName, string familyName, string[] filesToAdd)
+
+        private static void InstallAppFont(FontFamily[] inst, string fontName, string familyName, string[] filesToAdd)
         {
             if (!BuiltInFonts.ContainsKey(fontName))
             {
@@ -179,12 +180,12 @@ namespace Rambha.Document
             }
         }
 
-        public static Font GetFont(MNFontName fontNameEnum)
+        public static Font GetFont(string fontNameEnum)
         {
             return BuiltInFonts[fontNameEnum];
         }
 
-        public static Font GetFontVariation(MNFontName fontName, float size)
+        public static Font GetFontVariation(string fontName, float size)
         {
             return GetFontVariation(BuiltInFonts[fontName], size);
         }
@@ -194,7 +195,7 @@ namespace Rambha.Document
             return GetFontVariation(font, size, font.Style);
         }
 
-        public static Font GetFontVariation(MNFontName font, FontStyle style)
+        public static Font GetFontVariation(string font, FontStyle style)
         {
             return GetFontVariation(BuiltInFonts[font], style);
         }
@@ -204,7 +205,7 @@ namespace Rambha.Document
             return GetFontVariation(font, font.Size, style);
         }
 
-        public static Font GetFontVariation(MNFontName fontName, float size, FontStyle style)
+        public static Font GetFontVariation(string fontName, float size, FontStyle style)
         {
             return GetFontVariation(BuiltInFonts[fontName], size, style);
         }
@@ -249,12 +250,12 @@ namespace Rambha.Document
 
         private static Dictionary<string, SMFont> p_virtual_fonts = new Dictionary<string, SMFont>();
 
-        public static string GetVirtFontCode(MNFontName fontName, float fontSize, bool Bold, bool Italic, bool Underline, bool Strikeout)
+        public static string GetVirtFontCode(string fontName, float fontSize, bool Bold, bool Italic, bool Underline, bool Strikeout)
         {
-            return string.Format("{0}-{1}-{2}{3}{4}{5}", (int)fontName, fontSize, Bold ? 1 : 0, Italic ? 1 : 0, Underline ? 1 : 0, Strikeout ? 1 : 0);
+            return string.Format("{0}-{1}-{2}{3}{4}{5}", fontName, fontSize, Bold ? 1 : 0, Italic ? 1 : 0, Underline ? 1 : 0, Strikeout ? 1 : 0);
         }
 
-        public static SMFont GetVirtFontVariation(MNFontName fontName, float fontSize, bool Bold, bool Italic, bool Underline, bool Strikeout)
+        public static SMFont GetVirtFontVariation(string fontName, float fontSize, bool Bold, bool Italic, bool Underline, bool Strikeout)
         {
             string code = GetVirtFontCode(fontName, fontSize, Bold, Italic, Underline, Strikeout);
             if (!p_virtual_fonts.ContainsKey(code))

@@ -28,25 +28,49 @@ namespace Rambha.Document
         Triangle
     }
 
-    public enum MNFontName
+    public class MNFontName
     {
-        AdobeGaramondPro = 1,
-        Balaram = 2,
-        BerlinSansFB = 3,
-        ChaparralPro = 4,
-        Devanagari = 5,
-        FranklinGothicCondensed = 6,
-        GilSansMurari = 7,
-        LucidaSans = 8,
-        OddsAndSods = 9,
-        PenmanshipPrint = 10,
-        Sabon = 11,
-        Shanti = 12,
-        TektonPro = 13,
-        VagRounded = 14,
-        WWDesigns = 15,
-        Times = 16,
-        Default = 17
+        public static string IntToString(int fontId)
+        {
+            switch (fontId)
+            {
+                case 1: return "Garamond";
+                case 2: return "Balaram";
+                case 3: return "Berlin";
+                case 4: return "Chaparral";
+                case 5: return "Devanagari";
+                case 6: return "Franklin";
+                case 7: return "GilSans";
+                case 8: return "Lucida";
+                case 9: return "Odds";
+                case 10: return "Penmanship";
+                case 11: return "Sabon";
+                case 12: return "Shanti";
+                case 13: return "Tekton";
+                case 14: return "VagRounded";
+                case 15: return "WW";
+                case 16: return "Times";
+            }
+            return "GilSans";
+        }
+
+        public const string AdobeGaramondPro = "Garamond";
+        public const string Balaram = "Balaram";
+        public const string BerlinSansFB = "Berlin";
+        public const string ChaparralPro = "Chaparral";
+        public const string Devanagari = "Devanagari";
+        public const string FranklinGothicCondensed = "Franklin";
+        public const string GilSansMurari = "GilSans";
+        public const string LucidaSans = "Lucida";
+        public const string OddsAndSods = "Odds";
+        public const string PenmanshipPrint = "Penmanship";
+        public const string Sabon = "Sabon";
+        public const string Shanti = "Shanti";
+        public const string TektonPro = "Tekton";
+        public const string VagRounded = "VagRounded";
+        public const string WWDesigns = "WW";
+        public const string Times = "Times";
+        public const string Default = "Default";
     }
 
     public enum SMScreen

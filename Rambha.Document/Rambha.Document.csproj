@@ -59,6 +59,7 @@
     <Compile Include="MNBookData.cs" />
     <Compile Include="MNBookHeader.cs" />
     <Compile Include="MNBookLanguage.cs" />
+    <Compile Include="MNExportContext.cs" />
     <Compile Include="MNFileWorkTime.cs" />
     <Compile Include="MNLazyImage.cs" />
     <Compile Include="MNMenu.cs" />

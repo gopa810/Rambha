@@ -124,9 +124,11 @@
             this.label1 = new System.Windows.Forms.Label();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer3 = new System.Windows.Forms.SplitContainer();
             this.tabControl2 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.pageScrollArea1 = new SlideMaker.Views.PageScrollArea();
+            this.richTextBoxPageNotes = new System.Windows.Forms.RichTextBox();
             this.tabControlDetails = new System.Windows.Forms.TabControl();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.containerA = new SlideMaker.EVContainer();
@@ -138,8 +140,8 @@
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.label2 = new System.Windows.Forms.Label();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.splitContainer3 = new System.Windows.Forms.SplitContainer();
-            this.richTextBoxPageNotes = new System.Windows.Forms.RichTextBox();
+            this.label21 = new System.Windows.Forms.Label();
+            this.richTextFreeProperties = new System.Windows.Forms.RichTextBox();
             this.tabControl1.SuspendLayout();
             this.tabPages.SuspendLayout();
             this.toolStrip1.SuspendLayout();
@@ -158,16 +160,16 @@
             this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).BeginInit();
+            this.splitContainer3.Panel1.SuspendLayout();
+            this.splitContainer3.Panel2.SuspendLayout();
+            this.splitContainer3.SuspendLayout();
             this.tabControl2.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabControlDetails.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.tabPageProperties.SuspendLayout();
             this.tabActions.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).BeginInit();
-            this.splitContainer3.Panel1.SuspendLayout();
-            this.splitContainer3.Panel2.SuspendLayout();
-            this.splitContainer3.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -1262,6 +1264,24 @@
             this.splitContainer2.SplitterDistance = 705;
             this.splitContainer2.TabIndex = 3;
             // 
+            // splitContainer3
+            // 
+            this.splitContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer3.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer3.Name = "splitContainer3";
+            this.splitContainer3.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer3.Panel1
+            // 
+            this.splitContainer3.Panel1.Controls.Add(this.tabControl2);
+            // 
+            // splitContainer3.Panel2
+            // 
+            this.splitContainer3.Panel2.Controls.Add(this.richTextBoxPageNotes);
+            this.splitContainer3.Size = new System.Drawing.Size(705, 637);
+            this.splitContainer3.SplitterDistance = 471;
+            this.splitContainer3.TabIndex = 3;
+            // 
             // tabControl2
             // 
             this.tabControl2.Controls.Add(this.tabPage1);
@@ -1295,6 +1315,17 @@
             this.pageScrollArea1.TabIndex = 1;
             this.pageScrollArea1.NewPageRequested += new SlideMaker.Views.PageChangedEventHandler(this.pageScrollArea1_NewPageRequested);
             this.pageScrollArea1.BackToParentView += new SlideMaker.Views.NormalEventHandler(this.pageScrollArea1_BackToParentView);
+            // 
+            // richTextBoxPageNotes
+            // 
+            this.richTextBoxPageNotes.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.richTextBoxPageNotes.Font = new System.Drawing.Font("Arial Unicode MS", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.richTextBoxPageNotes.Location = new System.Drawing.Point(0, 0);
+            this.richTextBoxPageNotes.Name = "richTextBoxPageNotes";
+            this.richTextBoxPageNotes.Size = new System.Drawing.Size(705, 162);
+            this.richTextBoxPageNotes.TabIndex = 0;
+            this.richTextBoxPageNotes.Text = "";
+            this.richTextBoxPageNotes.TextChanged += new System.EventHandler(this.richTextBoxPageNotes_TextChanged);
             // 
             // tabControlDetails
             // 
@@ -1334,6 +1365,8 @@
             // 
             // tabPageProperties
             // 
+            this.tabPageProperties.Controls.Add(this.richTextFreeProperties);
+            this.tabPageProperties.Controls.Add(this.label21);
             this.tabPageProperties.Controls.Add(this.propertyGrid1);
             this.tabPageProperties.Location = new System.Drawing.Point(4, 22);
             this.tabPageProperties.Name = "tabPageProperties";
@@ -1345,11 +1378,13 @@
             // 
             // propertyGrid1
             // 
-            this.propertyGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.propertyGrid1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.propertyGrid1.LineColor = System.Drawing.SystemColors.ControlDark;
             this.propertyGrid1.Location = new System.Drawing.Point(3, 3);
             this.propertyGrid1.Name = "propertyGrid1";
-            this.propertyGrid1.Size = new System.Drawing.Size(164, 583);
+            this.propertyGrid1.Size = new System.Drawing.Size(164, 424);
             this.propertyGrid1.TabIndex = 0;
             // 
             // tabActions
@@ -1408,34 +1443,26 @@
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
-            // splitContainer3
+            // label21
             // 
-            this.splitContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer3.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer3.Name = "splitContainer3";
-            this.splitContainer3.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            this.label21.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label21.AutoSize = true;
+            this.label21.Location = new System.Drawing.Point(6, 439);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(81, 13);
+            this.label21.TabIndex = 1;
+            this.label21.Text = "Free Properties:";
             // 
-            // splitContainer3.Panel1
+            // richTextFreeProperties
             // 
-            this.splitContainer3.Panel1.Controls.Add(this.tabControl2);
-            // 
-            // splitContainer3.Panel2
-            // 
-            this.splitContainer3.Panel2.Controls.Add(this.richTextBoxPageNotes);
-            this.splitContainer3.Size = new System.Drawing.Size(705, 637);
-            this.splitContainer3.SplitterDistance = 471;
-            this.splitContainer3.TabIndex = 3;
-            // 
-            // richTextBoxPageNotes
-            // 
-            this.richTextBoxPageNotes.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.richTextBoxPageNotes.Font = new System.Drawing.Font("Arial Unicode MS", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBoxPageNotes.Location = new System.Drawing.Point(0, 0);
-            this.richTextBoxPageNotes.Name = "richTextBoxPageNotes";
-            this.richTextBoxPageNotes.Size = new System.Drawing.Size(705, 162);
-            this.richTextBoxPageNotes.TabIndex = 0;
-            this.richTextBoxPageNotes.Text = "";
-            this.richTextBoxPageNotes.TextChanged += new System.EventHandler(this.richTextBoxPageNotes_TextChanged);
+            this.richTextFreeProperties.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.richTextFreeProperties.Location = new System.Drawing.Point(6, 455);
+            this.richTextFreeProperties.Name = "richTextFreeProperties";
+            this.richTextFreeProperties.Size = new System.Drawing.Size(158, 128);
+            this.richTextFreeProperties.TabIndex = 2;
+            this.richTextFreeProperties.Text = "";
+            this.richTextFreeProperties.TextChanged += new System.EventHandler(this.richTextFreeProperties_TextChanged);
             // 
             // PageDetailPanel
             // 
@@ -1467,16 +1494,17 @@
             this.splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
+            this.splitContainer3.Panel1.ResumeLayout(false);
+            this.splitContainer3.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
+            this.splitContainer3.ResumeLayout(false);
             this.tabControl2.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabControlDetails.ResumeLayout(false);
             this.tabPage5.ResumeLayout(false);
             this.tabPageProperties.ResumeLayout(false);
+            this.tabPageProperties.PerformLayout();
             this.tabActions.ResumeLayout(false);
-            this.splitContainer3.Panel1.ResumeLayout(false);
-            this.splitContainer3.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
-            this.splitContainer3.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -1593,5 +1621,7 @@
         private System.Windows.Forms.Button button45;
         private System.Windows.Forms.SplitContainer splitContainer3;
         private System.Windows.Forms.RichTextBox richTextBoxPageNotes;
+        private System.Windows.Forms.RichTextBox richTextFreeProperties;
+        private System.Windows.Forms.Label label21;
     }
 }

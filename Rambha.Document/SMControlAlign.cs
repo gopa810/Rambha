@@ -69,6 +69,26 @@ namespace Rambha.Document
             SizeToFit = true;
         }
 
+        public string Html()
+        {
+            StringBuilder sb = new StringBuilder();
+            switch(Align)
+            {
+                case SMHorizontalAlign.Center:
+                    sb.Append("text-align:center;");
+                    break;
+                case SMHorizontalAlign.Justify:
+                    sb.Append("text-align:justify;");
+                    break;
+                case SMHorizontalAlign.Right:
+                    sb.Append("text-align:right;");
+                    break;
+                case SMHorizontalAlign.Left:
+                    sb.Append("text-align:left;");
+                    break;
+            }
+            return sb.ToString();
+        }
         public override string ToString()
         {
             return Align.ToString() + ", " + VertAlign.ToString() + ", " + LineSpacing;
@@ -143,7 +163,7 @@ namespace Rambha.Document
     [EditorBrowsable(EditorBrowsableState.Always)]
     public class SMFont
     {
-        public MNFontName Name { get; set; }
+        public string Name { get; set; }
 
         public bool Italic { get; set; }
 
@@ -162,11 +182,17 @@ namespace Rambha.Document
             Underline = false;
         }
 
-        public SMFont(MNFontName name, int size, FontStyle style)
+        public SMFont(string name, int size, FontStyle style)
         {
             this.Name = name;
             this.Size = size;
             this.Style = style;
+        }
+
+        public string HtmlString()
+        {
+            return string.Format("font-family:\"{0}\";font-size:{1:F1}%;font-style:{2};font-weight:{3};", Name, Size / 0.24,
+                (Italic ? "italic" : "normal"), (Bold ? "bold" : "normal"));
         }
 
         public override string ToString()
@@ -210,9 +236,6 @@ namespace Rambha.Document
 
         public void Save(RSFileWriter bw)
         {
-            bw.WriteByte(10);
-            bw.WriteInt32((Int32)Name);
-            
             bw.WriteByte(11);
             bw.WriteFloat(Size);
 
@@ -225,6 +248,9 @@ namespace Rambha.Document
             bw.WriteByte(15);
             bw.WriteBool(Underline);
 
+            bw.WriteByte(16);
+            bw.WriteString(Name);
+
             bw.WriteByte(0);
         }
 
@@ -236,7 +262,7 @@ namespace Rambha.Document
                 switch (b)
                 {
                     case 10:
-                        Name = (MNFontName)br.ReadInt32();
+                        Name = MNFontName.IntToString(br.ReadInt32());
                         break;
                     case 11:
                         Size = br.ReadFloat();
@@ -249,6 +275,9 @@ namespace Rambha.Document
                         break;
                     case 15:
                         Underline = br.ReadBool();
+                        break;
+                    case 16:
+                        Name = br.ReadString();
                         break;
                 }
             }
@@ -332,6 +361,12 @@ namespace Rambha.Document
             }
         }
 
+        public string HtmlColors()
+        {
+            return "background:" + ColorTranslator.ToHtml(this.BackColor) +
+              ";color:" + ColorTranslator.ToHtml(this.ForeColor) + ";";
+        }
+
     }
 
     [TypeConverter(typeof(ExpandableObjectConverter))]
@@ -363,6 +398,11 @@ namespace Rambha.Document
                     Top = Bottom = Right = Left = a;
                 }
             }
+        }
+
+        public string Html()
+        {
+            return string.Format("padding:{0}px {1}px {2}px {3}px;", Top, Right, Bottom, Left);
         }
 
         public SMContentPadding()

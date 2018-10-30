@@ -1608,8 +1608,8 @@ namespace Rambha.Document
             template.Replace("%homePage%", GoHomePage());
             template.Replace("%messageTitle%", MessageTitle);
             template.Replace("%messageText%", MessageText);
-            template.Replace("%textB%", TextB.Trim().Replace("\n", "<br>"));
-            template.Replace("%textC%", TextC.Trim().Replace("\n", "<br>"));
+            template.Replace("%textB%", TextB.Trim().Replace("\n", "<br>").Replace("\r", ""));
+            template.Replace("%textC%", TextC.Trim().Replace("\n", "<br>").Replace("\r", ""));
             template.Replace("%defFontSize%", "24"/*Document.Book.DefaultFontSize.ToString()*/);
             template.Replace("%defFontName%", Document.Book.DefaultFontName);
 
@@ -1622,7 +1622,7 @@ namespace Rambha.Document
             {
                 foreach (SMControl c in Template.Objects)
                 {
-                    ctx.UsedControls.Add(c.GetType().ToString());
+                    ctx.AddUsedControls(c.GetType().ToString(), Id);
                     c.ExportToHtml(ctx, zorder, ctrls, csss, jss);
                     zorder += 5;
                 }
@@ -1630,7 +1630,7 @@ namespace Rambha.Document
 
             foreach (SMControl c in this.Objects)
             {
-                ctx.UsedControls.Add(c.GetType().ToString());
+                ctx.AddUsedControls(c.GetType().ToString(), Id);
                 c.ExportToHtml(ctx, zorder, ctrls, csss, jss);
                 zorder += 5;
             }

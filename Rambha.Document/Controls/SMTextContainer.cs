@@ -639,6 +639,28 @@ namespace Rambha.Document
             }
             Tag = sb.ToString();
         }
+
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            sbHtml.Append("<div ");
+            sbHtml.AppendFormat(" id=\"c{0}\" ", this.Id);
+            sbHtml.AppendFormat(" style ='overflow-y:auto;position:absolute;z-index:{0};", zorder);
+            sbHtml.Append(Area.HtmlLTRB());
+            sbHtml.Append(Font.HtmlString() + Paragraph.Html() + ContentPaddingHtml());
+            sbHtml.Append("'>");
+
+            sbHtml.Append("<div style='display:flex;flex-direction:row;justify-content:center;flex-wrap:wrap;'>");
+            SplitTextToWords(Text);
+            foreach (SMTextContainerWord wb in drawWords)
+            {
+                sbHtml.AppendFormat("<div class=\"textContainerElem\" data-tag=\"{1}\">{0}</div>", wb.text, wb.tag);
+            }
+            sbHtml.Append("</div>");
+
+            sbHtml.Append("</div>\n");
+        }
+
+
     }
 
     public class SMTextContainerWord

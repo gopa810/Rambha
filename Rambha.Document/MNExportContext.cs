@@ -18,7 +18,7 @@ namespace Rambha.Document
         public string TemplatePage = @"e:\Dropbox\Projects\LTRWeb\page.html";
 
 
-        public HashSet<string> UsedControls = new HashSet<string>();
+        public Dictionary<string,HashSet<long>> UsedControls = new Dictionary<string, HashSet<long>>();
 
         public StringBuilder sbControlList = new StringBuilder();
         public StringBuilder sbResizeList = new StringBuilder();
@@ -41,6 +41,20 @@ namespace Rambha.Document
         {
             sbControlList.Clear();
             sbResizeList.Clear();
+        }
+
+        public void AddUsedControls(string key, long idPage)
+        {
+            if (UsedControls.ContainsKey(key))
+            {
+                UsedControls[key].Add(idPage);
+            }
+            else
+            {
+                HashSet<long> hash = new HashSet<long>();
+                hash.Add(idPage);
+                UsedControls[key] = hash;
+            }
         }
 
         public void AppendToControlList(params string[] args)

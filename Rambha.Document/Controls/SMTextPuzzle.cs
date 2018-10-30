@@ -92,6 +92,44 @@ namespace Rambha.Document
         private bool[,] p_cellStatus = null;
         private bool[,] p_cellExpectedStatus = null;
 
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            if (p_alignedText.Length == 0 || !p_prevText.Equals(Text) || p_prevRowCol != Rows * Columns)
+            {
+                if (Rows < 3) Rows = 3;
+                if (Columns < 3) Columns = 3;
+                p_prevRowCol = Rows * Columns;
+                p_prevText = Text;
+                p_cellStatus = new bool[Columns, Rows];
+                p_cellExpectedStatus = new bool[Columns, Rows];
+                p_alignedText = AlignText(Text);
+            }
+
+            sbHtml.AppendFormat("<div style='position:absolute;{0};{1}'>\n", Area.HtmlLTRB(), Font.HtmlString());
+            if (Columns >= 1 || Rows >= 1)
+            {
+                int index = 0;
+                float width = 100 / Columns;
+                float height = 100 / Rows;
+                for (int y = 0; y < Rows; y++)
+                {
+                    sbHtml.AppendFormat("  <div style='display:flex;flex-direction:row;height:{0}%;'>\n", height);
+                    for (int x = 0; x < Columns; x++)
+                    {
+                        string s = p_alignedText.Substring(index, 1);
+                        index++;
+                        string eid = string.Format("tp{0}_{1}", x, y);
+
+                        sbHtml.AppendFormat("    <div id=\"{1}\" style='width:{0}%;height:100%;border:1px solid black;margin:0px;display:flex;flex-direction:column;justify-content:center;' data-tag=\"{2}\">\n", width, eid, p_cellExpectedStatus[x, y]);
+                        sbHtml.AppendFormat("      <div style='text-align:center;'>{0}</div>\n", s);
+                        sbHtml.AppendFormat("    </div>\n");
+                    }
+                    sbHtml.AppendFormat("  </div>\n");
+                }
+            }
+            sbHtml.Append("</div>\n");
+        }
+
         public override void Paint(MNPageContext context)
         {
             Rectangle bounds = Area.GetBounds(context);

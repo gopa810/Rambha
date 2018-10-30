@@ -16,7 +16,13 @@ namespace ConvertToHtml
         {
             MNExportContext etx = new MNExportContext();
             etx.DirAllBooks = @"e:\temp";
-            string file = @"e:\Dropbox\ReaderBooks\PAC.smb";
+            string file = @"e:\Dropbox\ReaderBooks\STFK.smb";
+
+            if (!File.Exists(file))
+            {
+                Console.WriteLine("File {0} does not exist.", file);
+                return;
+            }
 
             Console.WriteLine("File: {0}", file);
             MNDocument docx = Program.LoadDocument(file);
@@ -25,11 +31,21 @@ namespace ConvertToHtml
 
             docx = null;
 
-            Console.WriteLine("Used controls:");
-            foreach(string s in etx.UsedControls)
+            StringBuilder Consolereport = new StringBuilder();
+            Consolereport.AppendLine("Used controls:");
+            foreach(string s in etx.UsedControls.Keys)
             {
-                Console.WriteLine("{0}", s);
+                HashSet<long> hash = etx.UsedControls[s];
+                Consolereport.AppendFormat("{0}:", s);
+                foreach(long l in hash)
+                {
+                    Consolereport.AppendFormat(" {0}", l);
+                }
+                Consolereport.AppendLine();
             }
+
+            Console.WriteLine(Consolereport.ToString());
+            File.WriteAllText(Path.Combine(etx.DirCurrentBook, "info.txt"), Consolereport.ToString());
 
             Console.ReadLine();
         }

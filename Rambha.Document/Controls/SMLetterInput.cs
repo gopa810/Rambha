@@ -95,6 +95,38 @@ namespace Rambha.Document
             bw.WriteByte(0);
         }
 
+        public override void ExportToHtml(MNExportContext ctx, int zorder, StringBuilder sbHtml, StringBuilder sbCss, StringBuilder sbJS)
+        {
+            sbHtml.AppendFormat("<div style='position:absolute;{0};{1}'>\n", Area.HtmlLTRB(),Font.HtmlString());
+            AnalyzeContents();
+            FindFirstEmptyCell();
+            if (p_xmax >= 1 || p_ymax >= 1)
+            {
+                float width = 100 / p_xmax;
+                float height = 100 / p_ymax;
+                for (int y = 0; y < p_ymax; y++)
+                {
+                    sbHtml.AppendFormat("  <div style='display:flex;flex-direction:row;height:{0}%;'>\n", height);
+                    for (int x = 0; x < p_xmax; x++)
+                    {
+                        string eid = string.Format("tp{0}_{1}", x, y);
+                        if (p_array[x, y, 1].Length == 0)
+                        {
+                            sbHtml.AppendFormat("    <div id=\"{1}\" style='width:{0}%;height:100%;border:1px solid white;margin:0px;'></div>\n", width, eid);
+                        }
+                        else
+                        {
+                            sbHtml.AppendFormat("    <div id=\"{1}\" style='width:{0}%;height:100%;border:1px solid black;margin:0px;display:flex;flex-direction:column;justify-content:center;' data-tag=\"{2}\">\n", width, eid, p_array[x,y,1]);
+                            sbHtml.AppendFormat("      <div style='{1};text-align:center;'>{0}</div>\n", p_array[x, y, 0], Font.HtmlString());
+                            sbHtml.AppendFormat("    </div>\n");
+                        }
+                    }
+                    sbHtml.AppendFormat("  </div>\n");
+                }
+            }
+            sbHtml.Append("</div>\n");
+        }
+
         public override void Paint(MNPageContext context)
         {
             Rectangle bounds = Area.GetBounds(context);
